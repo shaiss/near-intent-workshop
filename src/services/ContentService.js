@@ -14,14 +14,23 @@ class ContentService {
   }
 
   async getWorkshopStructure() {
+    // Always fetch fresh structure in development mode
+    if (!this.isProduction) {
+      return await this.fetchWorkshopStructure();
+    }
+    
     const now = Date.now();
     
-    // Return cached structure if it exists and is fresh
-    if (this.structureCache && this.lastFetchTime.get('structure') > now - this.cacheExpiry) {
+    // Return cached structure if it exists and is fresh (only in production)
+    if (this.structureCache && 
+        this.lastFetchTime.get('structure') > now - this.cacheExpiry) {
       return this.structureCache;
     }
     
-    // Get the workshop structure markdown
+    return await this.fetchWorkshopStructure();
+  }
+  
+  async fetchWorkshopStructure() {
     try {
       let text;
       
@@ -29,8 +38,11 @@ class ContentService {
         // In production, use the preloaded content
         text = contentMap['workshop-structure.md'];
       } else {
-        // In development, fetch from file system
-        const response = await fetch('/src/content/workshop-structure.md');
+        // In development, always fetch from file system
+        const response = await fetch('/src/content/workshop-structure.md?t=' + Date.now());
+        if (!response.ok) {
+          throw new Error(`Failed to fetch workshop structure: ${response.status}`);
+        }
         text = await response.text();
       }
       
@@ -38,7 +50,7 @@ class ContentService {
       
       // Update cache
       this.structureCache = structure;
-      this.lastFetchTime.set('structure', now);
+      this.lastFetchTime.set('structure', Date.now());
       
       return structure;
     } catch (error) {
@@ -48,15 +60,23 @@ class ContentService {
   }
 
   async getContent(fileName) {
+    // Always fetch fresh content in development mode
+    if (!this.isProduction) {
+      return await this.fetchContent(fileName);
+    }
+    
     const now = Date.now();
     
-    // Return cached content if it exists and is fresh
+    // Return cached content if it exists and is fresh (only in production)
     if (this.contentCache.has(fileName) && 
         this.lastFetchTime.get(fileName) > now - this.cacheExpiry) {
       return this.contentCache.get(fileName);
     }
     
-    // Get the content markdown
+    return await this.fetchContent(fileName);
+  }
+  
+  async fetchContent(fileName) {
     try {
       let text;
       
@@ -68,14 +88,17 @@ class ContentService {
           throw new Error(`Content file ${fileName} not found`);
         }
       } else {
-        // In development, fetch from file system
-        const response = await fetch(`/src/content/${fileName}`);
+        // In development, fetch from file system with cache busting
+        const response = await fetch(`/src/content/${fileName}?t=${Date.now()}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch content: ${response.status}`);
+        }
         text = await response.text();
       }
       
       // Update cache
       this.contentCache.set(fileName, text);
-      this.lastFetchTime.set(fileName, now);
+      this.lastFetchTime.set(fileName, Date.now());
       
       return text;
     } catch (error) {
@@ -91,17 +114,18 @@ class ContentService {
     this.lastFetchTime.delete(fileName);
     
     // Fetch fresh content
-    return await this.getContent(fileName);
+    return await this.fetchContent(fileName);
   }
 
   // Force refresh all content
   async refreshAllContent() {
+    console.log("Refreshing all content...");
     this.contentCache.clear();
     this.lastFetchTime.clear();
     this.structureCache = null;
     
     // Fetch fresh structure
-    return await this.getWorkshopStructure();
+    return await this.fetchWorkshopStructure();
   }
 
   // Parse the workshop structure markdown into a structured object
@@ -128,8 +152,13 @@ class ContentService {
       }
       // Parse part title (H2)
       else if (line.startsWith('## ')) {
+        if (currentPart !== null && currentPart.title && currentPart.sections.length === 0) {
+          // Skip parts with no sections
+          console.warn(`Part "${currentPart.title}" has no sections`);
+        }
+        
         currentPart = {
-          id: structure.parts.length,
+          id: structure.parts.length + 1,
           title: line.substring(3).trim(),
           sections: []
         };

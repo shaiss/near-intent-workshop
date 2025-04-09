@@ -21,5 +21,16 @@ export default defineConfig({
       },
     },
   },
-  assetsInclude: ['**/*.md']
+  assetsInclude: ['**/*.md'],
+  server: {
+    fs: {
+      // Allow serving files from one level up the project root
+      allow: ['..']
+    },
+    watch: {
+      // Force server to rebuild when content changes
+      usePolling: true,
+      interval: 1000
+    }
+  }
 }) 

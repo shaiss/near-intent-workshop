@@ -11,6 +11,18 @@ class ContentService {
     this.cacheExpiry = 5 * 60 * 1000;
     // Detect if we're in production
     this.isProduction = import.meta.env.PROD;
+    
+    // Initialize structure on startup
+    this.initializeStructure();
+  }
+  
+  async initializeStructure() {
+    try {
+      console.log("ContentService: Initializing workshop structure on startup");
+      await this.fetchWorkshopStructure();
+    } catch (error) {
+      console.error("Failed to initialize workshop structure:", error);
+    }
   }
 
   async getWorkshopStructure() {
@@ -37,13 +49,35 @@ class ContentService {
       if (this.isProduction) {
         // In production, use the preloaded content
         text = contentMap['workshop-structure.md'];
-      } else {
-        // In development, always fetch from file system
-        const response = await fetch('/src/content/workshop-structure.md?t=' + Date.now());
-        if (!response.ok) {
-          throw new Error(`Failed to fetch workshop structure: ${response.status}`);
+        if (!text) {
+          console.error("Workshop structure not found in contentMap");
+          throw new Error("Workshop structure not found in contentMap");
         }
-        text = await response.text();
+        console.log("ContentService: Using preloaded workshop structure");
+      } else {
+        // In development, try both approaches
+        try {
+          // First try from contentMap for more reliability
+          text = contentMap['workshop-structure.md'];
+          if (text) {
+            console.log("ContentService: Using workshop structure from contentMap");
+          } else {
+            // Fall back to fetch
+            console.log("ContentService: Fetching workshop structure from filesystem");
+            const response = await fetch('/src/content/workshop-structure.md?t=' + Date.now());
+            if (!response.ok) {
+              throw new Error(`Failed to fetch workshop structure: ${response.status}`);
+            }
+            text = await response.text();
+          }
+        } catch (fetchError) {
+          console.error("Error fetching structure from filesystem:", fetchError);
+          // Last attempt from contentMap
+          text = contentMap['workshop-structure.md'];
+          if (!text) {
+            throw new Error("Workshop structure not found in contentMap or filesystem");
+          }
+        }
       }
       
       const structure = this.parseWorkshopStructure(text);

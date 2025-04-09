@@ -1,17 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Menu, X, FileText, ChevronDown, ChevronUp, Home, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { workshopStructure } from '@/components/content/workshop-structure';
+// Import the function to parse the markdown file
+import { parseWorkshopStructure } from '@/services/ContentService';
+
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedParts, setExpandedParts] = useState({
-    0: true, 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, "appendix": false
-  });
+  const [expandedParts, setExpandedParts] = useState({});
+  const [workshopStructure, setWorkshopStructure] = useState(null);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
+
+  useEffect(() => {
+    const fetchWorkshopStructure = async () => {
+      try {
+        const structure = await parseWorkshopStructure();
+        setWorkshopStructure(structure);
+      } catch (error) {
+        console.error("Error fetching workshop structure:", error);
+        // Handle error appropriately, maybe display an error message
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWorkshopStructure();
+  }, []);
 
   const togglePart = (part) => {
     setExpandedParts(prev => ({
@@ -20,7 +37,22 @@ export default function Layout({ children, currentPageName }) {
     }));
   };
 
-  const sections = workshopStructure.parts.flatMap(part => 
+
+  // Show loading state while structure is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  // Handle case where workshopStructure is still null after loading
+  if (!workshopStructure) {
+    return <div>Error loading workshop structure</div>;
+  }
+
+  const sections = workshopStructure.parts.flatMap(part =>
     part.sections.map(section => ({
       part: part.id,
       sub: section.id,
@@ -29,16 +61,11 @@ export default function Layout({ children, currentPageName }) {
     }))
   );
 
-  const partTitles = {
-    0: "Part 0: Introduction & Setup",
-    1: "Part 1: Understanding the Building Blocks",
-    2: "Part 2: Building the Backend",
-    3: "Part 3: Creating the Smart Wallet Experience",
-    4: "Part 4: Building the Frontend",
-    5: "Part 5: Testnet Deployment & Debugging",
-    6: "Part 6: Going Beyond the Demo",
-    "appendix": "Appendix / Bonus Tracks"
-  };
+  const partTitles = workshopStructure.parts.reduce((acc, part) => {
+    acc[part.id] = part.title;
+    return acc;
+  }, {});
+
 
   return (
     <div className="min-h-screen bg-amber-50">
@@ -74,7 +101,7 @@ export default function Layout({ children, currentPageName }) {
             transform: translate(0, 0);
             color: black;
           }
-          
+
           .neo-button.bg-black {
             color: white;
           }
@@ -108,7 +135,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -120,7 +147,7 @@ export default function Layout({ children, currentPageName }) {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between p-4 bg-yellow-300 border-b-4 border-black">
-          <Link 
+          <Link
             to={createPageUrl("Home")}
             className="text-xl font-black flex items-center gap-2"
             onClick={() => setSidebarOpen(false)}
@@ -141,7 +168,7 @@ export default function Layout({ children, currentPageName }) {
           {/* Navigation for parts */}
           {Object.entries(partTitles).map(([part, title]) => (
             <div key={part} className="mb-2">
-              <div 
+              <div
                 className="flex items-center justify-between p-2 font-bold cursor-pointer neo-nav-item rounded-md"
                 onClick={() => togglePart(part)}
               >
@@ -207,17 +234,17 @@ export default function Layout({ children, currentPageName }) {
               <p className="text-sm">Built by Shai Perednik - An interactive guide to the future of blockchain interactions</p>
             </div>
             <div className="flex gap-4">
-              <a 
-                href="https://near.org" 
-                target="_blank" 
+              <a
+                href="https://near.org"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="py-1 px-3 bg-black text-white neo-button font-bold text-sm"
               >
                 NEAR.org
               </a>
-              <a 
-                href="https://docs.near.org" 
-                target="_blank" 
+              <a
+                href="https://docs.near.org"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="py-1 px-3 bg-yellow-300 neo-button font-bold text-sm"
               >

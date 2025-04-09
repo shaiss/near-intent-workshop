@@ -1,52 +1,35 @@
 
 import { useState } from 'react';
 
-/**
- * A hook for handling intents - this is a skeleton that workshop participants will implement
- */
 export function useIntent() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   
-  // Placeholder functions that will be implemented during the workshop
-  const submitIntent = async (intent) => {
+  const createAndSubmitIntent = async (type, params) => {
     setLoading(true);
-    setError(null);
-    
     try {
-      // TODO: Implement intent submission logic
-      console.log("Intent submission to be implemented", intent);
-      return null;
-    } catch (err) {
-      setError(err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const executeIntent = async (intentId) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // TODO: Implement intent execution logic
-      console.log("Intent execution to be implemented", intentId);
-      return null;
-    } catch (err) {
-      setError(err.message);
-      return null;
+      // This would connect to your actual intent service
+      // For simulation, we'll return a mock response
+      console.log(`Creating intent of type: ${type} with params:`, params);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const intentId = `intent_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      return {
+        intentId,
+        status: 'PENDING'
+      };
+    } catch (error) {
+      console.error('Error creating intent:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
   
   return {
-    loading,
-    error,
-    submitIntent,
-    executeIntent
+    createAndSubmitIntent,
+    loading
   };
 }
-
-export default useIntent;

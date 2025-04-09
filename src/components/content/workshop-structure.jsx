@@ -1,88 +1,94 @@
-const workshopStructure = {
-  title: "NEAR Intents & Smart Wallet Abstraction",
-  description: "Learn how to build intent-centric dApps with smart wallet abstraction on NEAR",
-  parts: [
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+export const WorkshopStructure = () => {
+  const sections = [
     {
-      id: 0,
       title: "Introduction & Setup",
-      description: "Overview of the workshop and setting up your development environment",
-      sections: [
-        { id: 1, title: "Welcome & Objectives", slug: "welcome" },
-        { id: 2, title: "Overview of NEAR Intents", slug: "overview" },
-        { id: 3, title: "Prerequisites & Setup", slug: "setup" },
-        { id: 4, title: "Repo Cloning", slug: "repo" }
+      items: [
+        { title: "Welcome & Objectives", path: "/workshop/welcome" },
+        { title: "Overview of NEAR Intents", path: "/workshop/overview" },
+        { title: "Prerequisites & Setup", path: "/workshop/setup" },
+        { title: "Repo Cloning", path: "/workshop/repo" },
       ]
     },
     {
-      id: 1,
       title: "Understanding the Building Blocks",
-      description: "Learn about the key concepts of intents and smart wallet abstraction",
-      sections: [
-        { id: 1, title: "What Are Intents?", slug: "intents-concept" },
-        { id: 2, title: "Anatomy of a NEAR Intent", slug: "intent-anatomy" },
-        { id: 3, title: "Smart Wallet Abstraction", slug: "smart-wallet" },
-        { id: 4, title: "Cross-chain UX", slug: "cross-chain" }
+      items: [
+        { title: "What Are Intents?", path: "/workshop/intents-concept" },
+        { title: "Anatomy of a NEAR Intent", path: "/workshop/intent-anatomy" },
+        { title: "Smart Wallet Abstraction", path: "/workshop/smart-wallet" },
+        { title: "Cross-chain UX", path: "/workshop/cross-chain" },
       ]
     },
     {
-      id: 2,
       title: "Building the Backend",
-      description: "Develop the smart contracts for intent verification and solving",
-      sections: [
-        { id: 1, title: "Local Smart Contract", slug: "local-contract" },
-        { id: 2, title: "Intent Verifier", slug: "intent-verifier" },
-        { id: 3, title: "Solver Contract", slug: "solver-contract" },
-        { id: 4, title: "Testing Execution", slug: "testing" },
-        { id: 5, title: "Gas & Fees Model", slug: "gas-fees" }
+      items: [
+        { title: "Local Smart Contract", path: "/workshop/local-contract" },
+        { title: "Intent Verifier", path: "/workshop/intent-verifier" },
+        { title: "Solver Contract", path: "/workshop/solver-contract" },
+        { title: "Testing Execution", path: "/workshop/testing" },
+        { title: "Gas & Fees Model", path: "/workshop/gas-fees" },
       ]
     },
     {
-      id: 3,
       title: "Creating the Smart Wallet Experience",
-      description: "Build wallet abstraction and session management for a seamless UX",
-      sections: [
-        { id: 1, title: "Wallet Selector", slug: "wallet-selector" },
-        { id: 2, title: "Session-based Smart Wallet", slug: "session-wallet" },
-        { id: 3, title: "Managing Keys", slug: "keys" },
-        { id: 4, title: "Abstraction of Actions", slug: "action-abstraction" }
+      items: [
+        { title: "Wallet Selector", path: "/workshop/wallet-selector" },
+        { title: "Session-based Smart Wallet", path: "/workshop/session-wallet" },
+        { title: "Managing Keys", path: "/workshop/keys" },
+        { title: "Abstraction of Actions", path: "/workshop/action-abstraction" },
       ]
     },
     {
-      id: 4,
       title: "Building the Frontend",
-      description: "Create an intuitive user interface for working with intents",
-      sections: [
-        { id: 1, title: "Setting Up Frontend", slug: "frontend-setup" },
-        { id: 2, title: "Connect Wallet", slug: "connect-wallet" },
-        { id: 3, title: "Submitting Intents", slug: "submit-intents" },
-        { id: 4, title: "Solver Options", slug: "solver-options" },
-        { id: 5, title: "Executing Intent", slug: "execute-intent" }
+      items: [
+        { title: "Setting Up Frontend", path: "/workshop/frontend-setup" },
+        { title: "Connect Wallet", path: "/workshop/connect-wallet" },
+        { title: "Submitting Intents", path: "/workshop/submit-intents" },
+        { title: "Solver Options", path: "/workshop/solver-options" },
+        { title: "Executing Intent", path: "/workshop/execute-intent" },
       ]
     },
     {
-      id: 5,
       title: "Testnet Deployment & Debugging",
-      description: "Deploy your contracts to NEAR testnet and learn debugging techniques",
-      sections: [
-        { id: 1, title: "Deploy to Testnet", slug: "testnet-deploy" },
-        { id: 2, title: "Testing with NEAR CLI", slug: "near-cli" },
-        { id: 3, title: "Debugging Intents", slug: "debug-intents" },
-        { id: 4, title: "Simulating Solvers", slug: "simulate-solvers" }
+      items: [
+        { title: "Deploy to Testnet", path: "/workshop/testnet-deploy" },
+        { title: "Testing with NEAR CLI", path: "/workshop/near-cli" },
+        { title: "Debugging Intents", path: "/workshop/debug-intents" },
+        { title: "Simulating Solvers", path: "/workshop/simulate-solvers" },
       ]
     },
     {
-      id: 6,
       title: "Going Beyond the Demo",
-      description: "Advanced concepts and future possibilities with intent-based architecture",
-      sections: [
-        { id: 1, title: "Composability", slug: "composability" },
-        { id: 2, title: "Cross-chain Use Cases", slug: "cross-chain-use-cases" },
-        { id: 3, title: "Production Considerations", slug: "production" },
-        { id: 4, title: "Future of Chain Abstraction", slug: "future" }
+      items: [
+        { title: "Composability", path: "/workshop/composability" },
+        { title: "Cross-chain Use Cases", path: "/workshop/cross-chain-use-cases" },
+        { title: "Production Considerations", path: "/workshop/production" },
+        { title: "Future of Chain Abstraction", path: "/workshop/future" },
       ]
-    }
-  ]
+    },
+  ];
+
+  return (
+    <div className="py-4">
+      {sections.map((section, index) => (
+        <div key={index} className="mb-6">
+          <h3 className="font-bold text-lg mb-2">{section.title}</h3>
+          <ul className="space-y-1">
+            {section.items.map((item, itemIndex) => (
+              <li key={itemIndex}>
+                <Link to={item.path} className="text-blue-500 hover:underline">
+                  {item.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
 };
 
-export { workshopStructure };
-export default workshopStructure;
+export default WorkshopStructure;

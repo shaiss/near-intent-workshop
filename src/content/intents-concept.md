@@ -26,8 +26,8 @@ Intents are declarative:
 
 ## Examples of Intents
 
+### Simple Transfer Intent
 ```javascript
-// Simple Transfer Intent
 {
   "intent": {
     "action": "transfer",
@@ -40,8 +40,8 @@ Intents are declarative:
 }
 ```
 
+### Token Swap **Intent**
 ```javascript
-// Token Swap Intent
 {
   "intent": {
     "action": "swap",
@@ -59,8 +59,8 @@ Intents are declarative:
 }
 ```
 
+### Cross-chain Bridge Intent
 ```javascript
-// Cross-chain Bridge Intent
 {
   "intent": {
     "action": "bridge",

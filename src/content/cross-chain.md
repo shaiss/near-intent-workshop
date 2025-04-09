@@ -1,5 +1,5 @@
 
-# Cross-chain UX and Abstraction Strategy
+# Cross-Chain UX and Abstraction Strategy
 
 ## The Challenge of Cross-Chain Interactions
 

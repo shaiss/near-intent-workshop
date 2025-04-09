@@ -204,7 +204,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
               <p className="font-bold">NEAR Intents & Smart Wallet Abstraction Workshop</p>
-              <p className="text-sm">Built with Base44 - An interactive guide to the future of blockchain interactions</p>
+              <p className="text-sm">Built by Shai Perednik - An interactive guide to the future of blockchain interactions</p>
             </div>
             <div className="flex gap-4">
               <a 

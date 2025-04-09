@@ -1,5 +1,5 @@
 
-# Solver Contract Development
+# Writing the Solver Contract
 
 ## Understanding Solvers
 

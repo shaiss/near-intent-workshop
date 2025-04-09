@@ -1,5 +1,5 @@
 
-# Welcome to NEAR Intents Workshop
+# Welcome & Workshop Objectives
 
 ## Workshop Objectives
 

@@ -53,6 +53,18 @@ rustc --version
 cargo --version
 ```
 
+## Environment Setup
+
+1. Clone the workshop repository
+2. Install dependencies
+3. Configure the project for NEAR testnet
+
+```bash
+git clone https://github.com/near-examples/near-intents-example.git
+cd near-intents-example
+npm install
+```
+
 ## NEAR Testnet Account
 
 1. Visit [https://wallet.testnet.near.org](https://wallet.testnet.near.org)
@@ -76,18 +88,6 @@ Verify that everything is working correctly:
 ```bash
 # Check your account balance
 near state yourname.testnet
-```
-
-## Environment Setup
-
-1. Clone the workshop repository
-2. Install dependencies
-3. Configure the project for NEAR testnet
-
-```bash
-git clone https://github.com/near-examples/near-intents-example.git
-cd near-intents-example
-npm install
 ```
 
 ## Troubleshooting

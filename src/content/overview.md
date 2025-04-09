@@ -1,4 +1,4 @@
-# Overview of NEAR Intents
+# Overview of NEAR Intents & Smart Wallet Abstraction
 
 ## What are NEAR Intents?
 
@@ -29,7 +29,7 @@ NEAR Intents represent a paradigm shift in how we think about blockchain interac
 ## How NEAR Intents Work
 
 Traditional blockchain transactions require users to:
-- Know exact contract addresses
+- [Know exact contract addresses
 - Understand complex transaction sequences
 - Manage gas fees and limits
 - Handle cross-chain complexities
@@ -89,3 +89,5 @@ User → UI → Intent Object
    - Future-proof architecture
 
 In the next sections, we'll dive deeper into implementing this architecture.
+
+TBD: add `Actor overview: dApp, User, Verifier, Solver, Relayer`

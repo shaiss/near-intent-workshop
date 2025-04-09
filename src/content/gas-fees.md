@@ -1,4 +1,4 @@
-# Gas & Fees Model
+# Gas & Fees  (Bonus)
 
 ## Understanding the Economics of Intent Systems
 

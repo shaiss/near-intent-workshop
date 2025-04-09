@@ -39,7 +39,7 @@ export default function Home() {
               href="https://github.com/near/intents-workshop" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="bg-white neo-button text-lg px-8 py-6 font-bold flex items-center"
+              className="bg-white text-black neo-button text-lg px-8 py-6 font-bold flex items-center"
             >
               View on GitHub <FileCode className="ml-2" />
             </a>
@@ -127,7 +127,7 @@ export default function Home() {
             <h3 className="text-xl font-bold mb-2">Technical Implementation</h3>
             <p className="flex-grow mb-4">Dive into practical implementation with hands-on examples. Build verifiers, solvers, and smart wallets while learning best practices for production-ready code.</p>
             <Link to={createPageUrl("Section?slug=local-contract")}>
-              <Button className="w-full bg-white neo-button font-bold">
+              <Button className="w-full bg-white text-black neo-button font-bold">
                 Start Building
               </Button>
             </Link>
@@ -137,7 +137,7 @@ export default function Home() {
             <h3 className="text-xl font-bold mb-2">Advanced Integration</h3>
             <p className="flex-grow mb-4">Learn advanced patterns for cross-chain operations, composability with DeFi protocols, and integrating with the broader NEAR ecosystem including Aurora and BOS.</p>
             <Link to={createPageUrl("Section?slug=cross-chain")}>
-              <Button className="w-full bg-white neo-button font-bold">
+              <Button className="w-full bg-white text-black neo-button font-bold">
                 Explore Advanced
               </Button>
             </Link>
@@ -183,7 +183,7 @@ export default function Home() {
             </Button>
           </Link>
           <Link to={createPageUrl("Section?slug=overview")}>
-            <Button className="bg-white neo-button text-lg px-6 py-3 font-bold">
+            <Button className="bg-white text-black neo-button text-lg px-6 py-3 font-bold">
               Quick Overview
             </Button>
           </Link>

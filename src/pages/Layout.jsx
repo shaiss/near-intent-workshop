@@ -72,6 +72,11 @@ export default function Layout({ children, currentPageName }) {
             box-shadow: 4px 4px 0 0 #000;
             transition: all 0.1s ease;
             transform: translate(0, 0);
+            color: black;
+          }
+          
+          .neo-button.bg-black {
+            color: white;
           }
 
           .neo-button:hover {

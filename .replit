@@ -12,7 +12,7 @@ run = ["sh", "-c", "npx serve -s dist"]
 build = ["sh", "-c", "npm run build"]
 
 [[ports]]
-localPort = 5173
+localPort = 5174
 externalPort = 80
 exposeLocalhost = true
 

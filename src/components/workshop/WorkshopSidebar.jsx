@@ -109,13 +109,22 @@ export default function WorkshopSidebar() {
               {expandedParts[part.id] && (
                 <div className="pl-4 pr-2 pb-2">
                   {part.sections.map((section) => (
-                    <Link
-                      key={section.id}
-                      to={createPageUrl(`Section?slug=${section.slug}`)}
-                      className="block py-1.5 pl-4 pr-2 text-sm hover:bg-gray-100 rounded"
-                    >
-                      {part.id}.{section.id} {section.title}
-                    </Link>
+                    section.slug ? (
+                      <Link
+                        key={section.id}
+                        to={createPageUrl(`Section?slug=${section.slug}`)}
+                        className="block py-1.5 pl-4 pr-2 text-sm hover:bg-gray-100 rounded"
+                      >
+                        {part.id}.{section.id} {section.title}
+                      </Link>
+                    ) : (
+                      <div
+                        key={section.id}
+                        className="block py-1.5 pl-4 pr-2 text-sm text-gray-500 italic"
+                      >
+                        {part.id}.{section.id} {section.title} (Coming Soon)
+                      </div>
+                    )
                   ))}
                 </div>
               )}

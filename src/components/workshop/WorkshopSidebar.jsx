@@ -148,7 +148,9 @@ export default function WorkshopSidebar() {
         </Button>
         
         {/* Export Workshop Button */}
-        <ExportWorkshop />
+        <div className="mt-2">
+          <ExportWorkshop />
+        </div>
       </div>
     </div>
   );

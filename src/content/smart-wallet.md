@@ -1,84 +1,103 @@
 
 # Smart Wallet Abstraction
 
-## What is a Smart Wallet?
+## What Is a Smart Wallet?
 
-A smart wallet is a contract-based wallet that can:
-- Execute complex transactions
-- Apply custom logic to transaction validation
-- Support advanced features like social recovery
-- Enable session-based key management
+A **Smart Wallet** on NEAR abstracts account management, signing, and transaction batching behind a user-friendly interface. It serves as an intermediary layer between users and blockchain interactions, simplifying complex operations.
 
-## Smart Wallet vs. EOA Wallet
+## Key Features of Smart Wallet Abstraction
 
-Traditional EOA (Externally Owned Account) wallets:
-- Simple key-based control
-- Limited functionality
-- All transactions must be signed directly
+### Key Management and Session Authentication
+- Create temporary session keys with limited permissions
+- Delegate specific transaction types to session keys
+- Maintain main keys safely offline or in secure storage
 
-Smart wallets provide:
-- Multiple authorization methods
-- Custom validation logic
-- Session-based permissions
-- Advanced recovery options
+### Multi-chain Interactions
+- Manage identities across multiple blockchains
+- Execute transactions on various networks from a single interface
+- Unify assets and operations regardless of underlying chain
 
-## Smart Wallet Implementation
+### Meta-transactions (Gasless UX)
+- Allow transactions without users needing to hold gas tokens
+- Relay transactions through third-party services that cover gas fees
+- Simplify onboarding by removing initial token purchase requirement
 
-Smart wallets on NEAR are implemented as:
-- Contract-based accounts
-- Multi-signature validation
-- Key rotation capabilities
-- Permission hierarchies
+### Plugin-based Authorization
+- Enable advanced security through authorization plugins
+- Support multi-signature requirements
+- Implement social recovery options
+- Integrate with DAOs or other governance structures
 
-## Session Keys
+## How Smart Wallet Abstraction Works
 
-Session keys are temporary authorization mechanisms that:
-1. Allow applications to execute specific actions
-2. Have limited scope and duration
-3. Can be revoked at any time
-4. Don't require full wallet access
+1. **Key Delegation**: The wallet delegates signing authority to session keys or relayers
+2. **Transaction Bundling**: Multiple operations are bundled into single transactions
+3. **Intent Resolution**: Complex intents are resolved into optimal execution paths
+4. **Transparent Execution**: Transactions are executed invisibly to the user
 
-```javascript
-// Example session key creation
-{
-  "publicKey": "ed25519:abc123...",
-  "allowedActions": ["swap", "bridge"],
-  "maxAmount": "100",
-  "expiresAt": 1672531200000
-}
+## Technical Components
+
+### Account Structure
+
+A smart wallet typically consists of:
+
+```
+Main Account (User Identity)
+   │
+   ├── Session Key Manager
+   │      ├── Session Key #1 (Limited scope/time)
+   │      └── Session Key #2 (Limited scope/time)
+   │
+   ├── Transaction Router
+   │      ├── Chain A Handler
+   │      └── Chain B Handler
+   │
+   └── Authorization Plugins
+          ├── Multi-sig Plugin
+          └── Recovery Plugin
 ```
 
-## Account Abstraction Benefits
+### Core Libraries
 
-- Improved UX with fewer confirmations
-- More secure with limited permissions
-- Better composability with other contracts
-- Enhanced recovery options
+The primary library for NEAR smart wallet development is `@near-wallet-selector`, which provides:
 
-## Smart Wallet Integration with Intents
+- Wallet connection management
+- Session key generation and management
+- Transaction signing and submission
+- Integration with popular wallet providers
 
-Smart wallets enhance the intent architecture by:
-1. Storing user preferences for solver selection
-2. Managing constraints based on user history
-3. Executing complex intent sequences
-4. Providing security guardrails
+## Benefits for User Experience
 
-## Implementation Example
+### Seamless Interactions
+- Users don't need to sign every transaction
+- Complex sequences appear as single operations
+- Background processing reduces waiting times
 
-```javascript
-// Creating a smart wallet instance
-const smartWallet = await SmartWalletFactory.create({
-  owner: userAccount,
-  guardians: [guardian1, guardian2],
-  recoveryPeriod: 7 * 24 * 60 * 60 * 1000 // 1 week
-});
+### Enhanced Security
+- Fine-grained permissions for different applications
+- Limited exposure of main keys
+- Time-bound session authorizations
 
-// Setting up a session key
-await smartWallet.addSessionKey({
-  publicKey: sessionKey.publicKey,
-  allowance: "10 NEAR",
-  receiverId: "app.near",
-  methodNames: ["executeSwap", "executeBridge"],
-  expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-});
-```
+### Simplified Cross-chain Operations
+- Abstract away chain-specific details
+- Unified interface for all operations
+- Automatic routing to optimal execution paths
+
+## Implementation Considerations
+
+### State Management
+- Track session validity and permissions
+- Monitor transaction status across chains
+- Maintain history for audit purposes
+
+### Security Trade-offs
+- Convenience vs. security
+- Session key scope limitations
+- Recovery mechanisms
+
+### User Education
+- Clear permissions display
+- Transaction preview
+- Security recommendations
+
+In the next section, we'll explore how cross-chain user experiences can be built using smart wallet abstraction and intent-based architecture.

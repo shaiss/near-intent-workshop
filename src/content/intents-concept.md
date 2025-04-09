@@ -1,43 +1,78 @@
-
 # Understanding NEAR Intents
 
 ## What Are Intents?
 
-An Intent is a declarative expression of what the user wants to achieve, without specifying how to achieve it. This paradigm shift from imperative to declarative transactions represents a fundamental evolution in blockchain interaction.
+## Definition and Key Characteristics
 
-### Core Concepts
+An **Intent** is a declarative expression of *what* the user wants to happen (e.g., "Swap 10 USDC for NEAR") without specifying *how* it happens (e.g., which DEX, route, or chain).
 
-1. **Declarative Over Imperative**
-   - Users express desired outcomes
-   - System determines optimal execution path
-   - Reduces complexity for end users
+### Key Characteristics
 
-2. **Chain Agnostic**
-   - Not tied to specific chains
-   - Can be resolved across networks
-   - Unified user experience
+- **Chain-agnostic**: Can be resolved on multiple chains
+- **Outcome-driven**: Describes desired result, not steps
+- **Composable**: Can be embedded inside apps, widgets, or bots
 
-3. **Solver Competition**
-   - Multiple solvers can fulfill intents
-   - Market-driven efficiency
-   - Best execution path wins
+## Declarative Over Imperative
+
+Traditional blockchain transactions are imperative:
+- Users specify exact contract calls
+- Parameters are fixed at submission time
+- Execution flow is predetermined
+
+Intents are declarative:
+- Users express desired outcomes
+- System determines optimal execution path
+- Reduces complexity for end users
+
+## Examples of Intents
 
 ```javascript
-// Example Intent Structure
+// Simple Transfer Intent
 {
-  "action": "swap",
-  "input": {
-    "token": "USDC",
-    "amount": "100"
-  },
-  "output": {
-    "token": "NEAR",
-    "minAmount": "10"
+  "intent": {
+    "action": "transfer",
+    "input": {
+      "token": "NEAR",
+      "amount": "1"
+    },
+    "recipient": "alice.near"
+  }
+}
+```
+
+```javascript
+// Token Swap Intent
+{
+  "intent": {
+    "action": "swap",
+    "input": {
+      "token": "USDC",
+      "amount": "100"
+    },
+    "output": {
+      "token": "wNEAR"
+    }
   },
   "constraints": {
-    "maxSlippage": "0.5%",
-    "deadline": "1h",
-    "preferredDex": ["ref_finance", "jumbo"]
+    "maxSlippage": "0.5"
+  }
+}
+```
+
+```javascript
+// Cross-chain Bridge Intent
+{
+  "intent": {
+    "action": "bridge",
+    "input": {
+      "token": "MATIC",
+      "amount": "5",
+      "sourceChain": "Polygon"
+    },
+    "output": {
+      "token": "wMATIC",
+      "destinationChain": "Ethereum"
+    }
   }
 }
 ```
@@ -64,62 +99,15 @@ An Intent is a declarative expression of what the user wants to achieve, without
 - Constraint checking
 - Failed transaction protection
 
-## Real World Examples
-
-### Token Swaps
-```javascript
-// Swap Intent
-{
-  "action": "swap",
-  "input": {"token": "USDC", "amount": "100"},
-  "output": {"token": "NEAR"}
-}
-```
-
-### Cross-chain Transfers
-```javascript
-// Bridge Intent
-{
-  "action": "bridge",
-  "source": {
-    "chain": "Ethereum",
-    "token": "USDC",
-    "amount": "100"
-  },
-  "destination": {
-    "chain": "NEAR"
-  }
-}
-```
-
-### Complex Operations
-```javascript
-// Multi-step Intent
-{
-  "action": "compound",
-  "operations": [
-    {
-      "type": "swap",
-      "input": {"token": "USDC", "amount": "100"},
-      "output": {"token": "NEAR"}
-    },
-    {
-      "type": "stake",
-      "pool": "liquid_staking"
-    }
-  ]
-}
-```
-
 ## Intent Lifecycle
 
 1. **Creation**
-   - User generates intent
+   - User generates intent through UI
    - Frontend formats intent object
    - Basic validation
 
 2. **Verification**
-   - Intent submitted to verifier
+   - Intent submitted to verifier contract
    - Constraints checked
    - Parameters validated
 

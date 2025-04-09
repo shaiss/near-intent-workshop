@@ -114,11 +114,14 @@ export default function WorkshopSidebar() {
       </div>
 
       <div className="p-4 border-t mt-auto">
-        <Button
+        <Button 
+          variant="ghost"
+          size="sm" 
           onClick={refreshContent}
           disabled={refreshing}
-          className="bg-black text-white neo-button text-lg px-8 py-6 font-bold"
+          className="w-full bg-white text-black neo-button font-bold flex items-center justify-center"
         >
+          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           Reload Content
         </Button>
       </div>

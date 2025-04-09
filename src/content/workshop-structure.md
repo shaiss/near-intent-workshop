@@ -29,13 +29,10 @@ A hands-on workshop for building next-generation dApps with NEAR's intent-centri
 
 ## Creating the Smart Wallet Experience
 
-- [Creating a Session-based Smart Wallet](local-contract.md)
-- [Creating a Session-based Smart Wallet]()
-- [Managing Keys & User Authentication]()
-- [Abstraction of Actions (e.g., Send Token, Swap, Cross-chain Bridge)]()
-- [xIntent Verifier Implementation](intent-verifier.md)
-- [xSolver Contract Development](solver-contract.md)
-- [xTesting Your Contracts](testing.md)
+- [Creating a Session-based Smart Wallet](session-wallet.md)
+- [Managing Keys & User Authentication](keys.md)
+- [Abstraction of Actions](action-abstraction.md)
+- [Testing Smart Wallet Integration](testing.md)
 
 ## Building the Frontend
 

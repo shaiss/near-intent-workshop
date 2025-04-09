@@ -14,7 +14,12 @@ export default defineConfig({
     watch: {
       // Force server to rebuild when content changes
       usePolling: true,
-      interval: 1000
+      interval: 500,
+    },
+    hmr: {
+      // Improve hot module replacement
+      overlay: true,
+      timeout: 5000
     }
   },
   resolve: {
@@ -24,6 +29,8 @@ export default defineConfig({
     extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json']
   },
   optimizeDeps: {
+    // Disable dependency optimization caching for development
+    force: true,
     esbuildOptions: {
       loader: {
         '.js': 'jsx',

@@ -24,6 +24,6 @@ task = "shell.exec"
 args = "npm run dev"
 
 [[ports]]
-localPort = 5173
+localPort = 5174
 externalPort = 80
 exposeLocalhost = true

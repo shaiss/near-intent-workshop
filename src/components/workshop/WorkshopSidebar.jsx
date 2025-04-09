@@ -18,12 +18,16 @@ export default function WorkshopSidebar() {
   const loadWorkshopStructure = async () => {
     setLoading(true);
     try {
+      console.log("WorkshopSidebar: Loading workshop structure");
       const workshopStructure = await ContentService.getWorkshopStructure();
+      console.log("WorkshopSidebar: Loaded structure:", JSON.stringify(workshopStructure, null, 2));
+      
       setStructure(workshopStructure);
 
       // Initialize expanded state
       const expanded = {};
       workshopStructure.parts.forEach((part) => {
+        console.log(`Expanding part ${part.id}: ${part.title} with ${part.sections.length} sections`);
         expanded[part.id] = true; // Start with all expanded
       });
       setExpandedParts(expanded);

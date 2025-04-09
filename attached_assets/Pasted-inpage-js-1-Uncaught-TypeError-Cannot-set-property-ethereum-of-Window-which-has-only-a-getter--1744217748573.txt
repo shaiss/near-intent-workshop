@@ -1,0 +1,56 @@
+inpage.js:1 Uncaught TypeError: Cannot set property ethereum of #<Window> which has only a getter
+    at d (inpage.js:1:43802)
+    at r.initializeProvider (inpage.js:1:43453)
+    at Object.<anonymous> (inpage.js:1:1111)
+    at Object.<anonymous> (inpage.js:1:4932)
+    at 1.../../shared/modules/provider-injection (inpage.js:1:4945)
+    at i (inpage.js:1:254)
+    at e (inpage.js:1:414)
+    at inpage.js:1:431
+lockdown-install.js:1 Removing unpermitted intrinsics
+client:743 [vite] connecting...
+client:866 [vite] connected.
+ContentService.js:140 Parsing workshop structure from markdown
+ContentService.js:142 Found 59 lines in the markdown file
+ContentService.js:158 Found workshop title: NEAR Intents & Smart Wallet Abstraction Workshop
+ContentService.js:163 Found workshop description: A hands-on workshop for building next-generation dApps with NEAR's intent-centric architecture
+ContentService.js:168 Found part: Introduction & Setup
+ContentService.js:188 Found section: Welcome & Workshop Objectives (welcome) in part Introduction & Setup
+ContentService.js:188 Found section: Overview of NEAR Intents & Smart Wallet Abstraction (overview) in part Introduction & Setup
+ContentService.js:188 Found section: Prerequisites & Environment Setup (setup) in part Introduction & Setup
+ContentService.js:188 Found section: Repo Cloning & Folder Structure Overview (repo) in part Introduction & Setup
+ContentService.js:168 Found part: Understanding the Building Blocks
+ContentService.js:188 Found section: What Are Intents? (Theory & Concept) (intents-concept) in part Understanding the Building Blocks
+ContentService.js:188 Found section: Anatomy of a NEAR Intent (intent-anatomy) in part Understanding the Building Blocks
+ContentService.js:188 Found section: What Is Smart Wallet Abstraction (smart-wallet) in part Understanding the Building Blocks
+ContentService.js:188 Found section: Cross-chain UX and Account Abstraction Strategy (cross-chain) in part Understanding the Building Blocks
+ContentService.js:188 Found section: Checkpoint (understanding_building_blocks) in part Understanding the Building Blocks
+ContentService.js:168 Found part: Building the Backend
+ContentService.js:188 Found section: Setting Up a Local Smart Contract (local-contract) in part Building the Backend
+ContentService.js:188 Found section: Writing an Intent Verifier (intent-verifier) in part Building the Backend
+ContentService.js:188 Found section: Writing the Solver Contract (solver-contract) in part Building the Backend
+ContentService.js:188 Found section: Deploying to Testnet (deploy-to-testnet) in part Building the Backend
+ContentService.js:188 Found section: Testing Verifier → Solver Execution Locally (testing) in part Building the Backend
+ContentService.js:188 Found section: Gas, Fees & Incentives Model (gas-fees) in part Building the Backend
+ContentService.js:168 Found part: Creating the Smart Wallet Experience
+ContentService.js:188 Found section: Creating a Session-based Smart Wallet (session-wallet) in part Creating the Smart Wallet Experience
+ContentService.js:188 Found section: Managing Keys & User Authentication (keys) in part Creating the Smart Wallet Experience
+ContentService.js:188 Found section: Abstraction of Actions (action-abstraction) in part Creating the Smart Wallet Experience
+ContentService.js:188 Found section: Testing Smart Wallet Integration (testing) in part Creating the Smart Wallet Experience
+ContentService.js:168 Found part: Building the Frontend
+ContentService.js:188 Found section: Setting Up a Vite/Next.js Frontend (frontend-setup) in part Building the Frontend
+ContentService.js:188 Found section: Connect Wallet & Display Intent Formsn (connect-wallet) in part Building the Frontend
+ContentService.js:188 Found section: Submitting Intents from the UI (submit-intents) in part Building the Frontend
+ContentService.js:188 Found section: Displaying Solver Options & Results () in part Building the Frontend
+ContentService.js:188 Found section: Executing an Intent Transaction from UI (execute-intent) in part Building the Frontend
+ContentService.js:168 Found part: Testnet Deployment & Debugging
+ContentService.js:188 Found section: Deploy Contracts to NEAR Testnet (testnet-deploy) in part Testnet Deployment & Debugging
+ContentService.js:188 Found section: Testing with NEAR CLI () in part Testnet Deployment & Debugging
+ContentService.js:188 Found section: Debugging Intent Failures (debug-intents) in part Testnet Deployment & Debugging
+ContentService.js:188 Found section: Simulating Solvers in Real Time (simulate-solvers) in part Testnet Deployment & Debugging
+ContentService.js:168 Found part: Going Beyond the Demo
+ContentService.js:188 Found section: Composability: Intents + DeFi + DAOs (composability) in part Going Beyond the Demo
+ContentService.js:188 Found section: Advanced Use Cases (advanced-use-cases) in part Going Beyond the Demo
+ContentService.js:188 Found section: Cross-chain Use Cases: How to Extend (cross-chain-use-cases) in part Going Beyond the Demo
+ContentService.js:188 Found section: Production Considerations (Security, Gas, User Safety) (production) in part Going Beyond the Demo
+ContentService.js:188 Found section: Future of Chain Abstraction on NEAR () in part Going Beyond the Demo

@@ -124,13 +124,23 @@ class ContentService {
     this.lastFetchTime.clear();
     this.structureCache = null;
     
-    // Fetch fresh structure
-    return await this.fetchWorkshopStructure();
+    try {
+      // Fetch fresh structure with no caching
+      const freshStructure = await this.fetchWorkshopStructure();
+      console.log("Fresh structure loaded:", JSON.stringify(freshStructure, null, 2));
+      return freshStructure;
+    } catch (error) {
+      console.error("Error refreshing content:", error);
+      throw error;
+    }
   }
 
   // Parse the workshop structure markdown into a structured object
   parseWorkshopStructure(markdown) {
+    console.log("Parsing workshop structure from markdown");
     const lines = markdown.split('\n');
+    console.log(`Found ${lines.length} lines in the markdown file`);
+    
     const structure = {
       title: '',
       description: '',
@@ -145,13 +155,18 @@ class ContentService {
       // Parse workshop title (H1)
       if (line.startsWith('# ')) {
         structure.title = line.substring(2).trim();
+        console.log(`Found workshop title: ${structure.title}`);
       } 
       // Parse description (text after title and before first H2)
       else if (structure.title && !structure.description && !line.startsWith('## ') && line) {
         structure.description = line;
+        console.log(`Found workshop description: ${structure.description}`);
       }
       // Parse part title (H2)
       else if (line.startsWith('## ')) {
+        const partTitle = line.substring(3).trim();
+        console.log(`Found part: ${partTitle}`);
+        
         if (currentPart !== null && currentPart.title && currentPart.sections.length === 0) {
           // Skip parts with no sections
           console.warn(`Part "${currentPart.title}" has no sections`);
@@ -159,7 +174,7 @@ class ContentService {
         
         currentPart = {
           id: structure.parts.length + 1,
-          title: line.substring(3).trim(),
+          title: partTitle,
           sections: []
         };
         structure.parts.push(currentPart);
@@ -170,11 +185,19 @@ class ContentService {
         if (titleMatch) {
           const title = titleMatch[1];
           const slug = titleMatch[2].replace('.md', '');
-          currentPart.sections.push({
-            id: currentPart.sections.length + 1,
-            title,
-            slug
-          });
+          console.log(`Found section: ${title} (${slug}) in part ${currentPart.title}`);
+          
+          // Check for duplicate slugs
+          const isDuplicate = currentPart.sections.some(s => s.slug === slug);
+          if (isDuplicate) {
+            console.warn(`Duplicate section slug found: ${slug} in part ${currentPart.title}`);
+          } else {
+            currentPart.sections.push({
+              id: currentPart.sections.length + 1,
+              title,
+              slug
+            });
+          }
         }
       }
     }

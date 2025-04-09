@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // Import the function to parse the markdown file
 import ContentService from '@/services/ContentService';
+import {Toaster} from "@/components/ui/toaster";
 
 
 export default function Layout({ children, currentPageName }) {
@@ -254,6 +255,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </footer>
       </div>
+      <Toaster/>
     </div>
   );
 }

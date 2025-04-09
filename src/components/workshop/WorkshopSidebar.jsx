@@ -4,6 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronDown, RefreshCw } from "lucide-react";
 import ContentService from "../../services/ContentService";
+import ExportWorkshop from "./ExportWorkshop";
 
 export default function WorkshopSidebar() {
   const [structure, setStructure] = useState(null);
@@ -123,7 +124,7 @@ export default function WorkshopSidebar() {
         </div>
       </div>
 
-      <div className="p-4 border-t mt-auto">
+      <div className="p-4 border-t mt-auto space-y-2">
         <Button
           variant="ghost"
           size="sm"
@@ -136,6 +137,9 @@ export default function WorkshopSidebar() {
           />
           {refreshing ? "Reloading..." : "Reload Content"}
         </Button>
+        
+        {/* Export Workshop Button */}
+        <ExportWorkshop />
       </div>
     </div>
   );

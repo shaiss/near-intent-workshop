@@ -10,6 +10,14 @@ deploymentTarget = "static"
 publicDir = "dist"
 buildCommand = "npm run build"
 
+[[ports]]
+localPort = 5173
+externalPort = 80
+
+[[ports]]
+localPort = 5174
+externalPort = 3000
+
 [[workflows.workflow]]
 name = "Run Dev Mode" 
 mode = "sequential"
@@ -17,10 +25,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-
-[[ports]]
-localPort = 5173
-externalPort = 80
 
 [workflows]
 runButton = "Run Dev Mode"

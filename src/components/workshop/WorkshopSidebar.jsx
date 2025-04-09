@@ -131,14 +131,14 @@ export default function WorkshopSidebar({ onNavigate }) {
                               onClick={onNavigate}
                             >
                               <span className="flex items-center">
-                                <span className="w-6 inline-block">{part.id}.{section.id}</span>
+                                <span className="w-10 inline-block">{part.id}.{section.id}</span>
                                 <span>{section.title}</span>
                               </span>
                             </Link>
                           ) : (
                             <div className="block py-2 px-4 pl-8 text-sm text-gray-500 italic">
                               <span className="flex items-center">
-                                <span className="w-6 inline-block">{part.id}.{section.id}</span>
+                                <span className="w-10 inline-block">{part.id}.{section.id}</span>
                                 <span>{section.title} (Coming Soon)</span>
                               </span>
                             </div>

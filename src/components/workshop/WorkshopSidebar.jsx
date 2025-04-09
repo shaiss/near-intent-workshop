@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from "@/utils";
@@ -21,7 +20,7 @@ export default function WorkshopSidebar() {
     try {
       const workshopStructure = await ContentService.getWorkshopStructure();
       setStructure(workshopStructure);
-      
+
       // Initialize expanded state
       const expanded = {};
       workshopStructure.parts.forEach(part => {
@@ -66,7 +65,7 @@ export default function WorkshopSidebar() {
           NEAR INTENTS
         </h2>
       </div>
-      
+
       <div className="flex-grow overflow-auto">
         <div className="space-y-1">
           {structure.parts.map((part) => (
@@ -78,7 +77,7 @@ export default function WorkshopSidebar() {
                 <span>Part {part.id}: {part.title}</span>
                 {expandedParts[part.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </button>
-              
+
               {expandedParts[part.id] && (
                 <div className="pl-4 pr-2 pb-2">
                   {part.sections.map((section) => (
@@ -96,7 +95,7 @@ export default function WorkshopSidebar() {
           ))}
         </div>
       </div>
-      
+
       <div className="p-4 border-t mt-auto">
         <Button 
           variant="ghost" 

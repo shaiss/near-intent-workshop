@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from "@/utils";
@@ -43,7 +42,7 @@ export default function WorkshopOutline() {
       <div className="max-w-4xl mx-auto p-6 space-y-8">
         <Skeleton className="h-12 w-3/4" />
         <Skeleton className="h-6 w-1/2" />
-        
+
         {[1, 2, 3].map((i) => (
           <div key={i} className="border rounded-lg p-6 space-y-4">
             <Skeleton className="h-8 w-1/3" />
@@ -64,9 +63,9 @@ export default function WorkshopOutline() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{structure.title}</h1>
       </div>
-      
+
       <p className="text-lg mb-8">{structure.description}</p>
-      
+
       <div className="space-y-8">
         {structure.parts.map((part) => (
           <div key={part.id} className="border rounded-lg p-6">

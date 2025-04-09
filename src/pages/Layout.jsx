@@ -9,6 +9,7 @@ import {
   ChevronUp,
   Home,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -220,8 +221,23 @@ export default function Layout({ children, currentPageName }) {
             className="mt-4 w-full"
             onClick={() => window.location.reload()}
           >
-            <RefreshCw className="h-4 w-4 mr-2" /> Reload Crontent
+            <RefreshCw className="h-4 w-4 mr-2" /> Reload Content
           </Button>
+          
+          {/* Export Workshop Button */}
+          <div className="mt-4 border-t pt-4">
+            <Link to="#" onClick={(e) => {
+              e.preventDefault();
+              const ExportWorkshop = require("@/components/workshop/ExportWorkshop").default;
+              const exportInstance = new ExportWorkshop({});
+              exportInstance.props.onClick();
+            }}>
+              <Button className="mt-2 w-full bg-white text-black neo-button font-bold flex items-center justify-center">
+                <Download className="w-4 h-4 mr-2" />
+                Export Workshop
+              </Button>
+            </Link>
+          </div>
         </nav>
       </aside>
 

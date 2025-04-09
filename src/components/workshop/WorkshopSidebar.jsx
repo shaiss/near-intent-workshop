@@ -98,11 +98,11 @@ export default function WorkshopSidebar() {
 
       <div className="p-4 border-t mt-auto">
         <Button 
-          variant="outline"
+          variant="ghost"
           size="sm" 
           onClick={refreshContent}
           disabled={refreshing}
-          className="w-full flex items-center justify-center neo-button bg-white text-black"
+          className="w-full bg-white text-black neo-button font-bold flex items-center justify-center"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           Reload Content

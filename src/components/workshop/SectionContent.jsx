@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-export default function SectionContent({ content, loading }) {
+export default function SectionContent({ content, loading, sectionTitle }) {
   if (loading) {
     return (
       <div className="space-y-4">
@@ -37,6 +37,9 @@ export default function SectionContent({ content, loading }) {
     );
   };
 
+  // Track if we've seen the first h1 that matches the section title
+  let foundFirstH1 = false;
+
   return (
     <div className="prose prose-lg max-w-none">
       <ReactMarkdown
@@ -50,9 +53,21 @@ export default function SectionContent({ content, loading }) {
               rel="noopener noreferrer"
             />
           ),
-          h1: ({node, ...props}) => (
-            <h1 {...props} className="text-4xl font-black mb-6" />
-          ),
+          h1: ({node, children, ...props}) => {
+            // Convert both to lowercase and trim for case-insensitive matching
+            const headingText = children.toString().toLowerCase().trim();
+            const title = sectionTitle ? sectionTitle.toLowerCase().trim() : '';
+            
+            // Check if this is the first h1 that matches the section title
+            if (!foundFirstH1 && headingText === title) {
+              foundFirstH1 = true;
+              // Skip rendering this h1
+              return null;
+            }
+            
+            // Render other h1 elements normally
+            return <h1 {...props} className="text-4xl font-black mb-6">{children}</h1>;
+          },
           h2: ({node, ...props}) => (
             <h2 {...props} className="text-2xl font-bold mt-8 mb-4" />
           ),

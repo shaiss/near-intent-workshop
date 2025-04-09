@@ -119,7 +119,11 @@ export default function Section() {
         </div>
       )}
 
-      <SectionContent content={content} loading={loading} />
+      <SectionContent 
+        content={content} 
+        loading={loading} 
+        sectionTitle={currentSection?.title} 
+      />
 
       <div className="flex justify-between mt-8">
         <Button 

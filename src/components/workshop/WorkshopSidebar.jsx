@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronDown, RefreshCw } from "lucide-react";
-import ContentService from '../../services/ContentService';
+import ContentService from "../../services/ContentService";
 
 export default function WorkshopSidebar() {
   const [structure, setStructure] = useState(null);
@@ -23,12 +23,12 @@ export default function WorkshopSidebar() {
 
       // Initialize expanded state
       const expanded = {};
-      workshopStructure.parts.forEach(part => {
+      workshopStructure.parts.forEach((part) => {
         expanded[part.id] = true; // Start with all expanded
       });
       setExpandedParts(expanded);
     } catch (error) {
-      console.error('Error loading workshop structure:', error);
+      console.error("Error loading workshop structure:", error);
     }
     setLoading(false);
   };
@@ -39,15 +39,15 @@ export default function WorkshopSidebar() {
       await ContentService.refreshAllContent();
       await loadWorkshopStructure();
     } catch (error) {
-      console.error('Error refreshing content:', error);
+      console.error("Error refreshing content:", error);
     }
     setRefreshing(false);
   };
 
   const togglePart = (partId) => {
-    setExpandedParts(prev => ({
+    setExpandedParts((prev) => ({
       ...prev,
-      [partId]: !prev[partId]
+      [partId]: !prev[partId],
     }));
   };
 
@@ -59,8 +59,19 @@ export default function WorkshopSidebar() {
     <div className="h-full flex flex-col">
       <div className="p-4">
         <h2 className="text-xl font-bold flex items-center">
-          <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          <svg
+            className="w-5 h-5 mr-2"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+            />
           </svg>
           NEAR INTENTS
         </h2>
@@ -74,8 +85,14 @@ export default function WorkshopSidebar() {
                 onClick={() => togglePart(part.id)}
                 className="w-full px-4 py-2 text-left font-medium flex justify-between items-center hover:bg-gray-100"
               >
-                <span>Part {part.id}: {part.title}</span>
-                {expandedParts[part.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <span>
+                  Part {part.id}: {part.title}
+                </span>
+                {expandedParts[part.id] ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
               </button>
 
               {expandedParts[part.id] && (
@@ -97,14 +114,11 @@ export default function WorkshopSidebar() {
       </div>
 
       <div className="p-4 border-t mt-auto">
-        <Button 
-          variant="ghost"
-          size="sm" 
+        <Button
           onClick={refreshContent}
           disabled={refreshing}
-          className="w-full bg-white text-black neo-button font-bold flex items-center justify-center"
+          className="bg-black text-white neo-button text-lg px-8 py-6 font-bold"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           Reload Content
         </Button>
       </div>

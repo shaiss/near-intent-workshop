@@ -1,172 +1,161 @@
 
-# Intent Verifier
+# Intent Verifier Implementation
 
-## What is an Intent Verifier?
+## Understanding the Verifier's Role
 
-An Intent Verifier is a smart contract that:
-- Validates the structure and content of an intent
-- Ensures the intent can be executed legally
-- Confirms the user has the necessary permissions
-- Stores the verified intent for solvers to pick up
+The Intent Verifier is a critical component in the intent architecture. Its primary responsibilities are:
 
-## Basic Verifier Structure
+1. **Validate intent format**: Ensure the intent follows the required structure
+2. **Verify constraints**: Check that the intent's constraints (slippage, deadlines, etc.) are reasonable
+3. **Authenticate user**: Confirm the intent is coming from an authorized user
+4. **Check feasibility**: Determine if the intent can be fulfilled in principle
+
+## Expanding the Verifier Contract
+
+Let's enhance our basic verifier implementation:
 
 ```rust
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::UnorderedMap;
-use near_sdk::{env, near_bindgen, AccountId, Balance, Promise};
+use near_sdk::{env, near_bindgen, AccountId, Promise, serde::{Deserialize, Serialize}};
 
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct IntentVerifier {
+#[derive(Default)]
+pub struct Verifier {
     pub owner_id: AccountId,
-    pub intents: UnorderedMap<String, Intent>,
+    pub verified_intents: Vec<String>, // Store intent IDs for demo purposes
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
 pub struct Intent {
-    pub creator: AccountId,
+    pub id: String,
+    pub user_account: String,
     pub action: String,
-    pub input: String,
-    pub output: String,
-    pub constraints: String,
-    pub status: IntentStatus,
-    pub created_at: u64,
-}
-
-#[derive(BorshDeserialize, BorshSerialize, PartialEq)]
-pub enum IntentStatus {
-    Pending,
-    Executed,
-    Cancelled,
-    Expired,
+    pub input_token: String,
+    pub input_amount: u128,
+    pub output_token: String,
+    pub min_output_amount: Option<u128>,
+    pub max_slippage: f64,
+    pub deadline: Option<u64>,
 }
 
 #[near_bindgen]
-impl IntentVerifier {
+impl Verifier {
     #[init]
     pub fn new(owner_id: AccountId) -> Self {
         Self {
             owner_id,
-            intents: UnorderedMap::new(b"i"),
+            verified_intents: Vec::new(),
         }
     }
+    
+    pub fn verify_intent(&mut self, intent: Intent) -> bool {
+        // Basic validation
+        assert!(intent.input_amount > 0, "Input amount must be greater than 0");
+        assert!(intent.max_slippage >= 0.0 && intent.max_slippage <= 100.0, "Invalid slippage percentage");
+        
+        // Check deadline if provided
+        if let Some(deadline) = intent.deadline {
+            let current_timestamp = env::block_timestamp();
+            assert!(deadline > current_timestamp, "Intent has expired");
+        }
+        
+        // Log verification details
+        env::log_str(&format!("Intent verified: {}", intent.id));
+        
+        // Store intent ID as verified
+        self.verified_intents.push(intent.id);
+        
+        true
+    }
+    
+    pub fn is_intent_verified(&self, intent_id: String) -> bool {
+        self.verified_intents.contains(&intent_id)
+    }
+}
+```
 
-    pub fn submit_intent(&mut self, action: String, input: String, output: String, constraints: String) -> String {
-        // Validation logic here
-        let intent_id = env::sha256(format!("{}{}{}{}{}", 
-            env::signer_account_id(), 
-            action, 
-            input,
-            output,
-            env::block_timestamp()
-        ).as_bytes());
+## Testing the Verifier
+
+We can add tests to ensure our verifier is working correctly:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use near_sdk::test_utils::{accounts, VMContextBuilder};
+    use near_sdk::testing_env;
+
+    fn get_context(predecessor_account_id: AccountId) -> VMContextBuilder {
+        let mut builder = VMContextBuilder::new();
+        builder
+            .current_account_id(accounts(0))
+            .signer_account_id(predecessor_account_id.clone())
+            .predecessor_account_id(predecessor_account_id);
+        builder
+    }
+
+    #[test]
+    fn test_verify_valid_intent() {
+        let context = get_context(accounts(1));
+        testing_env!(context.build());
+        
+        let mut contract = Verifier::new(accounts(0));
         
         let intent = Intent {
-            creator: env::signer_account_id(),
-            action,
-            input,
-            output,
-            constraints,
-            status: IntentStatus::Pending,
-            created_at: env::block_timestamp(),
+            id: "test-intent-1".to_string(),
+            user_account: accounts(1).to_string(),
+            action: "swap".to_string(),
+            input_token: "USDC".to_string(),
+            input_amount: 1000,
+            output_token: "NEAR".to_string(),
+            min_output_amount: Some(95),
+            max_slippage: 0.5,
+            deadline: None,
         };
         
-        self.intents.insert(&hex::encode(&intent_id), &intent);
-        hex::encode(&intent_id)
+        assert!(contract.verify_intent(intent));
+        assert!(contract.is_intent_verified("test-intent-1".to_string()));
     }
-    
-    pub fn get_intent(&self, intent_id: String) -> Option<Intent> {
-        self.intents.get(&intent_id)
+}
+```
+
+## Linking Verifier to Solver
+
+The real power comes when we connect our verifier to solvers. Here's how to set up cross-contract calls:
+
+```rust
+#[ext_contract(ext_solver)]
+trait Solver {
+    fn solve_intent(&self, intent_id: String, user: AccountId, input_amount: u128) -> Promise;
+}
+
+#[near_bindgen]
+impl Verifier {
+    // Add this method to the existing implementation
+    pub fn verify_and_solve(&mut self, intent: Intent, solver_account: AccountId) -> Promise {
+        // First verify the intent
+        assert!(self.verify_intent(intent.clone()), "Intent verification failed");
+        
+        // Then call the solver
+        ext_solver::solve_intent(
+            intent.id,
+            intent.user_account.parse().unwrap(),
+            intent.input_amount,
+            solver_account, // contract to call
+            0, // no attached deposit
+            5_000_000_000_000 // gas
+        )
     }
-    
-    // Other verifier methods will be added here
 }
 ```
 
-## Validation Logic
+## Deployment Considerations
 
-The core of the verifier is its validation logic, which should:
+When deploying your verifier contract:
 
-1. Verify the intent structure is correct
-2. Check that constraints are reasonable
-3. Ensure the user has sufficient balance for the operation
-4. Validate any permissions required
+1. Make sure to initialize it with the correct owner
+2. Consider gas costs for cross-contract calls
+3. Implement proper access control for sensitive operations
+4. Add proper error handling and recovery mechanisms
 
-Example validation for a swap intent:
-
-```rust
-fn validate_swap_intent(&self, input: &str, output: &str, constraints: &str) -> bool {
-    let input_data: InputToken = serde_json::from_str(input).unwrap();
-    let output_data: OutputToken = serde_json::from_str(output).unwrap();
-    let constraints_data: SwapConstraints = serde_json::from_str(constraints).unwrap();
-    
-    // Check input token exists
-    // Verify user has enough balance
-    // Validate output token exists
-    // Check if slippage is reasonable
-    // Verify deadline is in the future
-    
-    true // Return validation result
-}
-```
-
-## Intent Storage
-
-Verified intents need to be stored for solvers to access:
-
-```rust
-pub fn get_pending_intents(&self) -> Vec<(String, Intent)> {
-    self.intents
-        .iter()
-        .filter(|(_, intent)| intent.status == IntentStatus::Pending)
-        .collect()
-}
-```
-
-## Intent Status Management
-
-The verifier also manages the lifecycle of intents:
-
-```rust
-pub fn mark_intent_executed(&mut self, intent_id: String) {
-    // Only callable by approved solvers
-    assert!(self.is_approved_solver(env::predecessor_account_id()), "Not an approved solver");
-    
-    let mut intent = self.intents.get(&intent_id).expect("Intent not found");
-    assert!(intent.status == IntentStatus::Pending, "Intent is not pending");
-    
-    intent.status = IntentStatus::Executed;
-    self.intents.insert(&intent_id, &intent);
-}
-
-pub fn cancel_intent(&mut self, intent_id: String) {
-    // Only callable by intent creator
-    let intent = self.intents.get(&intent_id).expect("Intent not found");
-    assert!(intent.creator == env::predecessor_account_id(), "Not intent creator");
-    assert!(intent.status == IntentStatus::Pending, "Intent is not pending");
-    
-    intent.status = IntentStatus::Cancelled;
-    self.intents.insert(&intent_id, &intent);
-}
-```
-
-## Solver Management
-
-The verifier needs to manage which solvers are allowed to execute intents:
-
-```rust
-pub fn add_solver(&mut self, solver_id: AccountId) {
-    assert!(env::predecessor_account_id() == self.owner_id, "Not owner");
-    self.approved_solvers.insert(&solver_id);
-}
-
-pub fn remove_solver(&mut self, solver_id: AccountId) {
-    assert!(env::predecessor_account_id() == self.owner_id, "Not owner");
-    self.approved_solvers.remove(&solver_id);
-}
-
-pub fn is_approved_solver(&self, solver_id: AccountId) -> bool {
-    self.approved_solvers.contains(&solver_id)
-}
-```
+In the next section, we'll build a solver contract that can fulfill the intents verified by our contract.

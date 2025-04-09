@@ -1,87 +1,88 @@
 
-# Local Smart Contract
+# Setting Up a Local Smart Contract
 
-## Setting Up Your Development Environment
+## Understanding Smart Contracts in Intent Architecture
 
-Before creating our smart contract, let's make sure our development environment is properly configured.
+Smart contracts form the backbone of the intent verification and execution system. In this section, we'll set up two critical components:
+
+1. **Verifier Contract**: Validates user intents and ensures they meet requirements
+2. **Solver Contract**: Executes the verified intents to achieve the desired outcome
+
+## Setting Up Your Rust Development Environment
+
+For NEAR smart contracts, we'll use Rust as our programming language. Make sure you have Rust and Cargo installed:
 
 ```bash
-# Install required tools
-npm install -g near-cli
+cd contracts
+cargo new --lib verifier --vcs none
+cd verifier
 ```
 
-## Creating a Basic NEAR Contract
+## Configuring Your First Contract
 
-We'll start by creating a simple smart contract to understand the basics.
+Update your `Cargo.toml` with the necessary dependencies:
+
+```toml
+[package]
+name = "verifier"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+near-sdk = "4.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+```
+
+## Writing the Verifier Contract
+
+Create a basic intent verification contract in `src/lib.rs`:
 
 ```rust
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{env, near_bindgen};
+use near_sdk::{env, near_bindgen, serde::{Deserialize, Serialize}};
 
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct Contract {
-    greeting: String,
-}
+#[derive(Default)]
+pub struct Verifier {}
 
-impl Default for Contract {
-    fn default() -> Self {
-        Self {
-            greeting: "Hello".to_string(),
-        }
-    }
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Intent {
+    pub action: String,
+    pub input_token: String,
+    pub input_amount: u128,
+    pub output_token: String,
+    pub max_slippage: f64,
 }
 
 #[near_bindgen]
-impl Contract {
-    pub fn get_greeting(&self) -> String {
-        self.greeting.clone()
-    }
-    
-    pub fn set_greeting(&mut self, greeting: String) {
-        self.greeting = greeting;
+impl Verifier {
+    pub fn verify_intent(&self, intent: Intent) -> bool {
+        // placeholder logic
+        env::log_str(&format!("Verifying intent: {:?}", intent.action));
+        true
     }
 }
 ```
 
-## Compiling the Contract
+## Building the Contract
 
-To compile the contract, we'll use the NEAR development tools:
+Compile your contract to WebAssembly:
 
 ```bash
 cargo build --target wasm32-unknown-unknown --release
 ```
 
-## Testing the Contract Locally
+This produces a `.wasm` file in the `target/wasm32-unknown-unknown/release/` directory that can be deployed to the NEAR blockchain.
 
-We can test our contract using NEAR's simulation testing:
+## Next Steps
 
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use near_sdk::test_utils::{accounts, VMContextBuilder};
-    use near_sdk::testing_env;
+Once your basic verifier is set up, we'll move on to:
+1. Implementing more sophisticated verification logic
+2. Building a solver contract that can fulfill intents
+3. Connecting these components together
 
-    #[test]
-    fn test_get_greeting() {
-        let contract = Contract {
-            greeting: "Hello".to_string(),
-        };
-        assert_eq!(contract.get_greeting(), "Hello");
-    }
-
-    #[test]
-    fn test_set_greeting() {
-        let mut contract = Contract {
-            greeting: "Hello".to_string(),
-        };
-        contract.set_greeting("Howdy".to_string());
-        assert_eq!(contract.get_greeting(), "Howdy");
-    }
-}
-```
-
-## Preparing for Intent Integration
-
-Now that we have a basic contract, we'll modify it to work with intents in the next section.
+In the next section, we'll develop the intent verifier with more comprehensive validation logic.

@@ -1,148 +1,174 @@
 
-# Solver Contract
+# Solver Contract Development
 
-## What is a Solver?
+## Understanding Solvers
 
-A Solver is a specialized entity that:
-- Monitors the verifier for pending intents
-- Calculates execution strategies for intents
-- Executes transactions to fulfill intents
-- Reports execution results back to the verifier
+Solvers are the workhorses of the intent system. They:
 
-## Basic Solver Structure
+1. Take verified intents from the verifier
+2. Execute the necessary actions to fulfill those intents
+3. Report the results back to users and the verifier
+4. Compete with other solvers for the best execution
+
+## Creating a Basic Solver
+
+Let's implement a simple solver contract:
+
+```bash
+cd contracts
+cargo new --lib solver --vcs none
+cd solver
+```
+
+Update the `Cargo.toml` file:
+
+```toml
+[package]
+name = "solver"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+near-sdk = "4.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+```
+
+Now, let's implement the solver in `src/lib.rs`:
 
 ```rust
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{env, near_bindgen, AccountId, Promise};
+use near_sdk::{env, near_bindgen, AccountId, Promise, Balance, serde::{Deserialize, Serialize}};
 
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(Default)]
 pub struct Solver {
     pub owner_id: AccountId,
-    pub verifier_id: AccountId,
+    pub execution_fee: Balance, // Fee charged by this solver
+    pub executions: Vec<String>, // Track executed intents
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ExecutionResult {
+    pub intent_id: String,
+    pub success: bool,
+    pub output_amount: Balance,
+    pub fee_amount: Balance,
 }
 
 #[near_bindgen]
 impl Solver {
     #[init]
-    pub fn new(owner_id: AccountId, verifier_id: AccountId) -> Self {
+    pub fn new(owner_id: AccountId, execution_fee: Balance) -> Self {
         Self {
             owner_id,
-            verifier_id,
+            execution_fee,
+            executions: Vec::new(),
         }
     }
     
-    pub fn solve_intent(&mut self, intent_id: String) -> Promise {
-        assert!(env::predecessor_account_id() == self.owner_id, "Not owner");
+    pub fn solve_intent(&mut self, intent_id: String, user: AccountId, input_amount: Balance) -> ExecutionResult {
+        // In a real solver, this would:
+        // 1. Call DEX/protocol contracts to execute the requested swap/action
+        // 2. Track execution progress
+        // 3. Handle failures and retries
         
-        // 1. Get intent details from verifier
-        // 2. Calculate execution strategy
-        // 3. Execute transactions
-        // 4. Report results back to verifier
+        // For demo purposes, we just simulate a successful execution
+        env::log_str(&format!("Executing intent {} for user {}", intent_id, user));
         
-        // This is a simplified example - actual implementation would be more complex
-        Promise::new(self.verifier_id.clone())
-            .function_call(
-                "mark_intent_executed".to_string(),
-                json!({ "intent_id": intent_id }).to_string().into_bytes(),
-                0,
-                env::prepaid_gas() / 2
-            )
+        // Calculate fees (in a real scenario this would be more complex)
+        let fee_amount = (input_amount * self.execution_fee) / 10_000; // fee in basis points
+        let actual_input = input_amount - fee_amount;
+        
+        // Simulate a swap with 3% slippage from expected rate
+        let expected_rate = 10; // 10 output tokens per input token
+        let actual_rate = 9.7; // 3% worse than expected
+        let output_amount = (actual_input as f64 * actual_rate) as u128;
+        
+        // Record the execution
+        self.executions.push(intent_id.clone());
+        
+        ExecutionResult {
+            intent_id,
+            success: true,
+            output_amount,
+            fee_amount,
+        }
+    }
+    
+    pub fn has_executed(&self, intent_id: String) -> bool {
+        self.executions.contains(&intent_id)
+    }
+    
+    pub fn get_fee(&self) -> Balance {
+        self.execution_fee
+    }
+    
+    pub fn set_fee(&mut self, new_fee: Balance) {
+        assert_eq!(env::predecessor_account_id(), self.owner_id, "Only owner can set fee");
+        self.execution_fee = new_fee;
     }
 }
 ```
 
-## Solver Operation Modes
+## Building More Advanced Solvers
 
-Solvers can operate in different modes:
+Real-world solvers would implement:
 
-1. **Reactive Mode**
-   - Poll the verifier for new intents
-   - Process intents on-demand
+1. **Direct DEX Integration**: Call specific DEX contracts to execute trades
+2. **Multi-hop Routing**: Find optimal paths across multiple liquidity sources
+3. **Liquidity Aggregation**: Combine liquidity from multiple sources
+4. **MEV Protection**: Prevent value extraction by miners/validators
+5. **Failure Recovery**: Handle partial executions and rollbacks
 
-2. **Proactive Mode**
-   - Subscribe to intent submission events
-   - Process intents as soon as they arrive
-
-3. **Batch Mode**
-   - Collect multiple intents
-   - Execute them together for efficiency
-
-## Execution Strategy Calculation
-
-The core of a solver is its strategy calculation:
+Example of a more advanced swap implementation:
 
 ```rust
-fn calculate_execution_strategy(&self, intent: Intent) -> ExecutionStrategy {
-    match intent.action.as_str() {
-        "swap" => self.calculate_swap_strategy(&intent),
-        "bridge" => self.calculate_bridge_strategy(&intent),
-        "stake" => self.calculate_stake_strategy(&intent),
-        _ => ExecutionStrategy::Unsupported,
-    }
-}
-
-fn calculate_swap_strategy(&self, intent: &Intent) -> ExecutionStrategy {
-    // Parse input and output tokens
-    let input_token = serde_json::from_str::<InputToken>(&intent.input).unwrap();
-    let output_token = serde_json::from_str::<OutputToken>(&intent.output).unwrap();
-    
-    // Check available DEXes
-    // Calculate prices on each DEX
-    // Find the best execution path
-    // Return execution plan
-    
-    ExecutionStrategy::Swap {
-        dex: "ref.finance.near".to_string(),
-        path: vec![input_token.token, "wrap.near".to_string(), output_token.token],
-        expected_output: "12.5".to_string(),
-    }
+pub fn execute_swap(&self, 
+    from_token: AccountId,
+    to_token: AccountId,
+    amount: Balance,
+    min_return: Balance
+) -> Promise {
+    // Call a DEX contract to perform the swap
+    ext_dex::swap(
+        from_token,
+        to_token,
+        amount,
+        min_return,
+        dex_contract_id, // The DEX contract address
+        1, // Attached deposit of 1 yoctoNEAR for security
+        20_000_000_000_000 // Gas
+    )
 }
 ```
 
-## Transaction Execution
+## Building and Deploying the Solver
 
-Solvers need to execute transactions to fulfill intents:
+Compile the solver contract:
 
-```rust
-fn execute_swap(&self, strategy: SwapStrategy, intent: Intent) -> Promise {
-    // Create the transaction to execute the swap
-    Promise::new(strategy.dex)
-        .function_call(
-            "swap".to_string(),
-            json!({
-                "token_in": strategy.path[0],
-                "token_out": strategy.path[strategy.path.len() - 1],
-                "amount_in": intent.input.amount,
-                "min_amount_out": intent.output.min_amount,
-            }).to_string().into_bytes(),
-            1, // Attach deposit if needed
-            env::prepaid_gas() / 2
-        )
-        .then(
-            Promise::new(self.verifier_id.clone())
-                .function_call(
-                    "mark_intent_executed".to_string(),
-                    json!({ "intent_id": intent_id }).to_string().into_bytes(),
-                    0,
-                    env::prepaid_gas() / 4
-                )
-        )
-}
+```bash
+cargo build --target wasm32-unknown-unknown --release
 ```
 
-## Competition and MEV
+Deploy to NEAR testnet:
 
-Solvers compete with each other to execute intents:
+```bash
+near deploy --accountId solver.your-account.testnet --wasmFile ./target/wasm32-unknown-unknown/release/solver.wasm --initFunction new --initArgs '{"owner_id": "your-account.testnet", "execution_fee": 20}'
+```
 
-1. **Price Competition**
-   - Better prices attract more users
-   - Reputation systems favor efficient solvers
+## Solver Competition Mechanism
 
-2. **Speed Competition**
-   - Faster execution may be preferred for time-sensitive operations
-   - Miners/validators may prioritize higher fee transactions
+In a complete intent system, multiple solvers can compete:
 
-3. **MEV Considerations**
-   - Solvers can extract value through ordering
-   - Fair sequencing services can mitigate MEV
+1. Solvers observe intents from a shared pool
+2. Each solver proposes their execution plan
+3. The best offer (lowest fee, best execution price) wins
+4. The winner gets to execute the intent
+
+This competition drives efficiency and better prices for users.
+
+In the next section, we'll explore how to test your intent contracts to ensure they work correctly.

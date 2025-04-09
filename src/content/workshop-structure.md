@@ -1,55 +1,53 @@
 
-# NEAR Intents & Smart Wallet Abstraction
+# NEAR Intents & Smart Wallet Abstraction Workshop
 
-Learn how to build intent-centric dApps with smart wallet abstraction on NEAR
+A hands-on workshop for building next-generation dApps with NEAR's intent-centric architecture
 
 ## Introduction & Setup
 
-- [Welcome & Objectives](welcome.md)
-- [Overview of NEAR Intents](overview.md)
-- [Prerequisites & Setup](setup.md)
-- [Repo Cloning](repo.md)
+- [Welcome & Workshop Objectives](welcome.md)
+- [Overview of NEAR Intents & Smart Wallet Abstraction](overview.md)
+- [Environment Setup](setup.md)
+- [Repository Structure](repo.md)
 
 ## Understanding the Building Blocks
 
-- [What Are Intents?](intents-concept.md)
+- [What Are Intents? (Theory & Concept)](intents-concept.md)
 - [Anatomy of a NEAR Intent](intent-anatomy.md)
-- [Smart Wallet Abstraction](smart-wallet.md)
-- [Cross-chain UX](cross-chain.md)
+- [Smart Wallet Fundamentals](smart-wallet.md)
+- [Cross-chain Capabilities](cross-chain.md)
+- [Composability in Intent Systems](composability.md)
 
 ## Building the Backend
 
-- [Local Smart Contract](local-contract.md)
-- [Intent Verifier](intent-verifier.md)
-- [Solver Contract](solver-contract.md)
-- [Testing Execution](testing.md)
-- [Gas & Fees Model](gas-fees.md)
+- [Local Smart Contract Development](local-contract.md)
+- [Intent Verifier Implementation](intent-verifier.md)
+- [Solver Contract Development](solver-contract.md)
+- [Testing Your Contracts](testing.md)
+- [Gas Fees & Optimization](gas-fees.md)
 
 ## Creating the Smart Wallet Experience
 
-- [Wallet Selector](wallet-selector.md)
-- [Session-based Smart Wallet](session-wallet.md)
-- [Managing Keys](keys.md)
-- [Abstraction of Actions](action-abstraction.md)
+- [Local Contract Development](local-contract.md)
+- [Intent Verifier Implementation](intent-verifier.md)
+- [Solver Contract Development](solver-contract.md)
+- [Testing Your Contracts](testing.md)
 
 ## Building the Frontend
 
-- [Setting Up Frontend](frontend-setup.md)
-- [Connect Wallet](connect-wallet.md)
-- [Submitting Intents](submit-intents.md)
-- [Solver Options](solver-options.md)
-- [Executing Intent](execute-intent.md)
+- [Frontend Setup](frontend-setup.md)
+- [Connect Wallet Integration](connect-wallet.md)
+- [Submit Intents UI](submit-intents.md)
+- [Execute Intent Flow](execute-intent.md)
 
 ## Testnet Deployment & Debugging
 
-- [Deploy to Testnet](testnet-deploy.md)
-- [Testing with NEAR CLI](near-cli.md)
+- [Deploying to NEAR Testnet](testnet-deploy.md)
 - [Debugging Intents](debug-intents.md)
-- [Simulating Solvers](simulate-solvers.md)
+- [Simulate Solver Competition](simulate-solvers.md)
 
 ## Going Beyond the Demo
 
-- [Showcase of Advanced Use Cases](advanced-use-cases.md)
-- [Resources & Links for Deeper Exploration](resources.md)
-- [What's Next?](whats-next.md)
-- [Workshop Wrap-up & Inspiration](wrap-up.md)
+- [Advanced Use Cases](advanced-use-cases.md)
+- [Cross-chain Applications](cross-chain-use-cases.md)
+- [Production Best Practices](production.md)

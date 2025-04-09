@@ -1,4 +1,5 @@
-# Base44 App
+# NEAR Intents &
+Smart Wallet Abstraction Workshop
 
 
 This app was created automatically by Base44.

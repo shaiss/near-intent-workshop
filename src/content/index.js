@@ -1,69 +1,82 @@
 
-// This file imports all markdown content to ensure it's bundled with the app
-import welcome from './welcome.md?raw';
-import overview from './overview.md?raw';
-import setup from './setup.md?raw';
-import repo from './repo.md?raw';
-import intentsConceptMd from './intents-concept.md?raw';
-import intentAnatomyMd from './intent-anatomy.md?raw';
-import smartWalletMd from './smart-wallet.md?raw';
-import crossChainMd from './cross-chain.md?raw';
-import localContractMd from './local-contract.md?raw';
-import intentVerifierMd from './intent-verifier.md?raw';
-import solverContractMd from './solver-contract.md?raw';
-import testingMd from './testing.md?raw';
-import gasFeesMd from './gas-fees.md?raw';
-import walletSelectorMd from './wallet-selector.md?raw';
-import sessionWalletMd from './session-wallet.md?raw';
-import keysMd from './keys.md?raw';
-import actionAbstractionMd from './action-abstraction.md?raw';
-import frontendSetupMd from './frontend-setup.md?raw';
-import connectWalletMd from './connect-wallet.md?raw';
-import submitIntentsMd from './submit-intents.md?raw';
-import solverOptionsMd from './solver-options.md?raw';
-import executeIntentMd from './execute-intent.md?raw';
-import testnetDeployMd from './testnet-deploy.md?raw';
-import nearCliMd from './near-cli.md?raw';
-import debugIntentsMd from './debug-intents.md?raw';
-import simulateSolversMd from './simulate-solvers.md?raw';
-import advancedUseCasesMd from './advanced-use-cases.md?raw';
-import resourcesMd from './resources.md?raw';
-import whatsNextMd from './whats-next.md?raw';
-import wrapUpMd from './wrap-up.md?raw';
-import workshopStructure from './workshop-structure.md?raw';
+// Section content imports
+import welcome from './welcome.md';
+import overview from './overview.md';
+import setup from './setup.md';
+import repo from './repo.md';
 
-const contentMap = {
+import intentsConceptMd from './intents-concept.md';
+import intentAnatomyMd from './intent-anatomy.md';
+import smartWalletMd from './smart-wallet.md';
+import crossChainMd from './cross-chain.md';
+
+import localContractMd from './local-contract.md';
+import intentVerifierMd from './intent-verifier.md';
+import solverContractMd from './solver-contract.md';
+import testingMd from './testing.md';
+import gasFeesMd from './gas-fees.md';
+
+import walletSelectorMd from './wallet-selector.md';
+import sessionWalletMd from './session-wallet.md';
+import keysMd from './keys.md';
+import actionAbstractionMd from './action-abstraction.md';
+
+import frontendSetupMd from './frontend-setup.md';
+import connectWalletMd from './connect-wallet.md';
+import submitIntentsMd from './submit-intents.md';
+import solverOptionsMd from './solver-options.md';
+import executeIntentMd from './execute-intent.md';
+
+import testnetDeployMd from './testnet-deploy.md';
+import nearCliMd from './near-cli.md';
+import debugIntentsMd from './debug-intents.md';
+import simulateSolversMd from './simulate-solvers.md';
+
+import advancedUseCasesMd from './advanced-use-cases.md';
+import resourcesMd from './resources.md';
+import whatsNextMd from './whats-next.md';
+import wrapUpMd from './wrap-up.md';
+
+import workshopStructureMd from './workshop-structure.md';
+
+// Export all content sections
+export default {
   'welcome.md': welcome,
   'overview.md': overview,
   'setup.md': setup,
   'repo.md': repo,
+  
   'intents-concept.md': intentsConceptMd,
   'intent-anatomy.md': intentAnatomyMd,
   'smart-wallet.md': smartWalletMd,
   'cross-chain.md': crossChainMd,
+  
   'local-contract.md': localContractMd,
   'intent-verifier.md': intentVerifierMd,
   'solver-contract.md': solverContractMd,
   'testing.md': testingMd,
   'gas-fees.md': gasFeesMd,
+  
   'wallet-selector.md': walletSelectorMd,
   'session-wallet.md': sessionWalletMd,
   'keys.md': keysMd,
   'action-abstraction.md': actionAbstractionMd,
+  
   'frontend-setup.md': frontendSetupMd,
   'connect-wallet.md': connectWalletMd,
   'submit-intents.md': submitIntentsMd,
   'solver-options.md': solverOptionsMd,
   'execute-intent.md': executeIntentMd,
+  
   'testnet-deploy.md': testnetDeployMd,
   'near-cli.md': nearCliMd,
   'debug-intents.md': debugIntentsMd,
   'simulate-solvers.md': simulateSolversMd,
+  
   'advanced-use-cases.md': advancedUseCasesMd,
   'resources.md': resourcesMd,
   'whats-next.md': whatsNextMd,
   'wrap-up.md': wrapUpMd,
-  'workshop-structure.md': workshopStructure
+  
+  'workshop-structure.md': workshopStructureMd
 };
-
-export default contentMap;

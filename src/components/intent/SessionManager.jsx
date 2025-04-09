@@ -54,3 +54,91 @@ export default function SessionManager() {
     </Card>
   );
 }
+import React, { useState, useEffect } from 'react';
+import { useWallet } from '../wallet/WalletProvider';
+import { Button } from '../ui/button';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+
+export default function SessionManager() {
+  const { account, hasActiveSession, createSessionKey } = useWallet();
+  const [sessionExists, setSessionExists] = useState(false);
+  const [expiryTime, setExpiryTime] = useState(null);
+
+  useEffect(() => {
+    if (!account) return;
+    
+    // Check for existing session
+    const item = localStorage.getItem(`sessionKey:${account.accountId}`);
+    if (item) {
+      const { expires } = JSON.parse(item);
+      setSessionExists(true);
+      setExpiryTime(new Date(expires));
+    } else {
+      setSessionExists(false);
+      setExpiryTime(null);
+    }
+  }, [account, hasActiveSession]);
+
+  const handleCreateSession = async () => {
+    await createSessionKey();
+    
+    // Update UI state
+    const item = localStorage.getItem(`sessionKey:${account.accountId}`);
+    if (item) {
+      const { expires } = JSON.parse(item);
+      setSessionExists(true);
+      setExpiryTime(new Date(expires));
+    }
+  };
+
+  const handleRevokeSession = () => {
+    if (!account) return;
+    
+    localStorage.removeItem(`sessionKey:${account.accountId}`);
+    setSessionExists(false);
+    setExpiryTime(null);
+  };
+
+  if (!account) {
+    return null;
+  }
+
+  return (
+    <div className="session-manager p-4 border rounded-lg mb-6">
+      <h3 className="text-lg font-medium mb-4">Session Key Management</h3>
+      
+      {sessionExists ? (
+        <>
+          <Alert className="mb-4">
+            <AlertTitle>Active Session</AlertTitle>
+            <AlertDescription>
+              Your session key allows one-click transactions until {expiryTime.toLocaleString()}.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="flex gap-3">
+            <Button onClick={handleCreateSession} variant="outline">
+              Rotate Key
+            </Button>
+            <Button onClick={handleRevokeSession} variant="destructive">
+              Revoke Session
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <Alert className="mb-4">
+            <AlertTitle>No Active Session</AlertTitle>
+            <AlertDescription>
+              Create a session key to enable one-click transactions without requiring wallet approval each time.
+            </AlertDescription>
+          </Alert>
+          
+          <Button onClick={handleCreateSession}>
+            Create Session Key
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}

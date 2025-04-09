@@ -107,6 +107,18 @@ button:focus-visible {
   height: 70%;
 }
 
+/* Selected section highlight */
+.sidebar-section.selected {
+  background-color: #facc15 !important; /* Yellow-500 */
+  font-weight: bold;
+}
+
+/* Active part highlight */
+.sidebar-part-active {
+  border-left: 4px solid black;
+  background-color: rgba(0,0,0,0.05);
+}
+
 /* Accessibility improvements for focus states */
 :focus-visible {
   outline: 2px solid black;

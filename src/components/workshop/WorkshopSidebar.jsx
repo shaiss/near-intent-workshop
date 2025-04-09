@@ -84,22 +84,12 @@ export default function WorkshopSidebar({ onNavigate }) {
         <FileText className="w-5 h-5 mr-2" />
         <h2 className="text-xl font-bold">NEAR INTENTS</h2>
       </div>
-      
-      <div className="p-4 bg-yellow-200 border-b-2 border-black flex items-center">
-        <FileText className="w-5 h-5 mr-2" />
-        <h3 className="text-lg font-bold">Workshop Outline</h3>
-      </div>
 
       <div className="flex-grow overflow-auto">
         <nav aria-label="Workshop navigation">
-          {structure.parts.map((part) => {
-            // Choose background color based on part ID
-            let partBgColor = "bg-yellow-100";
-            if (part.id === 1) partBgColor = "bg-pink-200";
-            else if (part.id === 2) partBgColor = "bg-green-200";
-            else if (part.id === 3) partBgColor = "bg-blue-200";
-            else if (part.id === 4) partBgColor = "bg-orange-200";
-            else if (part.id === 5) partBgColor = "bg-purple-200";
+          {structure.parts.map((part, index) => {
+            // Alternate between light background colors
+            let partBgColor = index % 2 === 0 ? "bg-yellow-100" : "bg-yellow-50";
             
             return (
               <div key={part.id} className="border-b-2 border-black">
@@ -126,31 +116,36 @@ export default function WorkshopSidebar({ onNavigate }) {
                 {expandedParts[part.id] && (
                   <div 
                     id={`part-${part.id}-sections`}
-                    className={`border-t border-black/20 ${partBgColor} bg-opacity-50`}
+                    className={`border-t border-black/20 ${partBgColor}`}
                   >
-                    {part.sections.map((section) => (
-                      <div key={section.id} className="relative">
-                        {section.slug ? (
-                          <Link
-                            to={createPageUrl(`Section?slug=${section.slug}`)}
-                            className="block py-2 px-4 pl-8 text-sm hover:bg-black hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black relative transition-colors duration-200"
-                            onClick={onNavigate}
-                          >
-                            <span className="flex items-center">
-                              <span className="w-6 inline-block">{part.id}.{section.id}</span>
-                              <span>{section.title}</span>
-                            </span>
-                          </Link>
-                        ) : (
-                          <div className="block py-2 px-4 pl-8 text-sm text-gray-500 italic">
-                            <span className="flex items-center">
-                              <span className="w-6 inline-block">{part.id}.{section.id}</span>
-                              <span>{section.title} (Coming Soon)</span>
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {part.sections.map((section) => {
+                      // Check if this is the current active section based on URL
+                      const isActive = window.location.href.includes(`slug=${section.slug}`);
+                      
+                      return (
+                        <div key={section.id} className="relative">
+                          {section.slug ? (
+                            <Link
+                              to={createPageUrl(`Section?slug=${section.slug}`)}
+                              className={`sidebar-section block py-2 px-4 pl-8 text-sm hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black relative transition-colors duration-200 ${isActive ? 'selected' : ''}`}
+                              onClick={onNavigate}
+                            >
+                              <span className="flex items-center">
+                                <span className="w-6 inline-block">{part.id}.{section.id}</span>
+                                <span>{section.title}</span>
+                              </span>
+                            </Link>
+                          ) : (
+                            <div className="block py-2 px-4 pl-8 text-sm text-gray-500 italic">
+                              <span className="flex items-center">
+                                <span className="w-6 inline-block">{part.id}.{section.id}</span>
+                                <span>{section.title} (Coming Soon)</span>
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

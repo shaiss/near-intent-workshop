@@ -1,0 +1,119 @@
+Great! Let's dive into **Part 1: Understanding the Building Blocks** of NEAR Intents and Smart Wallet Abstraction.
+
+---
+
+## **Part 1: Understanding the Building Blocks**
+
+---
+
+### **1.1 What Are Intents? (Theory & Concept)**
+
+**Time**: 10 minutes  
+**Format**: Presentation + discussion
+
+**Definition**:  
+An **Intent** is a declarative expression of *what* the user wants to happen (e.g., “Swap 10 USDC for NEAR”) without specifying *how* it happens (e.g., which DEX, route, or chain).
+
+**Key Characteristics**:
+- **Chain-agnostic**: Can be resolved on multiple chains.
+- **Outcome-driven**: Describes desired result, not steps.
+- **Composable**: Can be embedded inside apps, widgets, or bots.
+
+**Examples**:
+- “Send 1 NEAR to alice.near”
+- “Swap 100 USDC → wNEAR”
+- “Bridge 5 MATIC to Ethereum Mainnet”
+
+---
+
+### **1.2 Anatomy of a NEAR Intent Transaction**
+
+**Time**: 15 minutes  
+**Format**: Diagram walkthrough + code trace
+
+**Flow Diagram**:
+
+```
+User → UI → Intent Object
+                   ↓
+            Verifier Contract
+                   ↓
+            Solver Submission
+                   ↓
+           Fulfillment Evaluation
+                   ↓
+        Execution on-chain (via Smart Wallet)
+```
+
+**Intent Object Structure (simplified)**:
+```json
+{
+  "intent": {
+    "action": "swap",
+    "input": {
+      "token": "USDC",
+      "amount": "100"
+    },
+    "output": {
+      "token": "wNEAR"
+    }
+  },
+  "constraints": {
+    "maxSlippage": "0.5"
+  }
+}
+```
+
+---
+
+### **1.3 What Is Smart Wallet Abstraction?**
+
+**Time**: 10 minutes  
+**Format**: Conceptual demo
+
+**Definition**:  
+A **Smart Wallet** on NEAR abstracts account management, signing, and transaction batching behind a user-friendly interface. It enables:
+
+- Key management and session auth
+- Multi-chain interactions
+- Meta-transactions (gasless UX)
+- Plugin-based authorization (e.g., DAO, multisig, social recovery)
+
+**How It Works**:
+- Delegates signing to a session key or off-chain relayer
+- Transactions are bundled and sent from the abstracted account
+- Intent fulfillment becomes “invisible” to the user
+
+**Key Library**: `@near-wallet-selector` + intent verifier logic
+
+---
+
+### **1.4 Cross-Chain UX and Abstraction Strategy**
+
+**Time**: 10 minutes  
+**Format**: Group brainstorm + examples
+
+**Objective**:  
+Visualize how intents can simplify *cross-chain interactions* and how abstraction removes the complexity from the user.
+
+**Example Scenarios**:
+- “I want to send ETH from Ethereum to NEAR as wrapped NEAR” → Intent spans bridge + swap
+- “I want to buy an NFT on Aurora using USDC from Polygon” → Intent spans 3 chains
+
+**Discussion Prompt**:
+> What types of user actions would benefit most from abstraction and intent resolution?
+
+---
+
+### **Checkpoint Summary**
+Participants should now:
+- Understand the high-level architecture
+- Be familiar with the concepts of **Verifier**, **Solver**, and **Smart Wallet**
+- See the value of abstraction for user-friendly dApps
+
+---
+
+**Next Up**:  
+**Part 2: Building the Backend (Intent Verifier & Solver)** — where we’ll write and deploy a basic smart contract that acts as a verifier and solver on NEAR testnet.
+
+Would you like to continue with Part 2 now or include interactive code snippets/slides for Part 1?

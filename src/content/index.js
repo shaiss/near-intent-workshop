@@ -26,10 +26,10 @@ import testnetDeployMd from './testnet-deploy.md?raw';
 import nearCliMd from './near-cli.md?raw';
 import debugIntentsMd from './debug-intents.md?raw';
 import simulateSolversMd from './simulate-solvers.md?raw';
-import composabilityMd from './composability.md?raw';
-import crossChainUseCasesMd from './cross-chain-use-cases.md?raw';
-import productionMd from './production.md?raw';
-import futureMd from './future.md?raw';
+import advancedUseCasesMd from './advanced-use-cases.md?raw';
+import resourcesMd from './resources.md?raw';
+import whatsNextMd from './whats-next.md?raw';
+import wrapUpMd from './wrap-up.md?raw';
 import workshopStructure from './workshop-structure.md?raw';
 
 // Create a mapping of all content files
@@ -60,10 +60,10 @@ const contentMap = {
   'near-cli.md': nearCliMd,
   'debug-intents.md': debugIntentsMd,
   'simulate-solvers.md': simulateSolversMd,
-  'composability.md': composabilityMd,
-  'cross-chain-use-cases.md': crossChainUseCasesMd,
-  'production.md': productionMd,
-  'future.md': futureMd,
+  'advanced-use-cases.md': advancedUseCasesMd,
+  'resources.md': resourcesMd,
+  'whats-next.md': whatsNextMd,
+  'wrap-up.md': wrapUpMd,
   'workshop-structure.md': workshopStructure
 };
 

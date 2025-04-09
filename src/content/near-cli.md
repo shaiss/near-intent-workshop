@@ -1,211 +1,138 @@
-
 # Testing with NEAR CLI
 
-## Using NEAR CLI to Test Your Intent Contracts
+## Overview
 
-The NEAR Command Line Interface (CLI) is a powerful tool for interacting with the NEAR blockchain. You can use it to test your intent contracts deployed on testnet.
-
-## Setting Up NEAR CLI
-
-Make sure you have NEAR CLI installed and configured:
-
-```bash
-# Install NEAR CLI
-npm install -g near-cli
-
-# Configure for testnet
-export NEAR_ENV=testnet
-```
+NEAR CLI (Command Line Interface) is a powerful tool for interacting with the NEAR blockchain. In this section, you'll learn how to use NEAR CLI to test your deployed intent verifier and solver contracts directly from the command line.
 
 ## Basic NEAR CLI Commands
 
-Here are some basic commands to interact with the NEAR blockchain:
+Before diving into specific contract interactions, here are some useful NEAR CLI commands:
 
 ```bash
-# Check account state
-near state YOUR_ACCOUNT_NAME.testnet
+# Check your account balance
+near state yourname.testnet
 
-# View account balance
-near state YOUR_ACCOUNT_NAME.testnet | grep total
+# View transaction details
+near tx <transaction-hash>
 
-# Create a subaccount
-near create-account subaccount.YOUR_ACCOUNT_NAME.testnet --masterAccount YOUR_ACCOUNT_NAME.testnet --initialBalance 5
+# List access keys for your account
+near keys yourname.testnet
 ```
 
-## Interacting with Your Intent Verifier
+## Testing the Verifier Contract
 
-Test your intent verifier contract with these commands:
-
-```bash
-# View all registered solvers
-near view verifier.YOUR_ACCOUNT_NAME.testnet get_solvers
-
-# Check pending intents
-near view verifier.YOUR_ACCOUNT_NAME.testnet get_pending_intents '{
-  "limit": 10,
-  "skip": 0
-}'
-
-# View intent by ID
-near view verifier.YOUR_ACCOUNT_NAME.testnet get_intent '{
-  "intent_id": "abc123"
-}'
-```
-
-## Creating an Intent
-
-To create and submit an intent:
+To test your verifier contract, you'll need to submit an intent to be verified:
 
 ```bash
-# Submit transfer intent
-near call verifier.YOUR_ACCOUNT_NAME.testnet submit_intent '{
+near call verifier.yourname.testnet verify_intent '{
   "intent": {
-    "type": "transfer",
-    "params": {
-      "receiver_id": "receiver.testnet",
-      "amount": "1000000000000000000000000",
-      "token": "near"
-    }
+    "action": "swap",
+    "input_token": "USDC",
+    "input_amount": 100,
+    "output_token": "wNEAR",
+    "max_slippage": 0.5
   }
-}' --accountId YOUR_ACCOUNT_NAME.testnet --deposit 0.01
+}' --accountId yourname.testnet
 ```
 
-## Testing Your Solver
+The response should include:
+- A verification ID
+- A success/failure status
+- Any additional validation details
 
-Interact with your solver contract:
+## Testing the Solver Contract
+
+Once an intent is verified, you can test your solver contract:
 
 ```bash
-# Register solver with verifier
-near call solver.YOUR_ACCOUNT_NAME.testnet register_with_verifier '{
-  "verifier_id": "verifier.YOUR_ACCOUNT_NAME.testnet",
-  "supported_intents": ["transfer", "swap"]
-}' --accountId YOUR_ACCOUNT_NAME.testnet
-
-# Manually trigger intent execution (typically done by solver)
-near call solver.YOUR_ACCOUNT_NAME.testnet execute_intent '{
-  "intent_id": "abc123"
-}' --accountId YOUR_ACCOUNT_NAME.testnet --gas 300000000000000
+near call solver.yourname.testnet solve_intent '{
+  "user": "yourname.testnet",
+  "input_amount": 100
+}' --accountId yourname.testnet
 ```
 
-## Scripting Complex Scenarios
+The solver should respond with execution details and a transaction result.
 
-For more complex testing scenarios, you can create bash scripts:
+## Testing with Different Parameters
+
+It's important to test your contracts with various parameters to ensure robust handling:
 
 ```bash
-#!/bin/bash
-set -e
-
-# Configuration
-ACCOUNT_ID="your_account_name.testnet"
-VERIFIER_ID="verifier.$ACCOUNT_ID"
-SOLVER_ID="solver.$ACCOUNT_ID"
-RECEIVER_ID="receiver.testnet"
-
-# Submit an intent
-echo "Submitting transfer intent..."
-RESULT=$(near call $VERIFIER_ID submit_intent '{
+# Test with invalid token
+near call verifier.yourname.testnet verify_intent '{
   "intent": {
-    "type": "transfer",
-    "params": {
-      "receiver_id": "'$RECEIVER_ID'",
-      "amount": "1000000000000000000000000",
-      "token": "near"
-    }
+    "action": "swap",
+    "input_token": "INVALID",
+    "input_amount": 100,
+    "output_token": "wNEAR",
+    "max_slippage": 0.5
   }
-}' --accountId $ACCOUNT_ID --deposit 0.01)
+}' --accountId yourname.testnet
 
-# Extract intent ID from result
-INTENT_ID=$(echo $RESULT | grep -oP 'Intent ID: \K[a-zA-Z0-9]+')
-echo "Created intent with ID: $INTENT_ID"
-
-# Wait a moment
-sleep 2
-
-# Check intent status
-echo "Checking intent status..."
-near view $VERIFIER_ID get_intent '{
-  "intent_id": "'$INTENT_ID'"
-}'
-
-# Manually execute the intent (in practice, solver would do this automatically)
-echo "Executing intent..."
-near call $SOLVER_ID execute_intent '{
-  "intent_id": "'$INTENT_ID'"
-}' --accountId $ACCOUNT_ID --gas 300000000000000
-
-# Check final intent status
-echo "Checking final status..."
-near view $VERIFIER_ID get_intent '{
-  "intent_id": "'$INTENT_ID'"
-}'
-
-echo "Test completed!"
-```
-
-## Monitoring Transaction Status
-
-After submitting transactions, you can monitor their status:
-
-```bash
-# Get transaction status by hash
-near tx-status TX_HASH --accountId YOUR_ACCOUNT_NAME.testnet
-```
-
-## Testing Cross-Chain Functionality
-
-For testing cross-chain intents:
-
-```bash
-# Submit cross-chain intent
-near call verifier.YOUR_ACCOUNT_NAME.testnet submit_intent '{
+# Test with different slippage
+near call verifier.yourname.testnet verify_intent '{
   "intent": {
-    "type": "cross_chain_transfer",
-    "params": {
-      "receiver_id": "0xYourEthereumAddress",
-      "amount": "1000000000000000000",
-      "source_chain": "near",
-      "target_chain": "aurora",
-      "token": "near"
-    }
+    "action": "swap",
+    "input_token": "USDC",
+    "input_amount": 100,
+    "output_token": "wNEAR",
+    "max_slippage": 1.5
   }
-}' --accountId YOUR_ACCOUNT_NAME.testnet --deposit 0.01 --gas 300000000000000
+}' --accountId yourname.testnet
 ```
 
-## Performance Testing
+## Testing Cross-Contract Calls
 
-For performance testing, you can use scripts to submit multiple intents:
+If your contracts make cross-contract calls, you can trigger and trace these calls:
 
 ```bash
-#!/bin/bash
-
-# Configuration
-ACCOUNT_ID="your_account_name.testnet"
-VERIFIER_ID="verifier.$ACCOUNT_ID"
-COUNT=10
-
-echo "Submitting $COUNT intents..."
-
-for i in $(seq 1 $COUNT); do
-  echo "Submitting intent $i..."
-  near call $VERIFIER_ID submit_intent '{
-    "intent": {
-      "type": "transfer",
-      "params": {
-        "receiver_id": "receiver.testnet",
-        "amount": "1000000000000000000000000",
-        "token": "near"
-      }
-    }
-  }' --accountId $ACCOUNT_ID --deposit 0.01 &
-  
-  # Wait a bit between submissions to avoid rate limiting
-  sleep 0.5
-done
-
-# Wait for all background processes to complete
-wait
-
-echo "All intents submitted!"
+near call verifier.yourname.testnet execute_with_solver '{
+  "solver_id": "solver.yourname.testnet",
+  "intent_id": "12345"
+}' --accountId yourname.testnet --gas 300000000000000
 ```
 
-In the next section, we'll cover debugging techniques for intent-based applications.
+Use the `--gas` flag to allocate additional gas for complex operations.
+
+## View Contract State
+
+To examine the internal state of your contracts:
+
+```bash
+# View all state entries
+near view-state verifier.yourname.testnet --finality final
+
+# View specific state with keys
+near view verifier.yourname.testnet get_intent '{"intent_id": "12345"}'
+```
+
+## Working with Arguments
+
+For more complex function calls, you can place your arguments in a JSON file:
+
+```bash
+# Create intent.json
+echo '{
+  "intent": {
+    "action": "swap",
+    "input_token": "USDC",
+    "input_amount": 100,
+    "output_token": "wNEAR",
+    "max_slippage": 0.5,
+    "deadline": "1698523278000"
+  }
+}' > intent.json
+
+# Call with file
+near call verifier.yourname.testnet verify_intent "$(cat intent.json)" --accountId yourname.testnet
+```
+
+## Next Steps
+
+After testing your contracts with NEAR CLI, you'll want to:
+
+1. Analyze any failed transactions
+2. Debug issues in your contract logic
+3. Optimize gas usage and execution flow
+
+In the next section, we'll look at strategies for debugging intent execution issues.

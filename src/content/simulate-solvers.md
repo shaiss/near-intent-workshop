@@ -1,4 +1,3 @@
-
 # Simulating Solvers
 
 ## Techniques for Simulating Solvers in Development
@@ -23,18 +22,18 @@ export class MockSolver {
     this.processedIntents = [];
     this.listeners = [];
   }
-  
+
   start() {
     this.running = true;
     this.processLoop();
     console.log('Mock solver started');
   }
-  
+
   stop() {
     this.running = false;
     console.log('Mock solver stopped');
   }
-  
+
   addIntent(intent) {
     console.log(`Mock solver received intent: ${intent.id}`);
     this.pendingIntents.push({
@@ -43,18 +42,18 @@ export class MockSolver {
       receivedAt: Date.now()
     });
   }
-  
+
   onIntentStatusChange(callback) {
     this.listeners.push(callback);
     return () => {
       this.listeners = this.listeners.filter(listener => listener !== callback);
     };
   }
-  
+
   notifyListeners(intent) {
     this.listeners.forEach(listener => listener(intent));
   }
-  
+
   async processLoop() {
     while (this.running) {
       if (this.pendingIntents.length > 0) {
@@ -62,12 +61,12 @@ export class MockSolver {
         const intent = this.pendingIntents.shift();
         await this.processIntent(intent);
       }
-      
+
       // Wait a bit before the next iteration
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
-  
+
   async processIntent(intent) {
     if (!this.supportedIntentTypes.includes(intent.type)) {
       console.log(`Mock solver doesn't support intent type: ${intent.type}`);
@@ -81,20 +80,20 @@ export class MockSolver {
       this.notifyListeners(failedIntent);
       return;
     }
-    
+
     // Update status to EXECUTING
     const executingIntent = {
       ...intent,
       status: 'EXECUTING'
     };
     this.notifyListeners(executingIntent);
-    
+
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, this.simulatedDelay));
-    
+
     // Determine success or failure based on success rate
     const isSuccess = Math.random() < this.successRate;
-    
+
     const processedIntent = {
       ...intent,
       status: isSuccess ? 'COMPLETED' : 'FAILED',
@@ -102,13 +101,13 @@ export class MockSolver {
       result: isSuccess ? this.generateMockResult(intent) : null,
       processedAt: Date.now()
     };
-    
+
     this.processedIntents.push(processedIntent);
     this.notifyListeners(processedIntent);
-    
+
     console.log(`Mock solver ${isSuccess ? 'completed' : 'failed'} intent: ${intent.id}`);
   }
-  
+
   generateMockResult(intent) {
     switch (intent.type) {
       case 'transfer':
@@ -135,7 +134,7 @@ export class MockSolver {
         return { success: true };
     }
   }
-  
+
   getStats() {
     return {
       pendingCount: this.pendingIntents.length,
@@ -168,10 +167,10 @@ mockSolver.start();
 // Use these functions in development mode
 export async function submitIntent(signedIntent) {
   console.log('Development mode: Using mock solver');
-  
+
   // Generate a random intent ID
   const intentId = `intent_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
-  
+
   // Create intent object with ID
   const intent = {
     ...signedIntent,
@@ -179,10 +178,10 @@ export async function submitIntent(signedIntent) {
     status: 'PENDING',
     createdAt: Date.now()
   };
-  
+
   // Add to mock solver queue
   mockSolver.addIntent(intent);
-  
+
   return {
     intentId,
     status: 'PENDING'
@@ -195,13 +194,13 @@ export async function getIntentStatus(intentId) {
   if (processedIntent) {
     return processedIntent;
   }
-  
+
   // Find in pending intents
   const pendingIntent = mockSolver.pendingIntents.find(i => i.id === intentId);
   if (pendingIntent) {
     return pendingIntent;
   }
-  
+
   throw new Error(`Intent with ID ${intentId} not found`);
 }
 
@@ -233,17 +232,17 @@ export function SolverSimulator() {
   const [successRate, setSuccessRate] = useState(mockSolver.successRate * 100);
   const [delay, setDelay] = useState(mockSolver.simulatedDelay);
   const [stats, setStats] = useState(mockSolver.getStats());
-  
+
   useEffect(() => {
     // Update stats every second
     const interval = setInterval(() => {
       setStats(mockSolver.getStats());
       setIsRunning(mockSolver.running);
     }, 1000);
-    
+
     return () => clearInterval(interval);
   }, []);
-  
+
   const toggleSolver = () => {
     if (isRunning) {
       mockSolver.stop();
@@ -252,22 +251,22 @@ export function SolverSimulator() {
     }
     setIsRunning(!isRunning);
   };
-  
+
   const updateSuccessRate = (value) => {
     mockSolver.successRate = value / 100;
     setSuccessRate(value);
   };
-  
+
   const updateDelay = (value) => {
     mockSolver.simulatedDelay = value;
     setDelay(value);
   };
-  
+
   const clearProcessedIntents = () => {
     mockSolver.processedIntents = [];
     setStats(mockSolver.getStats());
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -285,7 +284,7 @@ export function SolverSimulator() {
             <span>{isRunning ? 'Running' : 'Stopped'}</span>
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label>Success Rate: {successRate}%</Label>
@@ -298,7 +297,7 @@ export function SolverSimulator() {
             onValueChange={(value) => updateSuccessRate(value[0])}
           />
         </div>
-        
+
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label>Processing Delay: {delay}ms</Label>
@@ -311,22 +310,22 @@ export function SolverSimulator() {
             onValueChange={(value) => updateDelay(value[0])}
           />
         </div>
-        
+
         <div className="bg-gray-100 p-4 rounded-md">
           <h3 className="font-medium mb-2">Statistics</h3>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>Pending Intents:</div>
             <div>{stats.pendingCount}</div>
-            
+
             <div>Processed Intents:</div>
             <div>{stats.processedCount}</div>
-            
+
             <div>Success Count:</div>
             <div>{stats.successCount}</div>
-            
+
             <div>Failure Count:</div>
             <div>{stats.failureCount}</div>
-            
+
             <div>Success Rate:</div>
             <div>
               {stats.processedCount === 0
@@ -357,46 +356,46 @@ export class NetworkSimulator {
     this.latency = 200; // ms
     this.packetLoss = 0; // percentage (0-100)
     this.enabled = false;
-    
+
     // Save the original fetch
     this.originalFetch = window.fetch;
   }
-  
+
   enable() {
     if (this.enabled) return;
-    
+
     this.enabled = true;
     window.fetch = this.createSimulatedFetch();
     console.log('Network simulation enabled');
   }
-  
+
   disable() {
     if (!this.enabled) return;
-    
+
     this.enabled = false;
     window.fetch = this.originalFetch;
     console.log('Network simulation disabled');
   }
-  
+
   setLatency(latencyMs) {
     this.latency = latencyMs;
   }
-  
+
   setPacketLoss(lossPercentage) {
     this.packetLoss = Math.min(100, Math.max(0, lossPercentage));
   }
-  
+
   createSimulatedFetch() {
     const simulator = this;
     const originalFetch = this.originalFetch;
-    
+
     return function simulatedFetch(url, options) {
       // Simulate packet loss
       if (Math.random() < simulator.packetLoss / 100) {
         console.log(`[Network Simulator] Simulating packet loss for: ${url}`);
         return Promise.reject(new Error('Network request failed (simulated packet loss)'));
       }
-      
+
       // Simulate latency
       return new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -470,12 +469,12 @@ export function runScenario(scenarioId) {
   if (!scenario) {
     throw new Error(`Unknown scenario: ${scenarioId}`);
   }
-  
+
   console.log(`Running scenario: ${scenario.name}`);
   scenario.setup();
   networkSimulator.enable();
   mockSolver.start();
-  
+
   return scenario;
 }
 
@@ -501,22 +500,22 @@ import { Label } from '../ui/label';
 export function ScenarioSimulator() {
   const [activeScenario, setActiveScenario] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
-  
+
   const handleRunScenario = (scenarioId) => {
     if (isRunning) {
       stopSimulation();
     }
-    
+
     runScenario(scenarioId);
     setActiveScenario(scenarioId);
     setIsRunning(true);
   };
-  
+
   const handleStopSimulation = () => {
     stopSimulation();
     setIsRunning(false);
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -540,7 +539,7 @@ export function ScenarioSimulator() {
             </div>
           ))}
         </RadioGroup>
-        
+
         {activeScenario && isRunning && (
           <div className="bg-blue-50 p-3 rounded-md">
             <p className="text-sm font-medium">
@@ -568,3 +567,208 @@ export function ScenarioSimulator() {
 ```
 
 In the next section, we'll explore advanced concepts in intent-based architecture, including composability.
+
+
+# Simulating Solvers
+
+## Overview
+
+In a production intent infrastructure, multiple solvers compete to fulfill user intents. In this section, you'll learn how to simulate this competitive environment for testing purposes.
+
+## Why Simulate Solvers?
+
+Solver simulation helps you:
+
+1. Test the complete intent fulfillment flow
+2. Validate the economic models and incentives
+3. Identify edge cases in solver selection and execution
+4. Prepare for multi-solver competition before launching in production
+
+## Basic Solver Simulation Script
+
+Here's a simplified Node.js script that simulates a solver monitoring for new intents:
+
+```javascript
+const nearAPI = require('near-api-js');
+const fs = require('fs');
+
+// Configure connection to NEAR
+const config = {
+  networkId: 'testnet',
+  nodeUrl: 'https://rpc.testnet.near.org',
+  walletUrl: 'https://wallet.testnet.near.org',
+  helperUrl: 'https://helper.testnet.near.org',
+};
+
+async function simulateSolver() {
+  // Connect to NEAR
+  const near = await nearAPI.connect(config);
+  const account = await near.account('solver.yourname.testnet');
+
+  console.log('Solver simulation started...');
+
+  // Create a mock database of intents (in production, use an indexer)
+  let mockDB = './intent_database.json';
+  if (!fs.existsSync(mockDB)) {
+    fs.writeFileSync(mockDB, JSON.stringify({intents: []}));
+  }
+
+  // Simulation loop
+  while(true) {
+    // Read the current state
+    const dbData = JSON.parse(fs.readFileSync(mockDB));
+
+    // Look for unprocessed intents
+    const openIntents = dbData.intents.filter(i => !i.processed);
+    console.log(`Found ${openIntents.length} open intents`);
+
+    for (const intent of openIntents) {
+      try {
+        // Check if this solver can handle this intent
+        if (intent.input_token === 'USDC' && intent.output_token === 'wNEAR') {
+          console.log(`Processing intent ${intent.id} for user ${intent.user}`);
+
+          // Call the solver contract
+          const result = await account.functionCall({
+            contractId: 'solver.yourname.testnet',
+            methodName: 'solve_intent',
+            args: {
+              user: intent.user,
+              input_amount: intent.input_amount
+            },
+            gas: '300000000000000'
+          });
+
+          console.log(`Solver execution result: ${JSON.stringify(result)}`);
+
+          // Mark as processed in our mock DB
+          intent.processed = true;
+          intent.result = result;
+        }
+      } catch (error) {
+        console.error(`Error processing intent ${intent.id}:`, error);
+      }
+    }
+
+    // Update the database
+    fs.writeFileSync(mockDB, JSON.stringify({intents: dbData.intents}));
+
+    // Wait before next scan
+    await new Promise(resolve => setTimeout(resolve, 10000));
+  }
+}
+
+// Start the simulation
+simulateSolver().catch(console.error);
+```
+
+Save this as `simulate-solver.js` and run with Node.js.
+
+## Adding Intents to the Simulation
+
+Create a separate script to add intents to your mock database:
+
+```javascript
+const fs = require('fs');
+
+function addIntent(intent) {
+  const mockDB = './intent_database.json';
+
+  // Read the current database
+  const dbData = JSON.parse(fs.readFileSync(mockDB));
+
+  // Add a new intent
+  const newIntent = {
+    id: `intent-${Date.now()}`,
+    user: intent.user,
+    input_token: intent.input_token,
+    input_amount: intent.input_amount,
+    output_token: intent.output_token,
+    max_slippage: intent.max_slippage,
+    timestamp: Date.now(),
+    processed: false
+  };
+
+  dbData.intents.push(newIntent);
+
+  // Write back to the database
+  fs.writeFileSync(mockDB, JSON.stringify(dbData, null, 2));
+
+  console.log(`Added new intent: ${newIntent.id}`);
+  return newIntent.id;
+}
+
+// Example usage
+addIntent({
+  user: 'yourname.testnet',
+  input_token: 'USDC',
+  input_amount: 100,
+  output_token: 'wNEAR',
+  max_slippage: 0.5
+});
+```
+
+Save this as `add-intent.js` and use it to populate your test intent database.
+
+## Simulating Multiple Competing Solvers
+
+To simulate a competitive environment, create multiple solver instances with different strategies:
+
+```javascript
+// solver-a.js - Optimizes for speed
+const delay = 2000; // Fast response time
+const fee = 0.8; // Higher fee
+
+// solver-b.js - Optimizes for cost
+const delay = 5000; // Slower response time
+const fee = 0.3; // Lower fee
+```
+
+Run these solvers simultaneously and observe which one wins for different types of intents.
+
+## Integrating with Real Indexers
+
+For more realistic testing, consider integrating with NEAR indexers:
+
+### Using NEAR Lake Framework
+
+```javascript
+const { LakeConfig, startStream } = require('near-lake-framework');
+
+const lakeConfig = new LakeConfig({
+  s3Prefix: 'testnet',
+  startBlockHeight: 12345678,
+});
+
+async function handleStreamerMessage(streamerMessage) {
+  const block = await streamerMessage.toBlock();
+
+  // Process receipts to find intents
+  for (const chunk of block.chunks) {
+    for (const receipt of chunk.receipts) {
+      // Look for calls to your verifier contract
+      if (receipt.receiverId === 'verifier.yourname.testnet') {
+        // Process and add to solver queue
+        console.log(`Found potential intent in receipt: ${receipt.receiptId}`);
+      }
+    }
+  }
+}
+
+startStream({
+  config: lakeConfig,
+  callbackOptions: {
+    blockCallbackFn: handleStreamerMessage
+  }
+});
+```
+
+## Next Steps
+
+After implementing and testing your solver simulation:
+
+1. Analyze the data to identify performance bottlenecks
+2. Refine your solver logic based on simulation results
+3. Consider how your system would scale with real-world usage
+
+This completes the testnet deployment and debugging section. Next, we'll explore more advanced use cases and production considerations for your intent infrastructure.

@@ -7,22 +7,27 @@ NEAR Intents represent a paradigm shift in how we think about blockchain interac
 
 ### Key Concepts
 
-1. **Intent-Centric Architecture**
-   - User expresses what they want
-   - System determines how to fulfill it
-   - Multiple possible execution paths
+1. **Intent**
+   - A declarative goal (e.g., "Swap 10 USDC for NEAR")
+   - Focuses on what the user wants, not how to do it
+   - Chain-agnostic and outcome-driven
 
-2. **Smart Wallet Abstraction**
-   - Session-based keys
-   - Delegated execution
-   - Improved UX with fewer confirmations
+2. **Solver**
+   - Competes to fulfill an intent optimally
+   - Finds the best route, price, or execution path
+   - Can operate across multiple chains or protocols
 
-3. **Verifiers & Solvers**
-   - Verifiers validate intent validity
-   - Solvers compete to execute intents
-   - Market-driven execution
+3. **Verifier**
+   - Validates that a Solver's proposed fulfillment meets the intent's constraints
+   - Ensures user expectations are met
+   - Acts as a security layer between intent and execution
 
-## Why Intents Matter
+4. **Smart Wallet**
+   - Abstracts signing, batching, and multi-chain logic
+   - Improves UX by hiding complexity
+   - Enables gasless transactions and session-based authentication
+
+## How NEAR Intents Work
 
 Traditional blockchain transactions require users to:
 - Know exact contract addresses
@@ -36,25 +41,39 @@ Intents simplify this by:
 - Enabling competitive execution
 - Supporting cross-chain operations
 
+## Workflow Diagram
+
+```
+User → UI → Intent Object
+               ↓
+        Verifier Contract
+               ↓
+        Solver Submission
+               ↓
+       Fulfillment Evaluation
+               ↓
+    Execution on-chain (via Smart Wallet)
+```
+
 ## Example Intent
 
 ```javascript
 {
-  "action": "swap",
-  "input_token": "USDC",
-  "input_amount": "100",
-  "output_token": "NEAR",
-  "min_output_amount": "10",
-  "deadline": "1h"
+  "intent": {
+    "action": "swap",
+    "input": {
+      "token": "USDC",
+      "amount": "100"
+    },
+    "output": {
+      "token": "NEAR"
+    }
+  },
+  "constraints": {
+    "maxSlippage": "0.5"
+  }
 }
 ```
-
-This simple intent could be fulfilled through:
-- Different DEXes
-- Multiple chains
-- Various routing paths
-
-The solver network determines the best execution strategy.
 
 ## Benefits
 

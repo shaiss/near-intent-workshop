@@ -1,13 +1,13 @@
 
-# Repository Cloning
+# Repository Structure
 
-## Getting the Workshop Code
+## Cloning the Workshop Repository
 
 To follow along with this workshop, you'll need to clone the workshop repository to your local machine.
 
 ```bash
-git clone https://github.com/shaiss/near-intent-workshop.git
-cd intents-workshop
+git clone https://github.com/near-examples/near-intents-example.git
+cd near-intents-example
 ```
 
 ## Project Structure
@@ -15,16 +15,46 @@ cd intents-workshop
 The repository is organized as follows:
 
 ```
-intents-workshop/
-├── contracts/        # Smart contracts for the workshop
-├── frontend/         # React application for the frontend
-├── docs/             # Additional documentation
-└── examples/         # Code examples for each section
+/workshop-root
+  /contracts         # Contains Verifier and Solver smart contracts
+  /frontend          # React/Next UI for expressing and fulfilling intents
+  /wallet            # Smart wallet abstraction logic
+  /scripts           # Deployment and simulation scripts
+  near.config.js     # Testnet config
 ```
+
+## Key Components
+
+### `/contracts`
+
+Contains the smart contract code for:
+- Intent Verifier: Validates that intents are properly formed and constraints are met
+- Solver Contract: Implements the logic to fulfill intents
+
+### `/frontend`
+
+The user interface for:
+- Creating and submitting intents
+- Connecting to wallets
+- Monitoring intent execution
+
+### `/wallet`
+
+Smart wallet abstraction implementation:
+- Session key management
+- Transaction batching
+- Account abstraction
+
+### `/scripts`
+
+Utility scripts for:
+- Deploying contracts to testnet
+- Testing intent execution
+- Simulating solver behavior
 
 ## Installation
 
-Install the dependencies by running:
+After cloning the repository, install the dependencies:
 
 ```bash
 npm install
@@ -32,20 +62,31 @@ npm install
 
 ## Initial Setup
 
-1. Configure your project to use the NEAR testnet
-2. Set up your environment variables
-3. Make sure everything is working by running a test
+Ensure your environment is properly configured:
+
+1. Make sure you have a NEAR testnet account
+2. Configure NEAR CLI with your account
+3. Check that the development environment is working
 
 ```bash
-npm run test
+# Test the development environment
+npm run dev
 ```
 
-You should see all tests passing if your setup is correct.
+## Workshop Files
+
+Throughout the workshop, we'll be working with specific files:
+
+- Verifier contract implementation
+- Solver contract implementation
+- Frontend components for intent creation
+- Smart wallet integration code
 
 ## Troubleshooting
 
-If you encounter issues during the setup process:
+If you encounter issues with the repository:
 
-1. Make sure you have the correct Node.js version
-2. Verify that your NEAR account is properly configured
-3. Check the workshop's GitHub Issues for known problems
+1. Make sure all dependencies are installed
+2. Check that you're using the correct branch
+3. Verify your NEAR account is properly set up
+4. Refer to the workshop GitHub issues for common problems

@@ -13,6 +13,13 @@ Welcome to the NEAR Intents & Smart Wallet Abstraction workshop! In this compreh
 - Implementing cross-chain features with intent architecture
 - Production best practices and advanced techniques
 
+### Key Goals
+
+- Build a minimal working demo that lets users express intents
+- Execute intents via a smart wallet on NEAR testnet
+- Gain practical experience with NEAR's intent architecture
+- Understand how to improve Web3 UX through abstraction
+
 ### Prerequisites
 
 Before starting this workshop, you should have:

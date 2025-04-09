@@ -16,8 +16,10 @@ class ContentService {
   async getWorkshopStructure() {
     const now = Date.now();
     
-    // Return cached structure if it exists and is fresh
-    if (this.structureCache && this.lastFetchTime.get('structure') > now - this.cacheExpiry) {
+    // Return cached structure if it exists and is fresh (only in production)
+    if (this.isProduction && 
+        this.structureCache && 
+        this.lastFetchTime.get('structure') > now - this.cacheExpiry) {
       return this.structureCache;
     }
     
@@ -29,8 +31,8 @@ class ContentService {
         // In production, use the preloaded content
         text = contentMap['workshop-structure.md'];
       } else {
-        // In development, fetch from file system
-        const response = await fetch('/src/content/workshop-structure.md');
+        // In development, always fetch from file system to get latest
+        const response = await fetch('/src/content/workshop-structure.md?t=' + now);
         text = await response.text();
       }
       
@@ -99,6 +101,11 @@ class ContentService {
     this.contentCache.clear();
     this.lastFetchTime.clear();
     this.structureCache = null;
+    
+    if (this.isProduction) {
+      // In production, we need to clear module cache
+      import.meta.glob('/src/content/*.md', { eager: true, import: 'default' });
+    }
     
     // Fetch fresh structure
     return await this.getWorkshopStructure();

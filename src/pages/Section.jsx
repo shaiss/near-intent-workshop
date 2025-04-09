@@ -115,6 +115,16 @@ export default function Section() {
             <h1 className="text-3xl font-bold">
               {currentSection.part.id}.{currentSection.id} {currentSection.title}
             </h1>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshContent}
+              disabled={refreshing}
+              className="ml-2"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
         </div>
       )}

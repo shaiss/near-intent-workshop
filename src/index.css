@@ -72,6 +72,16 @@ button:focus-visible {
   }
 } */
 
+@layer components {
+  .neo-button {
+    @apply border-3 border-black shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] active:shadow-[2px_2px_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all duration-100 ease-in-out;
+  }
+  
+  .border-3 {
+    border-width: 3px;
+  }
+}
+
 
 
 @layer base {

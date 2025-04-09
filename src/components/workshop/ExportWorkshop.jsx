@@ -26,9 +26,8 @@ export default function ExportWorkshop() {
 
   return (
     <Button
-      variant="default"
       onClick={handleExportPDF}
-      className="w-full bg-white text-black neo-button font-bold flex items-center justify-center"
+      className="w-full neo-button flex items-center justify-center bg-white font-bold text-black border-3 border-black"
     >
       <Download className="w-4 h-4 mr-2" />
       Export Workshop

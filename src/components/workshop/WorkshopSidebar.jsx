@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronDown, RefreshCw } from "lucide-react";
+import { ChevronRight, ChevronDown, RefreshCw, Download } from "lucide-react";
 import ContentService from "../../services/ContentService";
 import ExportWorkshop from "./ExportWorkshop";
 
@@ -80,8 +80,9 @@ export default function WorkshopSidebar({ onNavigate }) {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4">
+    <div className="h-full flex flex-col bg-yellow-200">
+      {/* Header with black bottom border */}
+      <div className="p-4 bg-yellow-300 border-b-4 border-black">
         <h2 className="text-xl font-bold flex items-center">
           <svg
             className="w-5 h-5 mr-2"
@@ -102,21 +103,17 @@ export default function WorkshopSidebar({ onNavigate }) {
       </div>
 
       <div className="flex-grow overflow-auto">
-        <div className="space-y-1">
+        <div>
           {structure.parts.map((part) => (
-            <div key={part.id} className="border-b last:border-b-0">
+            <div key={part.id} className="border-b border-gray-300">
               <button
                 onClick={() => togglePart(part.id)}
-                className="w-full px-4 py-2 text-left font-medium flex justify-between items-center hover:bg-gray-100"
+                className="w-full px-4 py-3 text-left font-medium flex justify-between items-center hover:bg-yellow-300"
               >
-                <span>
+                <span className="font-bold">
                   Part {part.id}: {part.title}
                 </span>
-                {expandedParts[part.id] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
+                <ChevronRight className={`h-5 w-5 transition-transform ${expandedParts[part.id] ? 'rotate-90' : ''}`} />
               </button>
 
               {expandedParts[part.id] && (
@@ -126,7 +123,7 @@ export default function WorkshopSidebar({ onNavigate }) {
                       <Link
                         key={section.id}
                         to={createPageUrl(`Section?slug=${section.slug}`)}
-                        className="block py-1.5 pl-4 pr-2 text-sm hover:bg-gray-100 rounded"
+                        className="block py-2 pl-4 pr-2 text-sm hover:bg-yellow-300"
                         onClick={onNavigate}
                       >
                         {part.id}.{section.id} {section.title}
@@ -134,7 +131,7 @@ export default function WorkshopSidebar({ onNavigate }) {
                     ) : (
                       <div
                         key={section.id}
-                        className="block py-1.5 pl-4 pr-2 text-sm text-gray-500 italic"
+                        className="block py-2 pl-4 pr-2 text-sm text-gray-500 italic"
                       >
                         {part.id}.{section.id} {section.title} (Coming Soon)
                       </div>
@@ -147,13 +144,11 @@ export default function WorkshopSidebar({ onNavigate }) {
         </div>
       </div>
 
-      <div className="p-4 border-t mt-auto space-y-2">
+      <div className="p-4 mt-auto space-y-4">
         <Button
-          variant="ghost"
-          size="sm"
           onClick={refreshContent}
           disabled={refreshing}
-          className="w-full bg-white text-black neo-button font-bold flex items-center justify-center"
+          className="w-full neo-button flex items-center justify-center bg-white font-bold text-black border-3 border-black"
         >
           <RefreshCw
             className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
@@ -161,10 +156,8 @@ export default function WorkshopSidebar({ onNavigate }) {
           {refreshing ? "Reloading..." : "Reload Content"}
         </Button>
 
-        {/* Export Workshop Button - Make it more visible */}
-        <div className="mt-4 border-t pt-4">
-          <ExportWorkshop />
-        </div>
+        {/* Export Workshop Button */}
+        <ExportWorkshop />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-# Understanding NEAR Intents
+# What Are Intents? (Theory & Concept)
 
 ## What Are Intents?
 

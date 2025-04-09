@@ -1,4 +1,4 @@
-# Smart Wallet Fundamentals
+# What Is Smart Wallet Abstraction
 
 ## What Is a Smart Wallet?
 

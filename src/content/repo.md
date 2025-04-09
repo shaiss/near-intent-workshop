@@ -1,5 +1,5 @@
 
-# Repository Structure
+# Repo Cloning & Folder Structure Overview
 
 ## Cloning the Workshop Repository
 

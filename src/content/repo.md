@@ -6,7 +6,7 @@
 To follow along with this workshop, you'll need to clone the workshop repository to your local machine.
 
 ```bash
-git clone https://github.com/near/intents-workshop.git
+git clone https://github.com/shaiss/near-intent-workshop.git
 cd intents-workshop
 ```
 

@@ -36,7 +36,7 @@ export default function Home() {
               </Button>
             </Link>
             <a 
-              href="https://github.com/near/intents-workshop" 
+              href="https://github.com/shaiss/near-intent-workshop" 
               target="_blank" 
               rel="noopener noreferrer"
               className="bg-white text-black neo-button text-lg px-8 py-6 font-bold flex items-center"

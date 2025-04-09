@@ -11,11 +11,6 @@ buildCommand = "npm run build"
 run = ["sh", "-c", "npx serve -s dist"]
 build = ["sh", "-c", "npm run build"]
 
-[[ports]]
-localPort = 5174
-externalPort = 80
-exposeLocalhost = true
-
 [workflows]
 runButton = "Run"
 
@@ -27,3 +22,8 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[ports]]
+localPort = 5173
+externalPort = 80
+exposeLocalhost = true

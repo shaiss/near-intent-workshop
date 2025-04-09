@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Menu, X, FileText, ChevronDown, ChevronUp, Home, Refresh } from "lucide-react";
+import { Menu, X, FileText, ChevronDown, ChevronUp, Home, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { workshopStructure } from '@/components/content/workshop-structure';
@@ -167,7 +167,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
           ))}
           <Button className="mt-4 w-full" onClick={() => window.location.reload()}>
-            <Refresh className="h-4 w-4 mr-2"/> Reload Content
+            <RefreshCw className="h-4 w-4 mr-2"/> Reload Content
           </Button>
         </nav>
       </aside>

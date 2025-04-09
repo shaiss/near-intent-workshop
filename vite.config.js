@@ -9,12 +9,13 @@ export default defineConfig({
     allowedHosts: ['52839a0c-803c-4ec0-ac8a-60ad39c69f64-00-1g2qs1o5dqiy.kirk.replit.dev'],
     fs: {
       // Allow serving files from one level up the project root
-      allow: ['..']
+      allow: ['..', './src/content']
     },
     watch: {
       // Force server to rebuild when content changes
       usePolling: true,
       interval: 500,
+      include: ['src/**/*.md', 'src/**/*.js', 'src/**/*.jsx']
     },
     hmr: {
       // Improve hot module replacement

@@ -88,12 +88,26 @@ class ContentService {
           throw new Error(`Content file ${fileName} not found`);
         }
       } else {
-        // In development, fetch from file system with cache busting
-        const response = await fetch(`/src/content/${fileName}?t=${Date.now()}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch content: ${response.status}`);
+        try {
+          // First try to use contentMap in development too (for easier debugging)
+          text = contentMap[fileName];
+          if (!text) {
+            // If not in contentMap, fall back to fetch
+            console.log(`Content file ${fileName} not found in contentMap, fetching from filesystem`);
+            const response = await fetch(`/src/content/${fileName}?t=${Date.now()}`);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch content: ${response.status}`);
+            }
+            text = await response.text();
+          }
+        } catch (fetchError) {
+          console.error(`Error fetching ${fileName} from filesystem:`, fetchError);
+          // Last resort - try contentMap again
+          text = contentMap[fileName];
+          if (!text) {
+            throw new Error(`Content file ${fileName} not found in contentMap or filesystem`);
+          }
         }
-        text = await response.text();
       }
       
       // Update cache

@@ -5,7 +5,7 @@ import { Menu, X, FileText, ChevronDown, ChevronUp, Home, RefreshCw } from "luci
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // Import the function to parse the markdown file
-import { parseWorkshopStructure } from '@/services/ContentService';
+import ContentService from '@/services/ContentService';
 
 
 export default function Layout({ children, currentPageName }) {
@@ -18,7 +18,7 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     const fetchWorkshopStructure = async () => {
       try {
-        const structure = await parseWorkshopStructure();
+        const structure = await ContentService.getWorkshopStructure();
         setWorkshopStructure(structure);
       } catch (error) {
         console.error("Error fetching workshop structure:", error);

@@ -7,6 +7,7 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "static"
 publicDir = "dist"
+buildCommand = "npm run build"
 
 [[ports]]
 localPort = 5173

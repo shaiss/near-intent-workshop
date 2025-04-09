@@ -252,7 +252,7 @@ class ContentService {
     return structure;
   }
 
-  exportWorkshopContent: async () => {
+  async exportWorkshopContent() {
     try {
       const structure = await this.getWorkshopStructure();
       let markdownContent = `# ${structure.title}\n\n${structure.description}\n\n`;
@@ -267,7 +267,7 @@ class ContentService {
           // If the section has a slug, get its content
           if (section.slug) {
             try {
-              const sectionContent = contentMap.get(section.slug + '.md');
+              const sectionContent = contentMap[section.slug + '.md'];
               if (sectionContent) {
                 // Remove the first heading (title) as we already added it
                 const contentWithoutTitle = sectionContent.replace(/^#.*?\n/, '');
@@ -289,7 +289,7 @@ class ContentService {
       console.error("Failed to export workshop content:", error);
       throw error;
     }
-  },
+  }
 }
 
 export default new ContentService();

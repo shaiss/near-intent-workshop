@@ -1,24 +1,41 @@
 
 import React, { useState, useEffect } from 'react';
-import { workshopStructure } from '@/components/content/workshop-structure';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import SectionContent from '../components/workshop/SectionContent';
+import ContentService from '../services/ContentService';
 
 export default function Section() {
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [currentSection, setCurrentSection] = useState(null);
+  const [workshopStructure, setWorkshopStructure] = useState(null);
   const navigate = useNavigate();
 
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('slug');
 
   useEffect(() => {
-    loadSection();
-  }, [slug]);
+    loadWorkshopStructure();
+  }, []);
+
+  useEffect(() => {
+    if (workshopStructure && slug) {
+      loadSection();
+    }
+  }, [slug, workshopStructure]);
+
+  const loadWorkshopStructure = async () => {
+    try {
+      const structure = await ContentService.getWorkshopStructure();
+      setWorkshopStructure(structure);
+    } catch (error) {
+      console.error('Error loading workshop structure:', error);
+    }
+  };
 
   const loadSection = async () => {
     setLoading(true);
@@ -37,9 +54,9 @@ export default function Section() {
       }
 
       if (foundSection && foundPart) {
-        // Dynamically import the content
-        const module = await import(`../components/content/part${foundPart.id}/${slug}.js`);
-        setContent(module.default);
+        // Load the markdown content
+        const markdown = await ContentService.getContent(`${slug}.md`);
+        setContent(markdown);
         setCurrentSection({ ...foundSection, part: foundPart });
       }
     } catch (error) {
@@ -48,9 +65,20 @@ export default function Section() {
     setLoading(false);
   };
 
+  const refreshContent = async () => {
+    setRefreshing(true);
+    try {
+      await ContentService.refreshContent(`${slug}.md`);
+      await loadSection();
+    } catch (error) {
+      console.error('Error refreshing content:', error);
+    }
+    setRefreshing(false);
+  };
+
   // Navigation functions
   const getAdjacentSections = () => {
-    if (!currentSection) return { prev: null, next: null };
+    if (!currentSection || !workshopStructure) return { prev: null, next: null };
 
     let allSections = [];
     workshopStructure.parts.forEach(part => {
@@ -71,6 +99,11 @@ export default function Section() {
 
   const { prev, next } = getAdjacentSections();
 
+  const navigateToSection = (section) => {
+    if (!section) return;
+    navigate(createPageUrl('Section', `slug=${section.slug}`));
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       {currentSection && (
@@ -78,46 +111,44 @@ export default function Section() {
           <div className="text-sm text-gray-500 mb-2">
             Part {currentSection.part.id}: {currentSection.part.title}
           </div>
-          <h1 className="text-3xl font-bold">
-            {currentSection.part.id}.{currentSection.id} {currentSection.title}
-          </h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">
+              {currentSection.part.id}.{currentSection.id} {currentSection.title}
+            </h1>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshContent}
+              disabled={refreshing}
+              className="ml-2"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
       )}
 
       <SectionContent content={content} loading={loading} />
 
-      {/* Navigation */}
-      <div className="flex justify-between items-center mt-12 pt-6 border-t">
-        <div>
-          {prev && (
-            <Button
-              variant="outline"
-              onClick={() => navigate(createPageUrl(`Section?slug=${prev.slug}`))}
-              className="flex items-center gap-2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <div className="flex flex-col items-start">
-                <span className="text-xs opacity-70">Previous</span>
-                <span className="font-bold">{prev.title}</span>
-              </div>
-            </Button>
-          )}
-        </div>
-        <div>
-          {next && (
-            <Button
-              variant="outline"
-              onClick={() => navigate(createPageUrl(`Section?slug=${next.slug}`))}
-              className="flex items-center gap-2"
-            >
-              <div className="flex flex-col items-end">
-                <span className="text-xs opacity-70">Next</span>
-                <span className="font-bold">{next.title}</span>
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
+      <div className="flex justify-between mt-8">
+        <Button 
+          variant="outline" 
+          onClick={() => navigateToSection(prev)}
+          disabled={!prev}
+        >
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Previous
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          onClick={() => navigateToSection(next)}
+          disabled={!next}
+        >
+          Next
+          <ChevronRight className="w-4 h-4 ml-2" />
+        </Button>
       </div>
     </div>
   );

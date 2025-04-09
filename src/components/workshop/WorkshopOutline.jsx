@@ -1,21 +1,87 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from "@/utils";
-import { workshopStructure } from '@/components/content/workshop-structure';
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import ContentService from '../../services/ContentService';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WorkshopOutline() {
+  const [structure, setStructure] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    loadWorkshopStructure();
+  }, []);
+
+  const loadWorkshopStructure = async () => {
+    setLoading(true);
+    try {
+      const workshopStructure = await ContentService.getWorkshopStructure();
+      setStructure(workshopStructure);
+    } catch (error) {
+      console.error('Error loading workshop structure:', error);
+    }
+    setLoading(false);
+  };
+
+  const refreshContent = async () => {
+    setRefreshing(true);
+    try {
+      await ContentService.refreshAllContent();
+      await loadWorkshopStructure();
+    } catch (error) {
+      console.error('Error refreshing content:', error);
+    }
+    setRefreshing(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-8">
+        <Skeleton className="h-12 w-3/4" />
+        <Skeleton className="h-6 w-1/2" />
+        
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="border rounded-lg p-6 space-y-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4].map((j) => (
+                <Skeleton key={j} className="h-6 w-full" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">{workshopStructure.title}</h1>
-      <p className="text-lg mb-8">{workshopStructure.description}</p>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">{structure.title}</h1>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={refreshContent}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh Content
+        </Button>
+      </div>
+      
+      <p className="text-lg mb-8">{structure.description}</p>
       
       <div className="space-y-8">
-        {workshopStructure.parts.map((part) => (
+        {structure.parts.map((part) => (
           <div key={part.id} className="border rounded-lg p-6">
             <h2 className="text-xl font-bold mb-2">
               Part {part.id}: {part.title}
             </h2>
-            <p className="text-gray-600 mb-4">{part.description}</p>
             <div className="grid gap-2">
               {part.sections.map((section) => (
                 <Link

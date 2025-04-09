@@ -7,6 +7,7 @@ import ContentService from '../../services/ContentService';
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WorkshopOutline() {
+  console.log("WorkshopOutline rendering"); // Debug log
   const [structure, setStructure] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

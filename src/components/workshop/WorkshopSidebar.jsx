@@ -7,6 +7,7 @@ import ContentService from "../../services/ContentService";
 import ExportWorkshop from "./ExportWorkshop";
 
 export default function WorkshopSidebar() {
+  console.log("WorkshopSidebar rendering"); // Debug log
   const [structure, setStructure] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -147,8 +148,8 @@ export default function WorkshopSidebar() {
           {refreshing ? "Reloading..." : "Reload Content"}
         </Button>
         
-        {/* Export Workshop Button */}
-        <div className="mt-2">
+        {/* Export Workshop Button - Make it more visible */}
+        <div className="mt-4 border-t pt-4">
           <ExportWorkshop />
         </div>
       </div>

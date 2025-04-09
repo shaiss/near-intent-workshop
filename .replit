@@ -8,6 +8,8 @@ channel = "stable-24_05"
 deploymentTarget = "static"
 publicDir = "dist"
 buildCommand = "npm run build"
+run = ["sh", "-c", "npx serve -s dist"]
+build = ["sh", "-c", "npm run build"]
 
 [[ports]]
 localPort = 5173

@@ -121,6 +121,33 @@ button:focus-visible {
 
 /* High contrast mode support */
 @media (forced-colors: active) {
+
+/* Enhanced neo button effect with thick border and shadow */
+.neo-brutalism {
+  border: 3px solid black;
+  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  transition: all 0.2s ease;
+}
+
+.neo-brutalism:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0px 0px rgba(0,0,0,1);
+}
+
+/* Part color marker styles */
+.part-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
   .neo-button {
     border: 3px solid CanvasText;
   }

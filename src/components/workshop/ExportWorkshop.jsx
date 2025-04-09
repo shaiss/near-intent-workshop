@@ -33,7 +33,7 @@ export default function ExportWorkshop() {
     <Button
       onClick={handleExportPDF}
       disabled={isExporting}
-      className="w-full neo-button flex items-center justify-center bg-black font-bold text-white border-3 border-black hover:bg-black/90"
+      className="w-full neo-button flex items-center justify-center bg-black font-bold text-white border-3 border-black hover:bg-black/90 py-2"
       aria-label="Export workshop content"
     >
       <Download className={`w-4 h-4 mr-2 ${isExporting ? "animate-bounce" : ""}`} aria-hidden="true" />

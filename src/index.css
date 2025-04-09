@@ -42,6 +42,63 @@ h1 {
 
 button {
   border-radius: 8px;
+
+/* Enhanced neobrutalist styles */
+.neo-brutalism {
+  border: 3px solid black;
+  box-shadow: 4px 4px 0 0 black;
+}
+
+.neo-brutalism-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 0 black;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Improve sidebar interaction styles */
+.sidebar-section {
+  position: relative;
+}
+
+.sidebar-section::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 0;
+  background-color: black;
+  transition: height 0.2s ease;
+}
+
+.sidebar-section:hover::before {
+  height: 70%;
+}
+
+/* Accessibility improvements for focus states */
+:focus-visible {
+  outline: 2px solid black;
+  outline-offset: 2px;
+}
+
+/* Enhanced button styles with proper contrast for accessibility */
+.neo-button:focus-visible {
+  outline: 3px solid black;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .neo-button {
+    border: 3px solid CanvasText;
+  }
+  
+  .border-black {
+    border-color: CanvasText;
+  }
+}
+
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;

@@ -32,6 +32,73 @@ const derivationPath = "m/44'/397'/0'/0'/1'";
 const derivedKey = await deriveKeyFromPath(masterKey, derivationPath);
 ```
 
+## Session Key Implementation
+
+Here's a practical implementation of session key management:
+
+```javascript
+import { KeyPair } from 'near-api-js';
+import CryptoJS from 'crypto-js';
+
+class SessionKeyManager {
+  constructor() {
+    this.keyPrefix = 'near_session_key_';
+  }
+  
+  // Generate a new session key
+  generateSessionKey(accountId) {
+    const keyPair = KeyPair.fromRandom('ed25519');
+    return {
+      accountId,
+      privateKey: keyPair.secretKey,
+      publicKey: keyPair.publicKey.toString(),
+      created: Date.now(),
+      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+    };
+  }
+  
+  // Encrypt and store session key
+  storeSessionKey(sessionKey, password) {
+    const encryptedKey = CryptoJS.AES.encrypt(
+      JSON.stringify(sessionKey),
+      password
+    ).toString();
+    
+    localStorage.setItem(
+      this.keyPrefix + sessionKey.accountId,
+      encryptedKey
+    );
+  }
+  
+  // Retrieve and decrypt session key
+  getSessionKey(accountId, password) {
+    const encryptedKey = localStorage.getItem(this.keyPrefix + accountId);
+    if (!encryptedKey) return null;
+    
+    try {
+      const decrypted = CryptoJS.AES.decrypt(encryptedKey, password).toString(CryptoJS.enc.Utf8);
+      const sessionKey = JSON.parse(decrypted);
+      
+      // Check expiration
+      if (sessionKey.expires < Date.now()) {
+        this.removeSessionKey(accountId);
+        return null;
+      }
+      
+      return sessionKey;
+    } catch (e) {
+      console.error('Failed to decrypt session key:', e);
+      return null;
+    }
+  }
+  
+  // Remove session key
+  removeSessionKey(accountId) {
+    localStorage.removeItem(this.keyPrefix + accountId);
+  }
+}
+```
+
 ## Key Rotation Policies
 
 - Automatic rotation after expiration

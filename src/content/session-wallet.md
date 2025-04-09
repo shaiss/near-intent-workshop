@@ -46,6 +46,48 @@ const transaction = nearAPI.transactions.createTransaction(
 const signedTransaction = await wallet.signTransaction(transaction);
 ```
 
+## Setting Up a Session Wallet
+
+Here's a complete implementation example:
+
+```javascript
+import { connect, keyStores, KeyPair } from 'near-api-js';
+
+const setupSessionWallet = async (privateKey) => {
+  const keyStore = new keyStores.InMemoryKeyStore();
+  const keyPair = KeyPair.fromString(privateKey);
+  await keyStore.setKey("testnet", "your-account.testnet", keyPair);
+
+  const near = await connect({
+    networkId: "testnet",
+    keyStore,
+    nodeUrl: "https://rpc.testnet.near.org",
+    walletUrl: "https://wallet.testnet.near.org",
+  });
+
+  const account = await near.account("your-account.testnet");
+  return account;
+};
+```
+
+## Using the Session Wallet
+
+Once set up, you can use the session wallet to call contract methods directly:
+
+```javascript
+const callContract = async (sessionWallet, contractId, method, args) => {
+  const result = await sessionWallet.functionCall({
+    contractId,
+    methodName: method,
+    args,
+    gas: '30000000000000',
+    attachedDeposit: '0',
+  });
+  
+  return result;
+};
+```
+
 ## Managing Session Lifetime
 
 Sessions should have:

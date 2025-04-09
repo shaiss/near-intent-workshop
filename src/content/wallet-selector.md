@@ -1,47 +1,104 @@
 
-# Wallet Selector
+# Wallet Selector Integration
 
-## Introduction to NEAR Wallet Selector
+## Overview of NEAR Wallet Selector
 
-The NEAR Wallet Selector is a flexible, modular library that simplifies wallet integration for NEAR dApps. When combined with intents, it provides a powerful foundation for building seamless user experiences.
+NEAR Wallet Selector is a modular library that simplifies wallet integration for NEAR applications. It provides a unified interface for connecting to various NEAR wallets.
 
-## Key Features
+## Setting Up Wallet Selector
 
-- Unified interface for multiple wallet providers
-- Modal UI for wallet selection
-- Responsive design that works on mobile and desktop
-- Support for different authentication methods
+First, let's install the necessary packages:
 
-## Implementation Steps
+```bash
+npm install @near-wallet-selector/core @near-wallet-selector/near-wallet near-api-js
+```
 
-1. Install the wallet selector packages
-2. Configure available wallets
-3. Create a wallet context provider
-4. Build the connect button component
-5. Handle wallet events and state
+## Basic Integration
 
-## Code Example
+The core setup involves initializing the wallet selector with appropriate modules:
 
 ```javascript
 import { setupWalletSelector } from '@near-wallet-selector/core';
-import { setupModal } from '@near-wallet-selector/modal-ui';
-import { setupMyNearWallet } from '@near-wallet-selector/my-near-wallet';
+import { setupNearWallet } from '@near-wallet-selector/near-wallet';
 
-// Setup the wallet selector
-const selector = await setupWalletSelector({
-  network: 'testnet',
-  modules: [setupMyNearWallet()],
-});
+export const initWallet = async () => {
+  const selector = await setupWalletSelector({
+    network: 'testnet',
+    modules: [setupNearWallet()],
+  });
 
-// Setup the modal UI
-const modal = setupModal(selector, {
-  contractId: 'example.testnet',
-});
+  return selector;
+};
+```
 
-// Handle wallet connection
-document.getElementById('connect-button').addEventListener('click', () => {
-  modal.show();
-});
+## Creating a Connect Button
+
+To allow users to connect their wallets, create a simple connection button:
+
+```javascript
+const ConnectWallet = ({ selector }) => {
+  const handleConnect = async () => {
+    const wallet = await selector.wallet('near-wallet');
+    await wallet.signIn({
+      contractId: 'your-contract.testnet',
+      methodNames: ['verify_intent'],
+    });
+  };
+
+  return <button onClick={handleConnect}>Connect Wallet</button>;
+};
+```
+
+## Managing Wallet State
+
+Track connection state for a better user experience:
+
+```javascript
+import { useEffect, useState } from 'react';
+
+const WalletConnection = ({ selector }) => {
+  const [accountId, setAccountId] = useState(null);
+  
+  useEffect(() => {
+    // Subscribe to account changes
+    const subscription = selector.store.observable
+      .subscribe((state) => {
+        const accounts = state.accounts || [];
+        if (accounts.length) {
+          setAccountId(accounts[0].accountId);
+        } else {
+          setAccountId(null);
+        }
+      });
+    
+    return () => subscription.unsubscribe();
+  }, [selector]);
+  
+  return (
+    <div>
+      {accountId ? (
+        <div>Connected: {accountId}</div>
+      ) : (
+        <ConnectWallet selector={selector} />
+      )}
+    </div>
+  );
+};
+```
+
+## Handling Sign Out
+
+Provide a way for users to disconnect:
+
+```javascript
+const SignOutButton = ({ selector }) => {
+  const handleSignOut = async () => {
+    const wallet = await selector.wallet();
+    await wallet.signOut();
+  };
+  
+  return <button onClick={handleSignOut}>Sign Out</button>;
+};
 ```
 
 ## Integration with Intent Architecture

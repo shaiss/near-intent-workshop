@@ -39,6 +39,34 @@ async function transfer(params) {
 }
 ```
 
+### Implementing Intent Submission
+
+Here's how to implement a complete intent submission flow:
+
+```javascript
+// Submit an intent using a session wallet
+const submitIntent = async (intent) => {
+  // Get the session wallet
+  const sessionWallet = await setupSessionWallet(sessionKey.privateKey);
+  
+  // Call the verifier contract
+  const result = await sessionWallet.functionCall({
+    contractId: 'verifier.testnet',
+    methodName: 'verify_intent',
+    args: { intent },
+    gas: '30000000000000',
+    attachedDeposit: '0',
+  });
+  
+  // Return the transaction outcome
+  return {
+    transactionHash: result.transaction.hash,
+    status: 'Submitted',
+    details: result
+  };
+};
+```
+
 ### User-Centric Action Design
 
 Focus on mapping user goals to intents:
@@ -47,6 +75,74 @@ Focus on mapping user goals to intents:
 2. Create intent templates for each goal
 3. Build UIs around goals rather than transactions
 4. Provide feedback in user-friendly terms
+
+### Example UI Implementation
+
+```jsx
+import { useState } from 'react';
+
+function SwapForm({ onSubmit }) {
+  const [amount, setAmount] = useState('');
+  const [inputToken, setInputToken] = useState('USDC');
+  const [outputToken, setOutputToken] = useState('NEAR');
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const intent = {
+      action: "swap",
+      input_token: inputToken,
+      input_amount: parseFloat(amount),
+      output_token: outputToken,
+      max_slippage: 0.5
+    };
+    
+    onSubmit(intent);
+  };
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Swap Tokens</h2>
+      
+      <div>
+        <label>Amount:</label>
+        <input 
+          type="number" 
+          value={amount} 
+          onChange={(e) => setAmount(e.target.value)}
+          required
+        />
+      </div>
+      
+      <div>
+        <label>From Token:</label>
+        <select 
+          value={inputToken} 
+          onChange={(e) => setInputToken(e.target.value)}
+        >
+          <option value="USDC">USDC</option>
+          <option value="NEAR">NEAR</option>
+          <option value="ETH">ETH</option>
+        </select>
+      </div>
+      
+      <div>
+        <label>To Token:</label>
+        <select 
+          value={outputToken} 
+          onChange={(e) => setOutputToken(e.target.value)}
+        >
+          <option value="NEAR">NEAR</option>
+          <option value="USDC">USDC</option>
+          <option value="ETH">ETH</option>
+        </select>
+      </div>
+      
+      <button type="submit">Submit Intent</button>
+    </form>
+  );
+}
+```
 
 ## Building Composable Actions
 

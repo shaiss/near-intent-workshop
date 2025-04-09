@@ -1,9 +1,7 @@
-
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Menu, X, FileText, ChevronDown, ChevronUp, Home } from "lucide-react";
+import { Menu, X, FileText, ChevronDown, ChevronUp, Home, Refresh } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { workshopStructure } from '@/components/content/workshop-structure';
@@ -53,49 +51,49 @@ export default function Layout({ children, currentPageName }) {
             --border-width: 4px;
             --shadow-offset: 6px;
           }
-          
+
           body {
             font-family: 'Inter', 'Helvetica Neue', sans-serif;
           }
-          
+
           .neo-brutalism {
             border: var(--border-width) solid black;
             box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 #000;
             transition: all 0.2s ease;
           }
-          
+
           .neo-brutalism:hover {
             transform: translate(-2px, -2px);
             box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 #000;
           }
-          
+
           .neo-button {
             border: 3px solid black;
             box-shadow: 4px 4px 0 0 #000;
             transition: all 0.1s ease;
             transform: translate(0, 0);
           }
-          
+
           .neo-button:hover {
             transform: translate(-2px, -2px);
             box-shadow: 6px 6px 0 0 #000;
           }
-          
+
           .neo-button:active {
             transform: translate(2px, 2px);
             box-shadow: 2px 2px 0 0 #000;
           }
-          
+
           .neo-nav-item {
             border-bottom: 3px solid transparent;
             transition: all 0.2s ease;
           }
-          
+
           .neo-nav-item:hover, .neo-nav-item.active {
             border-bottom: 3px solid black;
             background-color: rgba(0,0,0,0.05);
           }
-          
+
           .neo-sidebar {
             border-right: var(--border-width) solid black;
             box-shadow: var(--shadow-offset) 0 0 0 #000;
@@ -145,7 +143,7 @@ export default function Layout({ children, currentPageName }) {
                 <span>{title}</span>
                 {expandedParts[part] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </div>
-              
+
               {expandedParts[part] && (
                 <div className="ml-4 mt-1 space-y-1">
                   {sections
@@ -168,6 +166,9 @@ export default function Layout({ children, currentPageName }) {
               )}
             </div>
           ))}
+          <Button className="mt-4 w-full" onClick={() => window.location.reload()}>
+            <Refresh className="h-4 w-4 mr-2"/> Reload Content
+          </Button>
         </nav>
       </aside>
 
@@ -224,4 +225,3 @@ export default function Layout({ children, currentPageName }) {
     </div>
   );
 }
-

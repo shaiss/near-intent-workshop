@@ -1,78 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
   Menu,
   X,
   FileText,
-  ChevronDown,
-  ChevronUp,
-  Home,
-  RefreshCw,
-  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-// Import the function to parse the markdown file
-import ContentService from "@/services/ContentService";
+import WorkshopSidebar from "@/components/workshop/WorkshopSidebar";
 import { Toaster } from "@/components/ui/toaster";
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedParts, setExpandedParts] = useState({});
-  const [workshopStructure, setWorkshopStructure] = useState(null);
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
-
-  useEffect(() => {
-    const fetchWorkshopStructure = async () => {
-      try {
-        const structure = await ContentService.getWorkshopStructure();
-        setWorkshopStructure(structure);
-      } catch (error) {
-        console.error("Error fetching workshop structure:", error);
-        // Handle error appropriately, maybe display an error message
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWorkshopStructure();
-  }, []);
-
-  const togglePart = (part) => {
-    setExpandedParts((prev) => ({
-      ...prev,
-      [part]: !prev[part],
-    }));
-  };
-
-  // Show loading state while structure is loading
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  // Handle case where workshopStructure is still null after loading
-  if (!workshopStructure) {
-    return <div>Error loading workshop structure</div>;
-  }
-
-  const sections = workshopStructure.parts.flatMap((part) =>
-    part.sections.map((section) => ({
-      part: part.id,
-      sub: section.id,
-      title: section.title,
-      slug: section.slug,
-    })),
-  );
-
-  const partTitles = workshopStructure.parts.reduce((acc, part) => {
-    acc[part.id] = part.title;
-    return acc;
-  }, {});
 
   return (
     <div className="min-h-screen bg-amber-50">
@@ -148,7 +89,7 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Using WorkshopSidebar component */}
       <aside
         className={cn(
           "fixed top-0 left-0 z-50 h-full w-72 bg-white neo-sidebar transform transition-transform duration-200 ease-in-out md:translate-x-0",
@@ -173,72 +114,9 @@ export default function Layout({ children, currentPageName }) {
             <X className="h-6 w-6" />
           </Button>
         </div>
-        <nav className="px-2 py-4 overflow-y-auto h-[calc(100vh-64px)]">
-          {/* Navigation for parts */}
-          {Object.entries(partTitles).map(([part, title]) => (
-            <div key={part} className="mb-2">
-              <div
-                className="flex items-center justify-between p-2 font-bold cursor-pointer neo-nav-item rounded-md"
-                onClick={() => togglePart(part)}
-              >
-                <span>{title}</span>
-                {expandedParts[part] ? (
-                  <ChevronUp size={18} />
-                ) : (
-                  <ChevronDown size={18} />
-                )}
-              </div>
-
-              {expandedParts[part] && (
-                <div className="ml-4 mt-1 space-y-1">
-                  {sections
-                    .filter(
-                      (section) => section.part.toString() === part.toString(),
-                    )
-                    .map((section) => (
-                      <Link
-                        key={section.slug}
-                        to={createPageUrl(`Section?slug=${section.slug}`)}
-                        className={cn(
-                          "block py-2 px-3 rounded-md neo-nav-item text-sm transition-colors",
-                          location.pathname.includes(section.slug)
-                            ? "bg-black text-white font-bold"
-                            : "",
-                        )}
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        {section.part !== "appendix"
-                          ? `${section.part}.${section.sub}`
-                          : `A.${section.sub}`}{" "}
-                        {section.title}
-                      </Link>
-                    ))}
-                </div>
-              )}
-            </div>
-          ))}
-          <Button
-            className="mt-4 w-full"
-            onClick={() => window.location.reload()}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" /> Reload Content
-          </Button>
-          
-          {/* Export Workshop Button */}
-          <div className="mt-4 border-t pt-4">
-            <Link to="#" onClick={(e) => {
-              e.preventDefault();
-              const ExportWorkshop = require("@/components/workshop/ExportWorkshop").default;
-              const exportInstance = new ExportWorkshop({});
-              exportInstance.props.onClick();
-            }}>
-              <Button className="mt-2 w-full bg-white text-black neo-button font-bold flex items-center justify-center">
-                <Download className="w-4 h-4 mr-2" />
-                Export Workshop
-              </Button>
-            </Link>
-          </div>
-        </nav>
+        <div className="h-[calc(100vh-64px)] overflow-hidden">
+          <WorkshopSidebar onNavigate={() => setSidebarOpen(false)} />
+        </div>
       </aside>
 
       {/* Main content */}

@@ -6,7 +6,7 @@ import { ChevronRight, ChevronDown, RefreshCw } from "lucide-react";
 import ContentService from "../../services/ContentService";
 import ExportWorkshop from "./ExportWorkshop";
 
-export default function WorkshopSidebar() {
+export default function WorkshopSidebar({ onNavigate }) {
   console.log("WorkshopSidebar rendering"); // Debug log
   const [structure, setStructure] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -115,6 +115,7 @@ export default function WorkshopSidebar() {
                         key={section.id}
                         to={createPageUrl(`Section?slug=${section.slug}`)}
                         className="block py-1.5 pl-4 pr-2 text-sm hover:bg-gray-100 rounded"
+                        onClick={onNavigate}
                       >
                         {part.id}.{section.id} {section.title}
                       </Link>

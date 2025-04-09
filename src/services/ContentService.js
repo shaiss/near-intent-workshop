@@ -1,4 +1,3 @@
-
 import { marked } from 'marked';
 import contentMap from '../content/index.js';
 
@@ -11,11 +10,11 @@ class ContentService {
     this.cacheExpiry = 5 * 60 * 1000;
     // Detect if we're in production
     this.isProduction = import.meta.env.PROD;
-    
+
     // Initialize structure on startup
     this.initializeStructure();
   }
-  
+
   async initializeStructure() {
     try {
       console.log("ContentService: Initializing workshop structure on startup");
@@ -30,22 +29,22 @@ class ContentService {
     if (!this.isProduction) {
       return await this.fetchWorkshopStructure();
     }
-    
+
     const now = Date.now();
-    
+
     // Return cached structure if it exists and is fresh (only in production)
     if (this.structureCache && 
         this.lastFetchTime.get('structure') > now - this.cacheExpiry) {
       return this.structureCache;
     }
-    
+
     return await this.fetchWorkshopStructure();
   }
-  
+
   async fetchWorkshopStructure() {
     try {
       let text;
-      
+
       if (this.isProduction) {
         // In production, use the preloaded content
         text = contentMap['workshop-structure.md'];
@@ -79,13 +78,13 @@ class ContentService {
           }
         }
       }
-      
+
       const structure = this.parseWorkshopStructure(text);
-      
+
       // Update cache
       this.structureCache = structure;
       this.lastFetchTime.set('structure', Date.now());
-      
+
       return structure;
     } catch (error) {
       console.error('Error loading workshop structure:', error);
@@ -98,22 +97,22 @@ class ContentService {
     if (!this.isProduction) {
       return await this.fetchContent(fileName);
     }
-    
+
     const now = Date.now();
-    
+
     // Return cached content if it exists and is fresh (only in production)
     if (this.contentCache.has(fileName) && 
         this.lastFetchTime.get(fileName) > now - this.cacheExpiry) {
       return this.contentCache.get(fileName);
     }
-    
+
     return await this.fetchContent(fileName);
   }
-  
+
   async fetchContent(fileName) {
     try {
       let text;
-      
+
       if (this.isProduction) {
         // In production, use the preloaded content
         text = contentMap[fileName];
@@ -143,11 +142,11 @@ class ContentService {
           }
         }
       }
-      
+
       // Update cache
       this.contentCache.set(fileName, text);
       this.lastFetchTime.set(fileName, Date.now());
-      
+
       return text;
     } catch (error) {
       console.error(`Error loading content file ${fileName}:`, error);
@@ -160,7 +159,7 @@ class ContentService {
     // Clear cache for the specific file
     this.contentCache.delete(fileName);
     this.lastFetchTime.delete(fileName);
-    
+
     // Fetch fresh content
     return await this.fetchContent(fileName);
   }
@@ -171,7 +170,7 @@ class ContentService {
     this.contentCache.clear();
     this.lastFetchTime.clear();
     this.structureCache = null;
-    
+
     try {
       // Fetch fresh structure with no caching
       const freshStructure = await this.fetchWorkshopStructure();
@@ -188,18 +187,18 @@ class ContentService {
     console.log("Parsing workshop structure from markdown");
     const lines = markdown.split('\n');
     console.log(`Found ${lines.length} lines in the markdown file`);
-    
+
     const structure = {
       title: '',
       description: '',
       parts: []
     };
-    
+
     let currentPart = null;
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
+
       // Parse workshop title (H1)
       if (line.startsWith('# ')) {
         structure.title = line.substring(2).trim();
@@ -214,12 +213,12 @@ class ContentService {
       else if (line.startsWith('## ')) {
         const partTitle = line.substring(3).trim();
         console.log(`Found part: ${partTitle}`);
-        
+
         if (currentPart !== null && currentPart.title && currentPart.sections.length === 0) {
           // Skip parts with no sections
           console.warn(`Part "${currentPart.title}" has no sections`);
         }
-        
+
         currentPart = {
           id: structure.parts.length + 1,
           title: partTitle,
@@ -234,7 +233,7 @@ class ContentService {
           const title = titleMatch[1];
           const slug = titleMatch[2].replace('.md', '');
           console.log(`Found section: ${title} (${slug}) in part ${currentPart.title}`);
-          
+
           // Check for duplicate slugs
           const isDuplicate = currentPart.sections.some(s => s.slug === slug);
           if (isDuplicate) {
@@ -249,9 +248,48 @@ class ContentService {
         }
       }
     }
-    
+
     return structure;
   }
+
+  exportWorkshopContent: async () => {
+    try {
+      const structure = await this.getWorkshopStructure();
+      let markdownContent = `# ${structure.title}\n\n${structure.description}\n\n`;
+
+      // Loop through each part and section to build the complete markdown
+      for (const part of structure.parts) {
+        markdownContent += `\n## Part ${part.id}: ${part.title}\n\n`;
+
+        for (const section of part.sections) {
+          markdownContent += `### ${part.id}.${section.id} ${section.title}\n\n`;
+
+          // If the section has a slug, get its content
+          if (section.slug) {
+            try {
+              const sectionContent = contentMap.get(section.slug + '.md');
+              if (sectionContent) {
+                // Remove the first heading (title) as we already added it
+                const contentWithoutTitle = sectionContent.replace(/^#.*?\n/, '');
+                markdownContent += contentWithoutTitle + '\n\n';
+              } else {
+                markdownContent += '*Content not available*\n\n';
+              }
+            } catch (e) {
+              markdownContent += '*Error loading content*\n\n';
+            }
+          } else {
+            markdownContent += '*Coming soon*\n\n';
+          }
+        }
+      }
+
+      return markdownContent;
+    } catch (error) {
+      console.error("Failed to export workshop content:", error);
+      throw error;
+    }
+  },
 }
 
 export default new ContentService();

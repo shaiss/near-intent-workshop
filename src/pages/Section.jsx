@@ -5,6 +5,7 @@ import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import SectionContent from '../components/workshop/SectionContent';
+import ContentNavigation from '../components/workshop/ContentNavigation';
 import ContentService from '../services/ContentService';
 
 export default function Section() {
@@ -106,6 +107,7 @@ export default function Section() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <ContentNavigation currentSlug={slug} />
       {currentSection && (
         <div className="mb-8">
           <div className="text-sm text-gray-500 mb-2">

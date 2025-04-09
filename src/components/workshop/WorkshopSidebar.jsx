@@ -117,10 +117,7 @@ export default function WorkshopSidebar() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            console.log("Reloading content...");
-            refreshContent();
-          }}
+          onClick={refreshContent}
           disabled={refreshing}
           className="w-full bg-white text-black neo-button font-bold flex items-center justify-center"
         >

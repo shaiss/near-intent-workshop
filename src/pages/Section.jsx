@@ -101,7 +101,7 @@ export default function Section() {
 
   const navigateToSection = (section) => {
     if (!section) return;
-    navigate(createPageUrl('Section', `slug=${section.slug}`));
+    navigate(createPageUrl(`Section?slug=${section.slug}`));
   };
 
   return (

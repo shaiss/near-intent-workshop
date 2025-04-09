@@ -12,10 +12,10 @@ run = ["sh", "-c", "npx serve -s dist"]
 build = ["sh", "-c", "npm run build"]
 
 [workflows]
-runButton = "Run"
+runButton = "Run Dev Mode"
 
 [[workflows.workflow]]
-name = "Run"
+name = "Run Dev Mode"
 author = 18570664
 mode = "sequential"
 

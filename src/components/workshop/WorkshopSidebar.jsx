@@ -22,12 +22,18 @@ export default function WorkshopSidebar() {
       const workshopStructure = await ContentService.getWorkshopStructure();
       console.log("WorkshopSidebar: Loaded structure:", JSON.stringify(workshopStructure, null, 2));
       
+      if (!workshopStructure || !workshopStructure.parts || workshopStructure.parts.length === 0) {
+        console.error("Workshop structure is empty or invalid:", workshopStructure);
+        setLoading(false);
+        return;
+      }
+      
       setStructure(workshopStructure);
 
       // Initialize expanded state
       const expanded = {};
       workshopStructure.parts.forEach((part) => {
-        console.log(`Expanding part ${part.id}: ${part.title} with ${part.sections.length} sections`);
+        console.log(`Expanding part ${part.id}: ${part.title} with ${part.sections?.length || 0} sections`);
         expanded[part.id] = true; // Start with all expanded
       });
       setExpandedParts(expanded);

@@ -22,21 +22,33 @@ export default function WorkshopSidebar({ onNavigate }) {
     try {
       console.log("WorkshopSidebar: Loading workshop structure");
       const workshopStructure = await ContentService.getWorkshopStructure();
-      console.log("WorkshopSidebar: Loaded structure:", JSON.stringify(workshopStructure, null, 2));
-      
-      if (!workshopStructure || !workshopStructure.parts || workshopStructure.parts.length === 0) {
-        console.error("Workshop structure is empty or invalid:", workshopStructure);
+      console.log(
+        "WorkshopSidebar: Loaded structure:",
+        JSON.stringify(workshopStructure, null, 2),
+      );
+
+      if (
+        !workshopStructure ||
+        !workshopStructure.parts ||
+        workshopStructure.parts.length === 0
+      ) {
+        console.error(
+          "Workshop structure is empty or invalid:",
+          workshopStructure,
+        );
         setLoading(false);
         return;
       }
-      
+
       setStructure(workshopStructure);
 
       // Initialize expanded state
       const expanded = {};
       workshopStructure.parts.forEach((part) => {
-        console.log(`Expanding part ${part.id}: ${part.title} with ${part.sections?.length || 0} sections`);
-        expanded[part.id] = true; // Start with all expanded
+        console.log(
+          `Expanding part ${part.id}: ${part.title} with ${part.sections?.length || 0} sections`,
+        );
+        expanded[part.id] = false; // Start without all expanded
       });
       setExpandedParts(expanded);
     } catch (error) {
@@ -85,7 +97,7 @@ export default function WorkshopSidebar({ onNavigate }) {
               d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
             />
           </svg>
-          NEAR INTENTS
+          Workshop Outline
         </h2>
       </div>
 
@@ -109,7 +121,7 @@ export default function WorkshopSidebar({ onNavigate }) {
 
               {expandedParts[part.id] && (
                 <div className="pl-4 pr-2 pb-2">
-                  {part.sections.map((section) => (
+                  {part.sections.map((section) =>
                     section.slug ? (
                       <Link
                         key={section.id}
@@ -126,8 +138,8 @@ export default function WorkshopSidebar({ onNavigate }) {
                       >
                         {part.id}.{section.id} {section.title} (Coming Soon)
                       </div>
-                    )
-                  ))}
+                    ),
+                  )}
                 </div>
               )}
             </div>
@@ -148,7 +160,7 @@ export default function WorkshopSidebar({ onNavigate }) {
           />
           {refreshing ? "Reloading..." : "Reload Content"}
         </Button>
-        
+
         {/* Export Workshop Button - Make it more visible */}
         <div className="mt-4 border-t pt-4">
           <ExportWorkshop />

@@ -16,7 +16,7 @@ A hands-on workshop for building next-generation dApps with NEAR's intent-centri
 - [Anatomy of a NEAR Intent](intent-anatomy.md)
 - [What Is Smart Wallet Abstraction](smart-wallet.md)
 - [Cross-chain UX and Account Abstraction Strategy](cross-chain.md)
-- [Checkpoint](understanding_building_blocks.md)
+- [Part 1 - Checkpoint](understanding_building_blocks.md)
 
 ## Building the Backend
 

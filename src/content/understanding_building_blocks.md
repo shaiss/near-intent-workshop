@@ -1,4 +1,4 @@
-# Checkpoint Summary
+# Part 1 - Checkpoint
 
 Participants should now:
 

@@ -49,7 +49,7 @@ Learn how to build intent-centric dApps with smart wallet abstraction on NEAR
 
 ## Going Beyond the Demo
 
-- [Composability](composability.md)
-- [Cross-chain Use Cases](cross-chain-use-cases.md)
-- [Production Considerations](production.md)
-- [Future of Chain Abstraction](future.md)
+- [Showcase of Advanced Use Cases](advanced-use-cases.md)
+- [Resources & Links for Deeper Exploration](resources.md)
+- [What's Next?](whats-next.md)
+- [Workshop Wrap-up & Inspiration](wrap-up.md)

@@ -254,3 +254,258 @@ export async function getIntentHistory(accountId) {
 ```
 
 In the next section, we'll explore solver options for executing these intents.
+# Submitting Intents
+
+## Creating an Intent Submission System
+
+Now that we have wallet connectivity, we need to create a system for users to submit intents. This involves creating forms, validating inputs, and sending the intent to our verifier contract.
+
+## Intent Hook
+
+First, let's create a custom hook to manage intent state and submission:
+
+```jsx
+// src/hooks/useIntent.jsx
+import { useState } from 'react';
+import { useWallet } from './useWallet';
+
+export const useIntent = () => {
+  const [status, setStatus] = useState('idle'); // idle, loading, success, error
+  const [error, setError] = useState(null);
+  const [intentId, setIntentId] = useState(null);
+  const { wallet, accountId, connected } = useWallet();
+
+  const submitIntent = async (intent) => {
+    if (!connected || !wallet) {
+      throw new Error('Wallet not connected');
+    }
+
+    try {
+      setStatus('loading');
+      setError(null);
+
+      // Generate a unique intent ID
+      const newIntentId = `intent_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      setIntentId(newIntentId);
+
+      // Add metadata to the intent
+      const fullIntent = {
+        ...intent,
+        id: newIntentId,
+        user: accountId,
+        timestamp: Date.now(),
+      };
+
+      // Send the intent to the verifier contract
+      const result = await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: 'verifier.testnet',
+        actions: [
+          {
+            type: 'FunctionCall',
+            params: {
+              methodName: 'verify_intent',
+              args: { intent: JSON.stringify(fullIntent) },
+              gas: '30000000000000',
+              deposit: '0',
+            },
+          },
+        ],
+      });
+
+      setStatus('success');
+      return { intentId: newIntentId, result };
+    } catch (err) {
+      setStatus('error');
+      setError(err.message || 'Failed to submit intent');
+      throw err;
+    }
+  };
+
+  const resetIntent = () => {
+    setStatus('idle');
+    setError(null);
+    setIntentId(null);
+  };
+
+  return {
+    status,
+    error,
+    intentId,
+    submitIntent,
+    resetIntent,
+  };
+};
+```
+
+## Enhanced Intent Form
+
+Now let's enhance our intent form to use the hook and provide better user feedback:
+
+```jsx
+// src/components/intent/IntentForm.jsx
+import { useState } from 'react';
+import { useIntent } from '../../hooks/useIntent';
+
+export const IntentForm = ({ onSubmitSuccess }) => {
+  const [input, setInput] = useState('USDC');
+  const [output, setOutput] = useState('wNEAR');
+  const [amount, setAmount] = useState('');
+  const { submitIntent, status, error } = useIntent();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const intent = {
+        action: 'swap',
+        input_token: input,
+        input_amount: parseFloat(amount),
+        output_token: output,
+        max_slippage: 0.5,
+      };
+
+      const { intentId } = await submitIntent(intent);
+      
+      // Inform parent component about successful submission
+      if (onSubmitSuccess) {
+        onSubmitSuccess(intentId);
+      }
+      
+      // Reset form
+      setAmount('');
+    } catch (err) {
+      console.error('Error submitting intent:', err);
+    }
+  };
+
+  return (
+    <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+      <h2 className="text-2xl font-bold mb-4">Submit Swap Intent</h2>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2" htmlFor="amount">
+            Amount
+          </label>
+          <input
+            id="amount"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter amount"
+            required
+            min="0.000001"
+            step="any"
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-gray-700 mb-2" htmlFor="input-token">
+              From
+            </label>
+            <select
+              id="input-token"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="USDC">USDC</option>
+              <option value="DAI">DAI</option>
+              <option value="USDT">USDT</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-gray-700 mb-2" htmlFor="output-token">
+              To
+            </label>
+            <select
+              id="output-token"
+              value={output}
+              onChange={(e) => setOutput(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="wNEAR">wNEAR</option>
+              <option value="ETH">ETH</option>
+              <option value="BTC">BTC</option>
+            </select>
+          </div>
+        </div>
+        
+        <button
+          type="submit"
+          className="w-full py-3 bg-blue-600 text-white font-bold rounded hover:bg-blue-700 transition duration-200"
+          disabled={status === 'loading'}
+        >
+          {status === 'loading' ? 'Submitting...' : 'Submit Intent'}
+        </button>
+      </form>
+    </div>
+  );
+};
+```
+
+## IntentService for API Interaction
+
+To better organize our code, let's create a service for intent-related API calls:
+
+```jsx
+// src/services/intentService.js
+export class IntentService {
+  constructor(networkId = 'testnet') {
+    this.networkId = networkId;
+    this.verifierContract = 'verifier.testnet';
+  }
+
+  async getIntentStatus(intentId) {
+    // In a real app, this would call a backend API or directly query the blockchain
+    // For demo purposes, we'll simulate a response
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          id: intentId,
+          status: 'verified',
+          timestamp: Date.now(),
+        });
+      }, 1000);
+    });
+  }
+
+  async getSolversForIntent(intentId) {
+    // Simulate getting solvers - in a real app this would query on-chain or off-chain solvers
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([
+          { 
+            id: 'solver-1',
+            name: 'Ref Finance',
+            route: 'USDC -> wNEAR',
+            price: '1:1.05',
+            gas: '25 TGas',
+            fee: '0.3%'
+          },
+          { 
+            id: 'solver-2',
+            name: 'Jumbo DEX',
+            route: 'USDC -> USDT -> wNEAR',
+            price: '1:1.04',
+            gas: '32 TGas',
+            fee: '0.25%'
+          }
+        ]);
+      }, 1500);
+    });
+  }
+}
+```
+
+By implementing these components, we've created a complete system for users to submit intents through our frontend. The next section will focus on displaying solver options and executing the intent fulfillment.

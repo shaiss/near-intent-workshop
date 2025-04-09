@@ -136,3 +136,80 @@ export function useIntent() {
 ```
 
 In the next section, we'll implement the wallet connection flow for our application.
+# Setting Up Frontend
+
+## Frontend Architecture for Intent-Centric Applications
+
+In this section, we'll set up a React-based frontend that interacts with our NEAR smart contracts for intent verification and fulfillment.
+
+## Project Setup
+
+If you don't already have a frontend project, you can create one using Vite:
+
+```bash
+npm create vite@latest frontend --template react
+cd frontend
+npm install
+```
+
+## Installing Essential Packages
+
+We'll need several packages for our NEAR integration and UI:
+
+```bash
+npm install near-api-js @near-wallet-selector/core \
+            @near-wallet-selector/near-wallet \
+            tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+## Project Structure
+
+Your frontend project should have a structure similar to this:
+
+```
+src/
+  components/
+    wallet/
+      ConnectButton.jsx
+      WalletProvider.jsx
+    intent/
+      IntentForm.jsx
+      SolverOptions.jsx
+  hooks/
+    useWallet.js
+    useIntent.js
+  services/
+    intentService.js
+  App.jsx
+  main.jsx
+```
+
+## Setting Up Tailwind CSS
+
+Configure Tailwind in your project:
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+Add the Tailwind directives to your CSS:
+
+```css
+/* index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+By setting up the project with this structure, we'll have a solid foundation for building our intent-based UI components in the next sections.

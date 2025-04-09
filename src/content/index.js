@@ -32,7 +32,6 @@ import whatsNextMd from './whats-next.md?raw';
 import wrapUpMd from './wrap-up.md?raw';
 import workshopStructure from './workshop-structure.md?raw';
 
-// Create a mapping of all content files
 const contentMap = {
   'welcome.md': welcome,
   'overview.md': overview,

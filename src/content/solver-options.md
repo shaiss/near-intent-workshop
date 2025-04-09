@@ -315,3 +315,189 @@ export class SolverNode {
 ```
 
 In the next section, we'll explore how to execute intents and monitor their status.
+# Solver Options
+
+## Displaying Available Solvers
+
+After a user submits an intent, we need to present them with solver options that can fulfill their intent. This section covers how to fetch and display these options.
+
+## Creating the Solver Options Component
+
+```jsx
+// src/components/intent/SolverOptions.jsx
+import { useEffect, useState } from 'react';
+import { IntentService } from '../../services/intentService';
+
+export const SolverOptions = ({ intentId, onSelectSolver }) => {
+  const [solvers, setSolvers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchSolvers = async () => {
+      if (!intentId) return;
+      
+      const intentService = new IntentService();
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // In a real application, we'd query actual solvers or a marketplace
+        const solverOptions = await intentService.getSolversForIntent(intentId);
+        setSolvers(solverOptions);
+      } catch (err) {
+        console.error('Error fetching solvers:', err);
+        setError('Failed to fetch solver options. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSolvers();
+  }, [intentId]);
+  
+  if (loading) {
+    return (
+      <div className="p-6 bg-white shadow-md rounded-lg">
+        <h2 className="text-xl font-bold mb-4">Finding the Best Routes...</h2>
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="p-6 bg-white shadow-md rounded-lg">
+        <h2 className="text-xl font-bold mb-4">Error</h2>
+        <p className="text-red-500">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+  
+  if (solvers.length === 0) {
+    return (
+      <div className="p-6 bg-white shadow-md rounded-lg">
+        <h2 className="text-xl font-bold mb-4">No Solvers Available</h2>
+        <p>No solvers are currently available for this intent. Please try again later or modify your intent.</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="p-6 bg-white shadow-md rounded-lg">
+      <h2 className="text-xl font-bold mb-4">Available Solvers</h2>
+      <p className="text-sm text-gray-600 mb-4">
+        Select a solver to execute your intent:
+      </p>
+      
+      <div className="space-y-4">
+        {solvers.map((solver) => (
+          <div 
+            key={solver.id}
+            className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition cursor-pointer"
+            onClick={() => onSelectSolver(solver)}
+          >
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold">{solver.name}</h3>
+              <span className="text-green-600 font-semibold">{solver.price}</span>
+            </div>
+            
+            <div className="mt-2 text-sm text-gray-600">
+              <p>Route: {solver.route}</p>
+              <div className="flex justify-between mt-1">
+                <span>Gas: {solver.gas}</span>
+                <span>Fee: {solver.fee}</span>
+              </div>
+            </div>
+            
+            <button
+              className="mt-3 w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectSolver(solver);
+              }}
+            >
+              Select & Execute
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+## Implementing the Solver Selection Flow
+
+Now let's update our main component to manage the full intent and solver selection flow:
+
+```jsx
+// src/components/intent/IntentFlow.jsx
+import { useState } from 'react';
+import { IntentForm } from './IntentForm';
+import { SolverOptions } from './SolverOptions';
+
+export const IntentFlow = () => {
+  const [currentStep, setCurrentStep] = useState('form'); // 'form', 'solvers', 'execution'
+  const [intentId, setIntentId] = useState(null);
+  const [selectedSolver, setSelectedSolver] = useState(null);
+  
+  const handleIntentSubmitted = (newIntentId) => {
+    setIntentId(newIntentId);
+    setCurrentStep('solvers');
+  };
+  
+  const handleSolverSelected = (solver) => {
+    setSelectedSolver(solver);
+    setCurrentStep('execution');
+  };
+  
+  const resetFlow = () => {
+    setCurrentStep('form');
+    setIntentId(null);
+    setSelectedSolver(null);
+  };
+  
+  return (
+    <div className="max-w-2xl mx-auto">
+      {currentStep === 'form' && (
+        <IntentForm onSubmitSuccess={handleIntentSubmitted} />
+      )}
+      
+      {currentStep === 'solvers' && intentId && (
+        <SolverOptions 
+          intentId={intentId} 
+          onSelectSolver={handleSolverSelected} 
+        />
+      )}
+      
+      {currentStep === 'execution' && selectedSolver && (
+        <div className="p-6 bg-white shadow-md rounded-lg">
+          <h2 className="text-xl font-bold mb-4">Executing Intent</h2>
+          <p>Executing your intent with {selectedSolver.name}...</p>
+          
+          {/* Execution status would be shown here */}
+          
+          <button
+            onClick={resetFlow}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            Create New Intent
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+With these components in place, users can now see available solver options after submitting an intent and select one to execute their intended action. The next section will cover the execution step.

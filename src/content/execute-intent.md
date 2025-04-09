@@ -346,3 +346,350 @@ export function IntentResult({ intent }) {
 ```
 
 In the next section, we'll look at how to deploy our contracts to the NEAR testnet.
+# Executing Intent
+
+## Fulfilling User Intents
+
+The final step in our intent flow is executing the selected solver's solution. This involves sending transactions through the wallet and providing feedback to the user.
+
+## Creating the Intent Execution Component
+
+```jsx
+// src/components/intent/IntentExecution.jsx
+import { useState, useEffect } from 'react';
+import { useWallet } from '../../hooks/useWallet';
+
+export const IntentExecution = ({ intentId, solver, onComplete, onReset }) => {
+  const [status, setStatus] = useState('preparing'); // preparing, executing, success, error
+  const [txHash, setTxHash] = useState(null);
+  const [error, setError] = useState(null);
+  const { wallet, accountId } = useWallet();
+  
+  useEffect(() => {
+    if (solver && status === 'preparing') {
+      executeIntent();
+    }
+  }, [solver, status]);
+  
+  const executeIntent = async () => {
+    if (!wallet || !solver) return;
+    
+    try {
+      setStatus('executing');
+      setError(null);
+      
+      // In a real application, you would have solver-specific parameters
+      const result = await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: 'solver.testnet', // This could be solver.contractId in a real app
+        actions: [{
+          type: 'FunctionCall',
+          params: {
+            methodName: 'solve_intent',
+            args: {
+              intent_id: intentId,
+              solver_id: solver.id,
+              user: accountId
+            },
+            gas: '30000000000000',
+            deposit: '0'
+          }
+        }]
+      });
+      
+      // Note: In a real app, you would extract the transaction hash
+      setTxHash('sample-tx-hash-' + Date.now());
+      setStatus('success');
+      
+      if (onComplete) {
+        onComplete({
+          intentId,
+          solverId: solver.id,
+          txHash: txHash,
+          status: 'completed'
+        });
+      }
+    } catch (err) {
+      console.error('Error executing intent:', err);
+      setError(err.message || 'Failed to execute intent');
+      setStatus('error');
+    }
+  };
+  
+  const getStatusDisplay = () => {
+    switch (status) {
+      case 'preparing':
+        return 'Preparing transaction...';
+      case 'executing':
+        return 'Executing transaction...';
+      case 'success':
+        return 'Transaction successful!';
+      case 'error':
+        return 'Transaction failed';
+      default:
+        return '';
+    }
+  };
+  
+  return (
+    <div className="p-6 bg-white shadow-md rounded-lg">
+      <h2 className="text-xl font-bold mb-4">Intent Execution</h2>
+      
+      <div className="mb-6">
+        <div className="flex items-center mb-2">
+          <div className={`w-4 h-4 rounded-full mr-2 ${
+            status === 'executing' ? 'bg-yellow-500 animate-pulse' :
+            status === 'success' ? 'bg-green-500' :
+            status === 'error' ? 'bg-red-500' : 'bg-gray-300'
+          }`}></div>
+          <p className="font-medium">{getStatusDisplay()}</p>
+        </div>
+        
+        {status === 'executing' && (
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div className="bg-blue-600 h-2.5 rounded-full animate-pulse w-3/4"></div>
+          </div>
+        )}
+      </div>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <p className="font-bold">Error:</p>
+          <p>{error}</p>
+        </div>
+      )}
+      
+      {status === 'success' && txHash && (
+        <div className="mb-4">
+          <p className="font-medium">Transaction Hash:</p>
+          <div className="bg-gray-100 p-2 rounded overflow-x-auto">
+            <code>{txHash}</code>
+          </div>
+          <p className="mt-2 text-green-600">
+            Your intent has been successfully executed!
+          </p>
+        </div>
+      )}
+      
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={onReset}
+          className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+        >
+          Create New Intent
+        </button>
+        
+        {status === 'error' && (
+          <button
+            onClick={executeIntent}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          >
+            Try Again
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+```
+
+## Updating the Intent Flow Component
+
+Finally, let's update our IntentFlow component to include the execution step:
+
+```jsx
+// src/components/intent/IntentFlow.jsx (updated)
+import { useState } from 'react';
+import { IntentForm } from './IntentForm';
+import { SolverOptions } from './SolverOptions';
+import { IntentExecution } from './IntentExecution';
+import { useToast } from '../../hooks/useToast'; // Hypothetical toast hook
+
+export const IntentFlow = () => {
+  const [currentStep, setCurrentStep] = useState('form'); // 'form', 'solvers', 'execution'
+  const [intentId, setIntentId] = useState(null);
+  const [selectedSolver, setSelectedSolver] = useState(null);
+  const [completedIntent, setCompletedIntent] = useState(null);
+  const { toast } = useToast();
+  
+  const handleIntentSubmitted = (newIntentId) => {
+    setIntentId(newIntentId);
+    setCurrentStep('solvers');
+    toast({
+      title: 'Intent Submitted',
+      description: 'Your intent has been verified and is ready for execution.',
+      status: 'success',
+    });
+  };
+  
+  const handleSolverSelected = (solver) => {
+    setSelectedSolver(solver);
+    setCurrentStep('execution');
+  };
+  
+  const handleExecutionComplete = (result) => {
+    setCompletedIntent(result);
+    toast({
+      title: 'Intent Executed',
+      description: 'Your intent has been successfully executed!',
+      status: 'success',
+    });
+  };
+  
+  const resetFlow = () => {
+    setCurrentStep('form');
+    setIntentId(null);
+    setSelectedSolver(null);
+    setCompletedIntent(null);
+  };
+  
+  return (
+    <div className="max-w-2xl mx-auto">
+      {currentStep === 'form' && (
+        <IntentForm onSubmitSuccess={handleIntentSubmitted} />
+      )}
+      
+      {currentStep === 'solvers' && intentId && (
+        <SolverOptions 
+          intentId={intentId} 
+          onSelectSolver={handleSolverSelected} 
+        />
+      )}
+      
+      {currentStep === 'execution' && selectedSolver && (
+        <IntentExecution 
+          intentId={intentId}
+          solver={selectedSolver}
+          onComplete={handleExecutionComplete}
+          onReset={resetFlow}
+        />
+      )}
+      
+      {/* Optional: History section showing past intents */}
+      {completedIntent && (
+        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+          <h3 className="font-medium">Recently Completed Intent</h3>
+          <p className="text-sm text-gray-600">
+            Intent {completedIntent.intentId} was executed via {completedIntent.solverId}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+## UI Polish and Final Touches
+
+For production applications, consider adding these enhancements:
+
+### 1. Toast Notifications
+
+Create a toast hook for user feedback:
+
+```jsx
+// src/hooks/useToast.jsx
+import { useState, useCallback } from 'react';
+
+export const useToast = () => {
+  const [toasts, setToasts] = useState([]);
+  
+  const toast = useCallback(({ title, description, status = 'info', duration = 5000 }) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, title, description, status }]);
+    
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, duration);
+  }, []);
+  
+  return { toasts, toast };
+};
+
+// Toast Component
+export const ToastContainer = ({ toasts }) => {
+  if (toasts.length === 0) return null;
+  
+  return (
+    <div className="fixed bottom-4 right-4 z-50">
+      {toasts.map(toast => (
+        <div 
+          key={toast.id} 
+          className={`mb-2 p-4 rounded-lg shadow-lg max-w-xs animate-fade-in ${
+            toast.status === 'success' ? 'bg-green-500 text-white' :
+            toast.status === 'error' ? 'bg-red-500 text-white' :
+            toast.status === 'warning' ? 'bg-yellow-500 text-white' :
+            'bg-blue-500 text-white'
+          }`}
+        >
+          <h4 className="font-bold">{toast.title}</h4>
+          <p className="text-sm">{toast.description}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+```
+
+### 2. Animation and Loading States
+
+Add animations for better UX:
+
+```css
+/* Add to your CSS */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+```
+
+### 3. Error Handling
+
+Implement comprehensive error handling:
+
+```jsx
+// Error boundary component
+import { Component } from 'react';
+
+export class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+          <h2 className="text-xl font-bold text-red-700 mb-2">Something went wrong</h2>
+          <p className="text-red-600 mb-4">
+            We encountered an error while processing your request.
+          </p>
+          <button
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            onClick={() => window.location.reload()}
+          >
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+With these components and enhancements in place, you now have a complete frontend implementation for your intent-based application. Users can submit intents, select from available solvers, and execute their desired actions with proper feedback and error handling.

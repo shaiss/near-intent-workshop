@@ -255,3 +255,270 @@ export function useSessionKey() {
 ```
 
 In the next section, we'll implement the interface for submitting intents using these wallet components.
+# Connecting Wallets
+
+## Implementing Wallet Connection
+
+The first step in our frontend is to allow users to connect their NEAR wallets. We'll use the NEAR Wallet Selector library for this purpose.
+
+## Creating the Wallet Provider
+
+Let's create a provider component to manage wallet connections across the application:
+
+```jsx
+// src/components/wallet/WalletProvider.jsx
+import { createContext, useContext, useEffect, useState } from 'react';
+import { setupWalletSelector } from '@near-wallet-selector/core';
+import { setupNearWallet } from '@near-wallet-selector/near-wallet';
+
+const WalletContext = createContext(null);
+
+export const WalletProvider = ({ children }) => {
+  const [wallet, setWallet] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        setLoading(true);
+        const selector = await setupWalletSelector({
+          network: 'testnet',
+          modules: [setupNearWallet()],
+        });
+
+        const wallet = await selector.wallet('near-wallet');
+        setWallet(wallet);
+        
+        // Get accounts if user is already signed in
+        const state = selector.store.getState();
+        if (state.accounts.length > 0) {
+          setAccounts(state.accounts);
+        }
+      } catch (error) {
+        console.error('Failed to initialize wallet selector:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    init();
+  }, []);
+
+  const connect = async () => {
+    if (!wallet) return;
+    
+    try {
+      const accountIds = await wallet.signIn({ contractId: 'verifier.testnet' });
+      setAccounts(accountIds.map(accountId => ({ accountId })));
+    } catch (error) {
+      console.error('Failed to sign in:', error);
+    }
+  };
+
+  const disconnect = async () => {
+    if (!wallet) return;
+    
+    try {
+      await wallet.signOut();
+      setAccounts([]);
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+    }
+  };
+
+  return (
+    <WalletContext.Provider 
+      value={{ 
+        wallet, 
+        accounts, 
+        connected: accounts.length > 0,
+        accountId: accounts[0]?.accountId || '',
+        loading, 
+        connect, 
+        disconnect 
+      }}
+    >
+      {children}
+    </WalletContext.Provider>
+  );
+};
+
+export const useWallet = () => useContext(WalletContext);
+```
+
+## Creating a Connect Button
+
+Now, let's create a button component for connecting wallets:
+
+```jsx
+// src/components/wallet/ConnectButton.jsx
+import { useWallet } from './WalletProvider';
+
+export const ConnectButton = () => {
+  const { connected, loading, connect, disconnect, accountId } = useWallet();
+
+  if (loading) {
+    return <button className="btn btn-primary" disabled>Loading...</button>;
+  }
+
+  if (connected) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium">{accountId}</span>
+        <button 
+          onClick={disconnect}
+          className="px-4 py-2 bg-red-500 text-white rounded-md"
+        >
+          Disconnect
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button 
+      onClick={connect}
+      className="px-4 py-2 bg-blue-500 text-white rounded-md"
+    >
+      Connect Wallet
+    </button>
+  );
+};
+```
+
+## Using the Wallet Provider
+
+Make sure to wrap your application with the `WalletProvider`:
+
+```jsx
+// src/App.jsx
+import { WalletProvider } from './components/wallet/WalletProvider';
+import { ConnectButton } from './components/wallet/ConnectButton';
+
+function App() {
+  return (
+    <WalletProvider>
+      <div className="container mx-auto p-4">
+        <header className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold">NEAR Intents Demo</h1>
+          <ConnectButton />
+        </header>
+        {/* Other components */}
+      </div>
+    </WalletProvider>
+  );
+}
+
+export default App;
+```
+
+## Creating the Intent Form
+
+Now that we have wallet connectivity, let's create a form for users to submit intents:
+
+```jsx
+// src/components/intent/IntentForm.jsx
+import { useState } from 'react';
+import { useWallet } from '../wallet/WalletProvider';
+
+export const IntentForm = () => {
+  const [input, setInput] = useState('USDC');
+  const [output, setOutput] = useState('wNEAR');
+  const [amount, setAmount] = useState('');
+  const { wallet, accountId, connected } = useWallet();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!connected || !wallet) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    const intent = {
+      action: 'swap',
+      input_token: input,
+      input_amount: parseFloat(amount),
+      output_token: output,
+      max_slippage: 0.5,
+    };
+
+    try {
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: 'verifier.testnet',
+        actions: [
+          {
+            type: 'FunctionCall',
+            params: {
+              methodName: 'verify_intent',
+              args: { intent: JSON.stringify(intent) },
+              gas: '30000000000000',
+              deposit: '0',
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      console.error('Failed to submit intent:', error);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 border rounded-lg">
+      <h2 className="text-xl font-bold mb-4">Submit Swap Intent</h2>
+      
+      <div className="mb-4">
+        <label className="block mb-1">Amount</label>
+        <input 
+          type="number" 
+          value={amount} 
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full p-2 border rounded" 
+          placeholder="Enter amount" 
+          required
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block mb-1">Input Token</label>
+          <select 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)}
+            className="w-full p-2 border rounded"
+          >
+            <option value="USDC">USDC</option>
+            <option value="DAI">DAI</option>
+            <option value="USDT">USDT</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block mb-1">Output Token</label>
+          <select 
+            value={output} 
+            onChange={(e) => setOutput(e.target.value)}
+            className="w-full p-2 border rounded"
+          >
+            <option value="wNEAR">wNEAR</option>
+            <option value="USDT">USDT</option>
+            <option value="ETH">ETH</option>
+          </select>
+        </div>
+      </div>
+      
+      <button 
+        type="submit" 
+        className="w-full py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+        disabled={!connected || !amount}
+      >
+        Submit Intent
+      </button>
+    </form>
+  );
+};
+```
+
+With these components in place, users can now connect their wallets and submit intents to the verifier contract.

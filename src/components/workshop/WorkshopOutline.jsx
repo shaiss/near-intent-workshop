@@ -61,17 +61,8 @@ export default function WorkshopOutline() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">{structure.title}</h1>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={refreshContent}
-          disabled={refreshing}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Content
-        </Button>
       </div>
       
       <p className="text-lg mb-8">{structure.description}</p>

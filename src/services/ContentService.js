@@ -1,5 +1,6 @@
 
 import { marked } from 'marked';
+import contentMap from '../content/index.js';
 
 class ContentService {
   constructor() {
@@ -8,6 +9,8 @@ class ContentService {
     this.lastFetchTime = new Map();
     // Cache expiry in milliseconds (5 minutes)
     this.cacheExpiry = 5 * 60 * 1000;
+    // Detect if we're in production
+    this.isProduction = import.meta.env.PROD;
   }
 
   async getWorkshopStructure() {
@@ -18,10 +21,19 @@ class ContentService {
       return this.structureCache;
     }
     
-    // Fetch and parse the workshop structure markdown
+    // Get the workshop structure markdown
     try {
-      const response = await fetch('/src/content/workshop-structure.md');
-      const text = await response.text();
+      let text;
+      
+      if (this.isProduction) {
+        // In production, use the preloaded content
+        text = contentMap['workshop-structure.md'];
+      } else {
+        // In development, fetch from file system
+        const response = await fetch('/src/content/workshop-structure.md');
+        text = await response.text();
+      }
+      
       const structure = this.parseWorkshopStructure(text);
       
       // Update cache
@@ -44,10 +56,22 @@ class ContentService {
       return this.contentCache.get(fileName);
     }
     
-    // Fetch and parse the content markdown
+    // Get the content markdown
     try {
-      const response = await fetch(`/src/content/${fileName}`);
-      const text = await response.text();
+      let text;
+      
+      if (this.isProduction) {
+        // In production, use the preloaded content
+        text = contentMap[fileName];
+        if (!text) {
+          console.error(`Content file ${fileName} not found in contentMap`);
+          throw new Error(`Content file ${fileName} not found`);
+        }
+      } else {
+        // In development, fetch from file system
+        const response = await fetch(`/src/content/${fileName}`);
+        text = await response.text();
+      }
       
       // Update cache
       this.contentCache.set(fileName, text);

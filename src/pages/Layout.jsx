@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Menu, X, FileText, ChevronDown, ChevronUp, Home, RefreshCw } from "lucide-react";
+import {
+  Menu,
+  X,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Home,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // Import the function to parse the markdown file
-import ContentService from '@/services/ContentService';
-import {Toaster} from "@/components/ui/toaster";
-
+import ContentService from "@/services/ContentService";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,12 +39,11 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const togglePart = (part) => {
-    setExpandedParts(prev => ({
+    setExpandedParts((prev) => ({
       ...prev,
-      [part]: !prev[part]
+      [part]: !prev[part],
     }));
   };
-
 
   // Show loading state while structure is loading
   if (loading) {
@@ -53,20 +59,19 @@ export default function Layout({ children, currentPageName }) {
     return <div>Error loading workshop structure</div>;
   }
 
-  const sections = workshopStructure.parts.flatMap(part =>
-    part.sections.map(section => ({
+  const sections = workshopStructure.parts.flatMap((part) =>
+    part.sections.map((section) => ({
       part: part.id,
       sub: section.id,
       title: section.title,
-      slug: section.slug
-    }))
+      slug: section.slug,
+    })),
   );
 
   const partTitles = workshopStructure.parts.reduce((acc, part) => {
     acc[part.id] = part.title;
     return acc;
   }, {});
-
 
   return (
     <div className="min-h-screen bg-amber-50">
@@ -143,10 +148,12 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       {/* Sidebar */}
-      <aside className={cn(
-        "fixed top-0 left-0 z-50 h-full w-72 bg-white neo-sidebar transform transition-transform duration-200 ease-in-out md:translate-x-0",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "fixed top-0 left-0 z-50 h-full w-72 bg-white neo-sidebar transform transition-transform duration-200 ease-in-out md:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
         <div className="flex items-center justify-between p-4 bg-yellow-300 border-b-4 border-black">
           <Link
             to={createPageUrl("Home")}
@@ -174,33 +181,46 @@ export default function Layout({ children, currentPageName }) {
                 onClick={() => togglePart(part)}
               >
                 <span>{title}</span>
-                {expandedParts[part] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                {expandedParts[part] ? (
+                  <ChevronUp size={18} />
+                ) : (
+                  <ChevronDown size={18} />
+                )}
               </div>
 
               {expandedParts[part] && (
                 <div className="ml-4 mt-1 space-y-1">
                   {sections
-                    .filter(section => section.part.toString() === part.toString())
-                    .map(section => (
+                    .filter(
+                      (section) => section.part.toString() === part.toString(),
+                    )
+                    .map((section) => (
                       <Link
                         key={section.slug}
                         to={createPageUrl(`Section?slug=${section.slug}`)}
                         className={cn(
                           "block py-2 px-3 rounded-md neo-nav-item text-sm transition-colors",
-                          location.pathname.includes(section.slug) ? "bg-black text-white font-bold" : ""
+                          location.pathname.includes(section.slug)
+                            ? "bg-black text-white font-bold"
+                            : "",
                         )}
                         onClick={() => setSidebarOpen(false)}
                       >
-                        {section.part !== "appendix" ? `${section.part}.${section.sub}` : `A.${section.sub}`} {section.title}
+                        {section.part !== "appendix"
+                          ? `${section.part}.${section.sub}`
+                          : `A.${section.sub}`}{" "}
+                        {section.title}
                       </Link>
-                    ))
-                  }
+                    ))}
                 </div>
               )}
             </div>
           ))}
-          <Button className="mt-4 w-full" onClick={() => window.location.reload()}>
-            <RefreshCw className="h-4 w-4 mr-2"/> Reload Content
+          <Button
+            className="mt-4 w-full"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" /> Reload Crontent
           </Button>
         </nav>
       </aside>
@@ -223,16 +243,19 @@ export default function Layout({ children, currentPageName }) {
         </header>
 
         {/* Main content area */}
-        <main className="p-4 md:p-8">
-          {children}
-        </main>
+        <main className="p-4 md:p-8">{children}</main>
 
         {/* Footer */}
         <footer className="mt-12 py-6 px-4 border-t-4 border-black bg-gray-100">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
-              <p className="font-bold">NEAR Intents & Smart Wallet Abstraction Workshop</p>
-              <p className="text-sm">Built by Shai Perednik - An interactive guide to the future of blockchain interactions</p>
+              <p className="font-bold">
+                NEAR Intents & Smart Wallet Abstraction Workshop
+              </p>
+              <p className="text-sm">
+                Built by Shai Perednik - An interactive guide to the future of
+                blockchain interactions
+              </p>
             </div>
             <div className="flex gap-4">
               <a
@@ -255,7 +278,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </footer>
       </div>
-      <Toaster/>
+      <Toaster />
     </div>
   );
 }

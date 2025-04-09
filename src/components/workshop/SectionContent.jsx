@@ -45,14 +45,21 @@ export default function SectionContent({ content, loading, sectionTitle }) {
       <ReactMarkdown
         components={{
           code: CodeBlock,
-          a: ({node, ...props}) => (
-            <a 
-              {...props} 
-              className="text-blue-600 font-semibold underline flex items-center" 
-              target="_blank" 
-              rel="noopener noreferrer"
-            />
-          ),
+          a: ({node, ...props}) => {
+            // Check if it's a button link (contains class with 'button')
+            const isButton = props.className && props.className.includes('button');
+            return (
+              <a 
+                {...props} 
+                className={isButton 
+                  ? "inline-flex items-center bg-white text-black neo-button px-4 py-2 font-bold" 
+                  : "text-blue-600 font-semibold underline flex items-center"
+                }
+                target="_blank" 
+                rel="noopener noreferrer"
+              />
+            );
+          },
           h1: ({node, children, ...props}) => {
             // Convert both to lowercase and trim for case-insensitive matching
             const headingText = children.toString().toLowerCase().trim();

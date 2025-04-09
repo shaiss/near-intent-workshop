@@ -1,4 +1,3 @@
-
 # Prerequisites & Environment Setup
 
 ## Required Software

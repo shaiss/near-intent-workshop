@@ -1,5 +1,4 @@
-
-# Anatomy of a NEAR Intent Transaction
+# Anatomy of a NEAR Intent
 
 ## Intent Flow Architecture
 
@@ -138,4 +137,3 @@ const userIntent = {
 
 // 5. Intent is executed
 // solver2.near.execute_solution(intentId)
-```

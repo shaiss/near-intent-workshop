@@ -1,4 +1,3 @@
-
 # Overview of NEAR Intents
 
 ## What are NEAR Intents?

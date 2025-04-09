@@ -1,5 +1,4 @@
-
-# Setting Up a Local Smart Contract
+# Local Smart Contract Development
 
 ## Understanding Smart Contracts in Intent Architecture
 

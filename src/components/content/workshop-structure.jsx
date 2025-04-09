@@ -1,94 +1,90 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 
-export const WorkshopStructure = () => {
-  const sections = [
+export const workshopStructure = {
+  title: "NEAR Intents & Smart Wallet Abstraction Workshop",
+  description: "A comprehensive workshop to build intent-centric applications on NEAR",
+  parts: [
     {
+      id: 1,
       title: "Introduction & Setup",
-      items: [
-        { title: "Welcome & Objectives", path: "/workshop/welcome" },
-        { title: "Overview of NEAR Intents", path: "/workshop/overview" },
-        { title: "Prerequisites & Setup", path: "/workshop/setup" },
-        { title: "Repo Cloning", path: "/workshop/repo" },
+      sections: [
+        { id: 1, title: "Welcome", slug: "welcome" },
+        { id: 2, title: "Overview", slug: "overview" },
+        { id: 3, title: "Environment Setup", slug: "setup" },
+        { id: 4, title: "Repository Structure", slug: "repo" }
       ]
     },
     {
+      id: 2,
       title: "Understanding the Building Blocks",
-      items: [
-        { title: "What Are Intents?", path: "/workshop/intents-concept" },
-        { title: "Anatomy of a NEAR Intent", path: "/workshop/intent-anatomy" },
-        { title: "Smart Wallet Abstraction", path: "/workshop/smart-wallet" },
-        { title: "Cross-chain UX", path: "/workshop/cross-chain" },
+      sections: [
+        { id: 1, title: "Intent-Centric Architecture", slug: "intents-concept" },
+        { id: 2, title: "Anatomy of an Intent", slug: "intent-anatomy" },
+        { id: 3, title: "Smart Wallet Fundamentals", slug: "smart-wallet" },
+        { id: 4, title: "Cross-chain Capabilities", slug: "cross-chain" }
       ]
     },
     {
+      id: 3,
       title: "Building the Backend",
-      items: [
-        { title: "Local Smart Contract", path: "/workshop/local-contract" },
-        { title: "Intent Verifier", path: "/workshop/intent-verifier" },
-        { title: "Solver Contract", path: "/workshop/solver-contract" },
-        { title: "Testing Execution", path: "/workshop/testing" },
-        { title: "Gas & Fees Model", path: "/workshop/gas-fees" },
+      sections: [
+        { id: 1, title: "Local Contract Development", slug: "local-contract" },
+        { id: 2, title: "Intent Verifier Implementation", slug: "intent-verifier" },
+        { id: 3, title: "Solver Contract Development", slug: "solver-contract" },
+        { id: 4, title: "Testing Your Contracts", slug: "testing" },
+        { id: 5, title: "Gas Fees & Optimization", slug: "gas-fees" }
       ]
     },
     {
+      id: 4,
       title: "Creating the Smart Wallet Experience",
-      items: [
-        { title: "Wallet Selector", path: "/workshop/wallet-selector" },
-        { title: "Session-based Smart Wallet", path: "/workshop/session-wallet" },
-        { title: "Managing Keys", path: "/workshop/keys" },
-        { title: "Abstraction of Actions", path: "/workshop/action-abstraction" },
+      sections: [
+        { id: 1, title: "NEAR Wallet Selector", slug: "wallet-selector" },
+        { id: 2, title: "Session-Based Wallet", slug: "session-wallet" },
+        { id: 3, title: "Managing Keys & Permissions", slug: "keys" },
+        { id: 4, title: "Abstracting Complex Actions", slug: "action-abstraction" }
       ]
     },
     {
+      id: 5,
       title: "Building the Frontend",
-      items: [
-        { title: "Setting Up Frontend", path: "/workshop/frontend-setup" },
-        { title: "Connect Wallet", path: "/workshop/connect-wallet" },
-        { title: "Submitting Intents", path: "/workshop/submit-intents" },
-        { title: "Solver Options", path: "/workshop/solver-options" },
-        { title: "Executing Intent", path: "/workshop/execute-intent" },
+      sections: [
+        { id: 1, title: "Frontend Setup", slug: "frontend-setup" },
+        { id: 2, title: "Connecting Wallets", slug: "connect-wallet" },
+        { id: 3, title: "Submitting Intents", slug: "submit-intents" },
+        { id: 4, title: "Solver Options", slug: "solver-options" },
+        { id: 5, title: "Executing Intents", slug: "execute-intent" }
       ]
     },
     {
+      id: 6,
       title: "Testnet Deployment & Debugging",
-      items: [
-        { title: "Deploy to Testnet", path: "/workshop/testnet-deploy" },
-        { title: "Testing with NEAR CLI", path: "/workshop/near-cli" },
-        { title: "Debugging Intents", path: "/workshop/debug-intents" },
-        { title: "Simulating Solvers", path: "/workshop/simulate-solvers" },
+      sections: [
+        { id: 1, title: "Deploying to Testnet", slug: "testnet-deploy" },
+        { id: 2, title: "Using NEAR CLI", slug: "near-cli" },
+        { id: 3, title: "Debugging Intents", slug: "debug-intents" },
+        { id: 4, title: "Simulating Solvers", slug: "simulate-solvers" }
       ]
     },
     {
-      title: "Going Beyond the Demo",
-      items: [
-        { title: "Composability", path: "/workshop/composability" },
-        { title: "Cross-chain Use Cases", path: "/workshop/cross-chain-use-cases" },
-        { title: "Production Considerations", path: "/workshop/production" },
-        { title: "Future of Chain Abstraction", path: "/workshop/future" },
+      id: 7,
+      title: "Advanced Topics",
+      sections: [
+        { id: 1, title: "Intent Composability", slug: "composability" },
+        { id: 2, title: "Cross-chain Use Cases", slug: "cross-chain-use-cases" },
+        { id: 3, title: "Future Directions", slug: "future" },
+        { id: 4, title: "Production Considerations", slug: "production" }
       ]
-    },
-  ];
-
-  return (
-    <div className="py-4">
-      {sections.map((section, index) => (
-        <div key={index} className="mb-6">
-          <h3 className="font-bold text-lg mb-2">{section.title}</h3>
-          <ul className="space-y-1">
-            {section.items.map((item, itemIndex) => (
-              <li key={itemIndex}>
-                <Link to={item.path} className="text-blue-500 hover:underline">
-                  {item.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  );
+    }
+  ]
 };
 
-export default WorkshopStructure;
+export default function WorkshopStructure() {
+  return (
+    <div>
+      <h1>{workshopStructure.title}</h1>
+      <p>{workshopStructure.description}</p>
+    </div>
+  );
+}

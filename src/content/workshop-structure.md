@@ -23,6 +23,7 @@ A hands-on workshop for building next-generation dApps with NEAR's intent-centri
 - [Setting Up a Local Smart Contract](local-contract.md)
 - [Writing an Intent Verifier](intent-verifier.md)
 - [Writing the Solver Contract](solver-contract.md)
+- [Connecting Verifier to Solver (Cross-Contract Calls)](cross-contract-calls.md)
 - [Deploying to Testnet](deploy-to-testnet.md)
 - [Testing Verifier → Solver Execution Locally](testing.md)
 - [Gas, Fees & Incentives Model](gas-fees.md)

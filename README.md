@@ -5,7 +5,7 @@ An interactive workshop application built with Vite+React to teach developers ab
 
 ## About
 
-This workshop guides users through building next-generation dApps using NEAR's intent-centric architecture. It covers key concepts including:
+This workshop will guide users through building next-generation dApps using NEAR's intent-centric architecture. It covers key concepts including:
 
 - Smart Wallet Abstraction
 - Intent Verification

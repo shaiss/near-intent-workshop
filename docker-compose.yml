@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  near-intent-workshop:
+    build: .
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+      - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=host.docker.internal,*.rshare.io,endless-squirrel-47.rshare.io
+    restart: unless-stopped 

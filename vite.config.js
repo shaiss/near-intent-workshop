@@ -18,6 +18,9 @@ export default defineConfig({
   server: {
     allowedHosts: [
       "52839a0c-803c-4ec0-ac8a-60ad39c69f64-00-1g2qs1o5dqiy.kirk.replit.dev",
+      "host.docker.internal",
+      "endless-squirrel-47.rshare.io",
+      "*.rshare.io"
     ],
     host: "0.0.0.0",
     port: 5173,
@@ -36,6 +39,16 @@ export default defineConfig({
       overlay: true,
       timeout: 5000,
     },
+  },
+  preview: {
+    allowedHosts: [
+      "52839a0c-803c-4ec0-ac8a-60ad39c69f64-00-1g2qs1o5dqiy.kirk.replit.dev",
+      "host.docker.internal",
+      "endless-squirrel-47.rshare.io",
+      "*.rshare.io"
+    ],
+    host: "0.0.0.0",
+    port: 5173
   },
   resolve: {
     alias: {

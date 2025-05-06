@@ -1,61 +1,200 @@
-# Showcase of Advanced Use Cases
+# Advanced Use Cases for Intent Architecture
 
-This section explores real-world applications for intent-centric architecture and smart wallet abstraction on NEAR.
+This section explores real-world applications and implementation patterns for intent-centric architecture and smart wallet abstraction on NEAR.
 
 ## Use Case 1: Unified DeFi Access
 
-**Intent Example**:  
-"I want to swap my USDC for wNEAR at the best rate."
+### Intent Structure
+```javascript
+{
+  "intent": {
+    "action": "swap",
+    "input": {
+      "token": "USDC",
+      "amount": "100",
+      "slippage": "0.5%"
+    },
+    "output": {
+      "token": "wNEAR",
+      "preference": "best_rate"
+    },
+    "constraints": {
+      "max_gas": "0.1 NEAR",
+      "timeout": "5 minutes"
+    }
+  }
+}
+```
 
-**What Happens**:
-- Intent is submitted to NEAR Intents Manager
-- Solvers (like Defuse or custom AMM agents) evaluate the best route (e.g., Ref Finance, Jumbo)
-- The selected solver executes the swap—possibly across chains
+### Implementation Flow
+1. User submits intent through NEAR Intents Manager
+2. Solvers (Defuse, custom AMM agents) evaluate routes:
+   - Ref Finance
+   - Jumbo
+   - Other DEX aggregators
+3. Selected solver executes optimal swap path
 
-**Live Demos / Examples**:
-- NEAR Intents App
-- Turbo Swap
-- Dogecoin DEX (experimental)
+### Live Examples
+- [NEAR Intents App](https://intents.near.org)
+- [Turbo Swap](https://turbo.near.org)
+- [Dogecoin DEX](https://doge.near.org) (experimental)
 
 ## Use Case 2: Cross-Chain Token Swaps
 
-**Intent Example**:  
-"Swap 0.1 BTC on Bitcoin → USDC on Arbitrum"
+### Intent Structure
+```javascript
+{
+  "intent": {
+    "action": "cross_chain_swap",
+    "source": {
+      "chain": "bitcoin",
+      "token": "BTC",
+      "amount": "0.1"
+    },
+    "destination": {
+      "chain": "arbitrum",
+      "token": "USDC"
+    },
+    "security": {
+      "timeout": "30 minutes",
+      "fallback": "refund"
+    }
+  }
+}
+```
 
-**Key Concepts**:
-- Intents + **Chain Signatures** = 1-click cross-chain swaps
-- Uses NEAR's **OmniBridge** for secure asset transfer
-- Atomic fulfillment avoids manual bridging
+### Key Components
+- **Chain Signatures**: Enables 1-click cross-chain operations
+- **OmniBridge**: Secure asset transfer infrastructure
+- **Atomic Fulfillment**: Ensures transaction atomicity
 
-**Demo Resource**:
-- Chain Signatures Documentation
-- MoreMarkets — Cross-chain DeFi with native assets like XRP, BTC
+### Implementation Guide
+1. Set up Chain Signatures:
+```javascript
+const chainSignatures = new ChainSignatures({
+  network: "mainnet",
+  bridge: "omnibridge"
+});
+
+await chainSignatures.initialize();
+```
+
+2. Configure cross-chain intent:
+```javascript
+const crossChainIntent = {
+  source: {
+    chain: "bitcoin",
+    token: "BTC",
+    amount: "0.1"
+  },
+  destination: {
+    chain: "arbitrum",
+    token: "USDC"
+  }
+};
+
+const signature = await chainSignatures.signIntent(crossChainIntent);
+```
 
 ## Use Case 3: Wallet Abstraction and Session UX
 
-**Pattern**: Use **Function Call Access Keys** for gasless or delegated execution
+### Session Key Implementation
+```javascript
+const sessionKey = {
+  publicKey: "ed25519:...",
+  allowance: [
+    {
+      receiverId: "v2.ref-finance.near",
+      methodNames: ["ft_transfer", "ft_transfer_call"],
+      allowance: "1000000000000000000000000"
+    }
+  ],
+  maxGas: "300000000000000"
+};
 
-**Intent Example**:  
-"Stake 100 NEAR into my favorite validator"
+await wallet.requestSignIn({
+  contractId: "v2.ref-finance.near",
+  methodNames: ["ft_transfer", "ft_transfer_call"],
+  allowance: "1000000000000000000000000"
+});
+```
 
-**Key Abstraction Tools**:
-- **Session Keys** with allowances
-- **Meta-transactions** via NEP-366
-- **FastAuth** onboarding with email login
+### Meta-transaction Example
+```javascript
+const metaTransaction = {
+  signerId: "user.near",
+  receiverId: "v2.ref-finance.near",
+  actions: [
+    {
+      type: "FunctionCall",
+      params: {
+        methodName: "ft_transfer",
+        args: {
+          receiver_id: "pool.near",
+          amount: "1000000000000000000000000"
+        },
+        gas: "300000000000000",
+        deposit: "0"
+      }
+    }
+  ]
+};
 
-**Try It**:
-- Meta Transactions Guide
-- FastAuth Introduction
+const result = await wallet.signAndSendTransaction(metaTransaction);
+```
 
 ## Use Case 4: DAO + Smart Wallets + Intents
 
-**Scenario**:  
-A DAO proposes a cross-chain yield strategy.
+### Multisig Contract Implementation
+```javascript
+const multisigContract = {
+  owners: ["dao.near", "treasury.near"],
+  threshold: 2,
+  intent: {
+    action: "cross_chain_yield",
+    steps: [
+      {
+        action: "deposit_collateral",
+        chain: "ethereum",
+        token: "ETH",
+        amount: "10"
+      },
+      {
+        action: "borrow",
+        chain: "arbitrum",
+        token: "USDC",
+        amount: "15000"
+      }
+    ]
+  }
+};
+```
 
-**Features**:
-- DAO uses a **Multisig Contract Wallet**
-- Signs an intent to deposit ETH collateral, borrow USDC
-- All governed by votes on AstroDAO
+### DAO Governance Integration
+```javascript
+const daoProposal = {
+  proposal: {
+    description: "Execute cross-chain yield strategy",
+    kind: "FunctionCall",
+    receiverId: "multisig.near",
+    actions: [
+      {
+        methodName: "execute_intent",
+        args: {
+          intent: multisigContract.intent
+        },
+        deposit: "0",
+        gas: "300000000000000"
+      }
+    ]
+  }
+};
 
-**Multichain DAO Tutorial**:  
-Building DAO-Controlled Accounts with Chain Signatures
+await astroDao.submitProposal(daoProposal);
+```
+
+## Implementation Resources
+- [Chain Signatures Documentation](https://docs.near.org/chain-signatures)
+- [Meta Transactions Guide](https://docs.near.org/meta-transactions)
+- [FastAuth Introduction](https://docs.near.org/fastauth)
+- [Multichain DAO Tutorial](https://docs.near.org/dao-multichain)

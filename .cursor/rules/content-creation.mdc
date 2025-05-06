@@ -1,5 +1,5 @@
 ---
-description: 
+description: Rules for creating, editing, and managing content files within the src/content directory. Use this rule to ensure all content changes are restricted to the appropriate directory, follow the correct structure and naming conventions, and maintain consistency across modules. Also covers adding, modifying, and deleting content files.
 globs: 
 alwaysApply: false
 ---

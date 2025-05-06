@@ -1,5 +1,5 @@
 ---
-description: 
+description: Defines the overall structure and logical flow of the workshop modules. Use this rule when creating, organizing, or updating content modules in the workshop. Ensures each module builds on previous knowledge, maintains consistent flow, and follows the established folder and file naming conventions.
 globs: 
 alwaysApply: false
 ---

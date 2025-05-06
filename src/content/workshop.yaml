@@ -1,0 +1,107 @@
+title: NEAR INTENTS
+author: Shai Perednik
+version: 1.0.0
+release_date: 2024-06-01
+description: >
+  A hands-on workshop to learn about NEAR Intents, building blocks, and smart wallet experiences.
+organization: NEAR Foundation
+website: https://near.org
+contact_email: hello@near.org
+license: CC BY-NC-SA 4.0
+github_repo: https://github.com/shaiss/near-intent-workshop
+tags:
+  - blockchain
+  - smart wallet
+  - intents
+  - workshop
+long_description: |
+  This workshop provides a comprehensive, hands-on introduction to NEAR Intents and smart wallet abstraction. Participants will learn the core building blocks, develop backend and frontend components, and deploy to the NEAR testnet. The content is suitable for developers, educators, and blockchain enthusiasts interested in the next generation of decentralized application design.
+
+call_to_action:
+  text: "Start Workshop"
+  link_type: "internal" # internal (to a workshop page) or external (to a URL)
+  target: "/sections/01-introduction/01-overview" # slug or URL
+
+# What you will learn section
+what_you_will_learn:
+  - "The fundamentals of Intent-Centric Architecture"
+  - "Building Smart Wallet Abstractions for better UX"
+  - "Creating Verifiers and Solvers for NEAR intents"
+  - "Implementing cross-chain features with intent architecture"
+  - "Production best practices and advanced techniques"
+
+# Prerequisites section
+prerequisites:
+  - "Basic knowledge of blockchain concepts"
+  - "Familiarity with JavaScript/TypeScript"
+  - "Understanding of React framework basics"
+  - "NEAR account on testnet (we'll help you set this up)"
+  - "Node.js and npm/yarn installed locally"
+
+# Workshop structure (three-column layout)
+workshop_structure:
+  - number: 1
+    title: "Core Concepts"
+    description: "Master the fundamentals of NEAR Intents, Smart Wallet Abstraction, and Intent-Centric Architecture. Understand how these components work together to create seamless blockchain experiences."
+    link: "Section?slug=02-understanding-building-blocks/01-intents-concept"
+    link_text: "Start Learning"
+    bg_color: "pink"
+  - number: 2
+    title: "Technical Implementation"
+    description: "Dive into practical implementation with hands-on examples. Build verifiers, solvers, and smart wallets while learning best practices for production-ready code."
+    link: "Section?slug=03-building-backend/01-local-contract"
+    link_text: "Start Building"
+    bg_color: "green"
+  - number: 3
+    title: "Advanced Integration"
+    description: "Learn advanced patterns for cross-chain operations, composability with DeFi protocols, and integrating with the broader NEAR ecosystem including Aurora and BOS."
+    link: "Section?slug=02-understanding-building-blocks/04-cross-chain"
+    link_text: "Explore Advanced"
+    bg_color: "orange"
+
+# Key features (four-card grid)
+key_features:
+  - title: "Smart Wallet Abstraction"
+    icon: "Wallet"
+    description: "Abstract away complexity for seamless user experience"
+    bg_color: "blue"
+  - title: "Intent Verification"
+    icon: "Code"
+    description: "Secure, flexible transaction validation"
+    bg_color: "red"
+  - title: "Solver Mechanics"
+    icon: "Settings"
+    description: "Efficient execution of user intents"
+    bg_color: "green"
+  - title: "Cross-Chain Integration"
+    icon: "Share2"
+    description: "Seamless multi-chain interactions"
+    bg_color: "purple"
+
+# Frequently Asked Questions
+faqs:
+  - question: "What makes Intents different from regular transactions?"
+    answer: "Intents represent what users want to achieve rather than how to achieve it. Unlike traditional transactions where users specify exact steps, intents allow the network to determine the optimal execution path, creating more flexibility and better user experiences."
+  - question: "Do I need to know Rust for this workshop?"
+    answer: "While having some Rust knowledge is helpful for smart contract development, the workshop provides code samples and explanations that you can follow even without deep Rust experience. We focus more on the concepts and architecture than advanced language features."
+  - question: "How does this apply to existing NEAR applications?"
+    answer: "Existing applications can gradually adopt the Intent architecture to improve user experience. The workshop includes sections on migration strategies and how to blend traditional and intent-based approaches in your application."
+faq_settings:
+  bg_color: "gray"
+  has_expandable: true # Whether to show expand/collapse chevron
+
+# Get Started section
+get_started:
+  heading: "Ready to Begin?"
+  description: "Start your journey with NEAR Intents and revolutionize your dApp development approach"
+  bg_color: "blue"
+  secondary_button:
+    text: "Quick Overview"
+    link: "Section?slug=01-introduction/02-overview"
+
+# Other global UI settings
+ui_settings:
+  primary_button_bg: "black"
+  primary_button_text: "white"
+  secondary_button_bg: "white"
+  secondary_button_text: "black"

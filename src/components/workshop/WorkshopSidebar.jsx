@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Button } from "@/components/ui/button";
-import { ChevronRight, RefreshCw, Download, FileText } from "lucide-react";
+import { ChevronRight, FileText } from "lucide-react";
 import ContentService from "../../services/ContentService";
 import ExportWorkshop from "./ExportWorkshop";
+import PropTypes from "prop-types";
 
-export default function WorkshopSidebar({ onNavigate }) {
+export default function WorkshopSidebar({ onNavigate, workshopTitle }) {
   const [structure, setStructure] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [expandedParts, setExpandedParts] = useState({});
 
   useEffect(() => {
@@ -48,17 +47,6 @@ export default function WorkshopSidebar({ onNavigate }) {
     setLoading(false);
   };
 
-  const refreshContent = async () => {
-    setRefreshing(true);
-    try {
-      await ContentService.refreshAllContent();
-      await loadWorkshopStructure();
-    } catch (error) {
-      console.error("Error refreshing content:", error);
-    }
-    setRefreshing(false);
-  };
-
   const togglePart = (partId) => {
     setExpandedParts((prev) => ({
       ...prev,
@@ -79,10 +67,17 @@ export default function WorkshopSidebar({ onNavigate }) {
 
   return (
     <div className="h-full flex flex-col bg-yellow-100">
-      {/* Header with black bottom border */}
-      <div className="p-4 bg-yellow-300 border-b-4 border-black flex items-center">
-        <FileText className="w-5 h-5 mr-2" />
-        <h2 className="text-xl font-bold">Workshop Outline</h2>
+      {/* Workshop Title Header - visually prominent */}
+      <div className="p-4 bg-yellow-300 border-b-4 border-black flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileText className="w-6 h-6" />
+          <span className="text-2xl font-extrabold tracking-tight uppercase drop-shadow-sm">{workshopTitle}</span>
+        </div>
+      </div>
+      {/* Section Header - visually subordinate */}
+      <div className="px-4 py-2 bg-yellow-200 border-b-2 border-black flex items-center">
+        <FileText className="w-4 h-4 mr-2 opacity-70" />
+        <h2 className="text-base font-semibold text-gray-700 tracking-wide">Workshop Outline</h2>
       </div>
 
       <div className="flex-grow overflow-auto">
@@ -161,24 +156,14 @@ export default function WorkshopSidebar({ onNavigate }) {
         </nav>
       </div>
 
-      <div className="p-4 mt-auto space-y-4 border-t-2 border-black bg-yellow-100">
-        <Button
-          onClick={refreshContent}
-          disabled={refreshing}
-          className="w-full neo-button flex items-center justify-center bg-white font-bold text-black border-3 border-black transition-transform"
-          aria-label={
-            refreshing ? "Reloading content" : "Reload workshop content"
-          }
-        >
-          <RefreshCw
-            className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-            aria-hidden="true"
-          />
-          {refreshing ? "Reloading..." : "Reload Content"}
-        </Button>
-
+      <div className="p-4 mt-auto border-t-2 border-black bg-yellow-100">
         <ExportWorkshop />
       </div>
     </div>
   );
 }
+
+WorkshopSidebar.propTypes = {
+  onNavigate: PropTypes.func,
+  workshopTitle: PropTypes.string,
+}; 

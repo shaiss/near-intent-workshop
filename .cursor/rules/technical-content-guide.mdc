@@ -1,5 +1,5 @@
 ---
-description: 
+description: Standards for writing technical content in the NEAR workshop. Use this rule when drafting or reviewing code examples, smart contract explanations, intent mechanisms, smart wallet integrations, and technical instructions. Ensures accuracy, completeness, and alignment with NEAR best practices, including code testing, terminology, and production considerations.
 globs: 
 alwaysApply: false
 ---

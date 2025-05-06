@@ -3,6 +3,8 @@ import ReactMarkdown from 'react-markdown';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import MermaidDiagram from './MermaidDiagram';
+import rehypeRaw from 'rehype-raw';
 
 export default function SectionContent({ content, loading, sectionTitle }) {
   if (loading) {
@@ -21,6 +23,13 @@ export default function SectionContent({ content, loading, sectionTitle }) {
 
   const CodeBlock = ({ node, inline, className, children, ...props }) => {
     const match = /language-(\w+)/.exec(className || '');
+    
+    // Detect mermaid code blocks
+    if (!inline && match && match[1] === 'mermaid') {
+      return <MermaidDiagram chart={String(children).replace(/\n$/, '')} />;
+    }
+    
+    // Regular code blocks
     return !inline && match ? (
       <SyntaxHighlighter
         style={atomDark}
@@ -82,6 +91,8 @@ export default function SectionContent({ content, loading, sectionTitle }) {
             <h3 {...props} className="text-xl font-bold mt-6 mb-3" />
           )
         }}
+        // Add rehype-raw plugin to enable HTML in markdown
+        rehypePlugins={[rehypeRaw]}
       >
         {content}
       </ReactMarkdown>

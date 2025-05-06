@@ -77,11 +77,50 @@ function directoryListingPlugin() {
   };
 }
 
+// Custom plugin to specifically watch workshop.yaml and force module reloads
+function workshopYamlWatcherPlugin() {
+  return {
+    name: 'workshop-yaml-watcher',
+    configureServer(server) {
+      // Get the absolute path to workshop.yaml
+      const workshopYamlPath = path.resolve(__dirname, 'src/content/workshop.yaml');
+      
+      // Make sure the file exists before setting up the watcher
+      if (!fs.existsSync(workshopYamlPath)) {
+        console.warn(`⚠️ Could not find workshop.yaml at ${workshopYamlPath}`);
+        return;
+      }
+      
+      console.log(`👀 Setting up watcher for workshop.yaml at ${workshopYamlPath}`);
+      
+      // Add watcher for workshop.yaml using Vite's watcher API which is more reliable
+      server.watcher.add(workshopYamlPath);
+      
+      // Listen for change events on the workshop.yaml file
+      server.watcher.on('change', (changedPath) => {
+        if (changedPath === workshopYamlPath) {
+          console.log('🔄 workshop.yaml changed, forcing page reload...');
+          
+          // Force clients to reload
+          server.ws.send({
+            type: 'full-reload'
+          });
+          
+          // Clear any module cache that might be using the yaml data
+          // This ensures getWorkshopMetadata() gets fresh data on next call
+          server.moduleGraph.invalidateAll();
+        }
+      });
+    }
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     directoryListingPlugin(),
+    workshopYamlWatcherPlugin(),
   ],
   // Add a timestamp to filenames to prevent caching issues
   build: {
@@ -90,6 +129,9 @@ export default defineConfig({
         entryFileNames: `assets/[name]-[hash]-${new Date().getTime()}.js`,
         chunkFileNames: `assets/[name]-[hash]-${new Date().getTime()}.js`,
         assetFileNames: `assets/[name]-[hash]-${new Date().getTime()}.[ext]`,
+        manualChunks: {
+          mermaid: ['mermaid']
+        }
       },
     },
   },
@@ -109,8 +151,8 @@ export default defineConfig({
     watch: {
       // Force server to rebuild when content changes
       usePolling: true,
-      interval: 500,
-      include: ["src/**/*.md", "src/**/*.js", "src/**/*.jsx"],
+      interval: 300,
+      include: ["src/**/*.md", "src/**/*.js", "src/**/*.jsx", "src/**/*.yaml", "src/**/*.yml"],
     },
     hmr: {
       // Improve hot module replacement
@@ -143,5 +185,5 @@ export default defineConfig({
       },
     },
   },
-  assetsInclude: ["**/*.md"],
+  assetsInclude: ["**/*.md", "**/*.yaml", "**/*.yml"],
 });

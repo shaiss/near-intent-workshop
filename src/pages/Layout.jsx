@@ -1,19 +1,27 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+// import { Link } from "react-router-dom"; // No longer used here
+// import { createPageUrl } from "@/utils"; // No longer used here
 import {
   Menu,
-  X,
-  FileText,
+//  X, // No longer used here
+//  FileText, // No longer used here
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import WorkshopSidebar from "@/components/workshop/WorkshopSidebar";
 import { Toaster } from "@/components/ui/toaster";
+import { getWorkshopMetadata } from "../services/ContentService";
+import PropTypes from "prop-types";
 
-export default function Layout({ children, currentPageName }) {
+export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  const [workshopTitle, setWorkshopTitle] = useState("NEAR INTENTS");
+
+  React.useEffect(() => {
+    getWorkshopMetadata().then(meta => {
+      if (meta && meta.title) setWorkshopTitle(meta.title);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-amber-50">
@@ -96,26 +104,8 @@ export default function Layout({ children, currentPageName }) {
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex items-center justify-between p-4 bg-yellow-300 border-b-4 border-black">
-          <Link
-            to={createPageUrl("Home")}
-            className="text-xl font-black flex items-center gap-2"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <FileText className="w-6 h-6" />
-            <span>NEAR INTENTS</span>
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-6 w-6" />
-          </Button>
-        </div>
-        <div className="h-[calc(100vh-64px)] overflow-hidden">
-          <WorkshopSidebar onNavigate={() => setSidebarOpen(false)} />
+        <div className="h-full overflow-hidden">
+          <WorkshopSidebar onNavigate={() => setSidebarOpen(false)} workshopTitle={workshopTitle} />
         </div>
       </aside>
 
@@ -132,7 +122,7 @@ export default function Layout({ children, currentPageName }) {
             >
               <Menu className="h-6 w-6" />
             </Button>
-            <h1 className="text-lg font-black">NEAR INTENTS WORKSHOP</h1>
+            <h1 className="text-lg font-black">{workshopTitle} WORKSHOP</h1>
           </div>
         </header>
 
@@ -176,3 +166,7 @@ export default function Layout({ children, currentPageName }) {
     </div>
   );
 }
+
+Layout.propTypes = {
+  children: PropTypes.node,
+};

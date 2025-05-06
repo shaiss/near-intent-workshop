@@ -1,5 +1,5 @@
 ---
-description: 
+description: Best practices for formatting markdown files in the workshop. Use this rule to ensure all content follows a consistent document structure, code block formatting, image and link usage, callouts, checklists, and terminal output examples. Promotes clarity, readability, and a professional appearance throughout the workshop materials.
 globs: 
 alwaysApply: false
 ---

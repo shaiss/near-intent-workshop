@@ -1,4 +1,5 @@
 import contentMap from '../content/index.js';
+import yaml from 'js-yaml'; // If not installed, run: npm install js-yaml
 
 class ContentService {
   constructor() {
@@ -366,6 +367,75 @@ class ContentService {
       throw error;
     }
   }
+}
+
+let workshopMetadataCache = null;
+let lastMetadataFetch = 0;
+const METADATA_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+export async function getWorkshopMetadata() {
+  const now = Date.now();
+  const isProduction = import.meta.env.PROD;
+  
+  // Skip cache in development mode, always fetch fresh data
+  if (!isProduction) {
+    return await fetchWorkshopMetadata();
+  }
+  
+  // Return cached metadata in production if it exists and is fresh
+  if (workshopMetadataCache && (now - lastMetadataFetch < METADATA_CACHE_EXPIRY)) {
+    return workshopMetadataCache;
+  }
+  
+  return await fetchWorkshopMetadata();
+}
+
+// Separate the fetching logic for better organization
+async function fetchWorkshopMetadata() {
+  try {
+    // Add timestamp to prevent browser caching
+    const now = Date.now();
+    const yamlText = await fetch(`/src/content/workshop.yaml?t=${now}`).then(r => r.text());
+    const metadata = yaml.load(yamlText);
+    
+    // Update cache
+    workshopMetadataCache = metadata;
+    lastMetadataFetch = Date.now();
+    
+    return metadata;
+  } catch (error) {
+    console.error("Error fetching workshop metadata:", error);
+    return null;
+  }
+}
+
+export function getSectionsFromMarkdown(markdownContent) {
+  const sections = {};
+  if (!markdownContent) return sections;
+
+  const lines = markdownContent.split('\n');
+  let currentSection = null;
+  let currentContent = [];
+
+  for (const line of lines) {
+    // Assuming H2 (##) for main section titles in home.md
+    const sectionMatch = line.match(/^##\s+(.*)/);
+    if (sectionMatch) {
+      if (currentSection) {
+        sections[currentSection] = currentContent.join('\n').trim();
+      }
+      currentSection = sectionMatch[1].trim();
+      currentContent = [];
+    } else if (currentSection) {
+      currentContent.push(line);
+    }
+  }
+
+  if (currentSection) {
+    sections[currentSection] = currentContent.join('\n').trim();
+  }
+  
+  return sections;
 }
 
 export default new ContentService();

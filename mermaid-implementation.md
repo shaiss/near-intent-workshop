@@ -1,4 +1,4 @@
-Here are the steps to implement mermaid diagram support in your NEAR workshop application:
+# Here are the steps to implement mermaid diagram support in your NEAR workshop application
 
 ## 1. Install Required Packages
 
@@ -185,6 +185,7 @@ flowchart TD
 ```
 
 The diagram above shows the basic intent verification flow.
+
 ```
 
 ## 5. Handle Edge Cases

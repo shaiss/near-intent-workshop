@@ -1,8 +1,10 @@
-version: '3'
+version: "3"
 
 services:
   near-intent-workshop:
-    build: .
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
     ports:
       - "5173:5173"
     volumes:
@@ -12,4 +14,4 @@ services:
       - NODE_ENV=development
       - VITE_HOST=0.0.0.0
       - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=host.docker.internal,*.rshare.io,endless-squirrel-47.rshare.io
-    restart: unless-stopped 
+    restart: unless-stopped

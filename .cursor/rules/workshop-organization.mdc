@@ -1,0 +1,78 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Workshop Structure and Module Organization
+
+## Overview
+The workshop is organized into progressive modules that build upon each other. This structure ensures a logical learning path for participants.
+
+## Module Structure
+The content is organized into these primary modules:
+
+1. **[01-introduction](mdc:src/content/01-introduction)**: Welcome, overview, and setup
+   - Workshop objectives and outcomes
+   - NEAR Intents & Smart Wallet Abstraction overview
+   - Environment setup instructions
+
+2. **[02-understanding-building-blocks](mdc:src/content/02-understanding-building-blocks)**: Core concepts
+   - Intent theory and concepts
+   - Intent anatomy and structure
+   - Smart wallet abstraction
+   - Cross-chain UX strategy
+
+3. **[03-building-backend](mdc:src/content/03-building-backend)**: Smart contract development
+   - Local smart contract setup
+   - Intent verifier implementation
+   - Solver contract development
+   - Cross-contract calls
+   - Testing and deployment
+
+4. **[04-smart-wallet-experience](mdc:src/content/04-smart-wallet-experience)**: Wallet implementation
+   - Session-based smart wallet creation
+   - Key management
+   - User authentication
+   - Action abstraction
+
+5. **[05-building-frontend](mdc:src/content/05-building-frontend)**: User interface
+   - Frontend setup
+   - Wallet connection
+   - Intent form creation
+   - Transaction execution
+
+6. **[06-testnet-deployment](mdc:src/content/06-testnet-deployment)**: Testing and debugging
+   - Testnet deployment
+   - Testing with NEAR CLI
+   - Debug techniques
+   - Solver simulation
+
+7. **[07-beyond-demo](mdc:src/content/07-beyond-demo)**: Advanced topics
+   - Composability with DeFi and DAOs
+   - Advanced use cases
+   - Cross-chain extensions
+   - Production considerations
+
+8. **[08-resources](mdc:src/content/08-resources)**: Additional materials
+   - Reference links
+   - Future roadmap
+   - Workshop wrap-up
+
+## Content Dependencies
+When writing content, be aware of dependencies:
+- Later modules assume knowledge from earlier modules
+- Reference previous concepts when building upon them
+- Include links to prerequisite content when appropriate
+
+## Maintaining Content Flow
+- Each module should begin with concept explanation
+- Follow with practical implementation
+- End with testing/verification
+- Include checkpoints and summaries
+
+## Adding New Modules
+If a new module needs to be added:
+1. Create a new folder with the next available number
+2. Follow the naming convention: `##-module-name`
+3. Update the content README.md to reflect the new module
+4. Start with an introductory file explaining the module's objectives

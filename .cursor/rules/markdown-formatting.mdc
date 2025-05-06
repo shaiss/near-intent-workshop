@@ -1,0 +1,98 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Markdown Content Formatting Guide
+
+## Basic Document Structure
+Every markdown file should follow this structure:
+```markdown
+# Main Title
+
+Brief introduction paragraph(s) explaining what this section covers.
+
+## Section Heading
+
+Content paragraphs with explanations, examples, and code snippets.
+
+### Sub-section (if needed)
+
+More detailed content.
+
+## Next Section
+
+Additional content...
+
+## Summary
+
+Brief recap of what was covered.
+```
+
+## Code Block Formatting
+Use triple backticks with the language for syntax highlighting:
+
+````markdown
+```javascript
+function example() {
+  console.log("This is a code example");
+}
+```
+````
+
+## Images and Diagrams
+Place images in the `src/content/images/` folder and reference them:
+```markdown
+![Alt text description](mdc:../images/example-diagram.png)
+```
+
+## Links
+- Internal links to other content:
+```markdown
+[Link to another section](mdc:../01-introduction/01-welcome.md)
+```
+
+- External links:
+```markdown
+[NEAR Protocol Documentation](mdc:https:/docs.near.org)
+```
+
+## Callouts and Notes
+Use blockquotes for important information:
+```markdown
+> **Note:** This is important information that learners should pay attention to.
+
+> **Warning:** This highlights a common mistake or issue to avoid.
+```
+
+## Task Instructions
+Use checklists for step-by-step instructions:
+```markdown
+1. First, initialize the project:
+   ```bash
+   npm init -y
+   ```
+2. Install dependencies:
+   ```bash
+   npm install near-api-js
+   ```
+3. Create the main file structure...
+```
+
+## Terminal Output Examples
+Show expected terminal output:
+```markdown
+After running the command, you should see output similar to:
+```bash
+Transaction ID: ABC123XYZ
+Contract deployed to: example.testnet
+Gas used: 2,345,678
+```
+```
+
+## Content Preferences
+- Use clear, concise language
+- Provide practical examples
+- Explain concepts before showing code
+- Include troubleshooting tips where appropriate
+- Link to official documentation when relevant

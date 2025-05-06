@@ -1,0 +1,69 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Technical Content Guidelines for NEAR Workshop
+
+## Code Examples
+- All code examples should be complete and functional
+- Include all necessary imports and dependencies
+- Use consistent naming conventions throughout examples
+- Comment complex code sections
+- Ensure examples align with NEAR best practices
+
+## NEAR-Specific Content
+### Smart Contracts
+- Use the latest NEAR SDK version when showing contract examples
+- Include proper error handling in contract code
+- Demonstrate security best practices
+- Show tests for contract code when applicable
+
+### Intent Mechanism
+- Clearly explain intent data structure requirements
+- Show intent serialization/deserialization correctly
+- Explain intent verification logic thoroughly
+- Demonstrate proper solver integration
+
+### Smart Wallet Integration
+- Provide complete key management examples
+- Show account creation steps
+- Include proper session handling
+- Demonstrate secure authentication flows
+
+## Technical Accuracy
+- Verify all code examples by testing them
+- Keep content updated with the latest NEAR protocol changes
+- Clearly mark experimental or upcoming features
+- Link to official NEAR documentation for reference
+
+## Common Patterns
+- Follow established patterns for intent structures
+- Use consistent vocabulary for NEAR concepts
+- Match terminology with official NEAR documentation
+- Structure code examples to demonstrate best practices
+
+## Language and Commands
+### Terminal Commands
+- Include complete command-line instructions
+- Show expected output when relevant
+- Explain flags and parameters
+- Provide troubleshooting tips for common errors
+
+### API References
+- Document parameters and return values
+- Show example request/response pairs
+- Explain rate limits and usage constraints
+- Provide links to API documentation
+
+## Testing and Verification
+- Include steps for verifying contract deployments
+- Show how to test intent verifiers
+- Demonstrate solver testing approaches
+- Provide debugging techniques for common issues
+
+## Production Considerations
+- Highlight security considerations
+- Discuss gas optimization techniques
+- Cover error handling strategies
+- Explain monitoring and maintenance approaches

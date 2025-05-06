@@ -1,0 +1,46 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Content Creation Guidelines
+
+## Scope Restrictions
+- ONLY modify files within the [src/content](mdc:src/content) directory
+- DO NOT edit, modify, or touch any files outside the content directory
+- DO NOT modify any JavaScript, CSS, HTML, or component files
+- DO NOT edit any configuration files or build scripts
+
+## Content Structure
+The workshop content is organized in a specific folder structure:
+
+1. Content is organized in numbered module folders (e.g., `01-introduction/`)
+2. Each module contains numbered markdown files (e.g., `01-welcome.md`)
+3. Both folders and files use the format: `##-name` where ## is a two-digit number
+
+## File Naming Convention
+When creating content files:
+- Use the pattern `##-descriptive-name.md` (e.g., `01-welcome.md`)
+- Always use lowercase kebab-case for filenames
+- Ensure the first two digits match the correct sequence
+
+## Adding New Content
+To add new content:
+1. Determine which module folder it belongs to
+2. Use the next available number in sequence for the file
+3. The markdown file should start with a level-1 heading (`# Title`)
+4. Use proper markdown formatting for sections, code blocks, and links
+
+## Modifying Content
+- You can freely edit any existing markdown files within the content directory
+- Maintain consistent formatting and structure
+
+## Deleting Content
+- You can delete markdown files you no longer need
+- The system will automatically update to reflect the deletion
+- No additional steps are required after deletion
+
+## Important Notes
+- The system dynamically loads content - changes will be visible on refresh
+- You can test your changes by clicking "Reload Content" in the sidebar
+- Content files are automatically included in the navigation based on their folder location and numbering

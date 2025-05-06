@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from "@/utils";
@@ -54,10 +53,38 @@ export default function Section() {
       }
 
       if (foundSection && foundPart) {
-        // Load the markdown content
-        const markdown = await ContentService.getContent(`${slug}.md`);
-        setContent(markdown);
-        setCurrentSection({ ...foundSection, part: foundPart });
+        // Check if the slug already contains a path (with '../' or a folder structure)
+        let contentPath;
+        if (slug.includes('/')) {
+          contentPath = slug.endsWith('.md') ? slug : `${slug}.md`;
+        } else {
+          // Use the old-style flat structure approach for backward compatibility
+          contentPath = `${slug}.md`;
+        }
+        
+        try {
+          // First try to load using the direct slug
+          const markdown = await ContentService.getContent(contentPath);
+          setContent(markdown);
+          setCurrentSection({ ...foundSection, part: foundPart });
+        } catch (error) {
+          console.error(`Failed to load content with path ${contentPath}:`, error);
+          
+          // If that fails and the slug doesn't have a folder structure,
+          // try to construct a path based on the workshop structure
+          if (!slug.includes('/')) {
+            const folderPrefix = `${String(foundPart.id).padStart(2, '0')}-${foundPart.title.toLowerCase().replace(/\s+/g, '-')}`;
+            const filePrefix = `${String(foundSection.id).padStart(2, '0')}-${slug}`;
+            const newPath = `${folderPrefix}/${filePrefix}.md`;
+            
+            console.log(`Trying constructed path: ${newPath}`);
+            const markdown = await ContentService.getContent(newPath);
+            setContent(markdown);
+            setCurrentSection({ ...foundSection, part: foundPart });
+          } else {
+            throw error; // Re-throw if we've already tried the path-based approach
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading section:', error);

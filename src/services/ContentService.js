@@ -1,4 +1,3 @@
-import { marked } from 'marked';
 import contentMap from '../content/index.js';
 
 class ContentService {
@@ -43,48 +42,184 @@ class ContentService {
 
   async fetchWorkshopStructure() {
     try {
-      let text;
+      console.log("ContentService: Building workshop structure from folder structure");
 
+      // Initialize structure object
+      const structure = {
+        title: "NEAR Intents & Smart Wallet Abstraction Workshop",
+        description: "A hands-on workshop for building next-generation dApps with NEAR's intent-centric architecture",
+        parts: []
+      };
+
+      // For production, generate the structure from the contentMap
       if (this.isProduction) {
-        // In production, use the preloaded content
-        text = contentMap['workshop-structure.md'];
-        if (!text) {
-          console.error("Workshop structure not found in contentMap");
-          throw new Error("Workshop structure not found in contentMap");
-        }
-        console.log("ContentService: Using preloaded workshop structure");
-      } else {
-        // In development, try both approaches
-        try {
-          // First try from contentMap for more reliability
-          text = contentMap['workshop-structure.md'];
-          if (text) {
-            console.log("ContentService: Using workshop structure from contentMap");
-          } else {
-            // Fall back to fetch
-            console.log("ContentService: Fetching workshop structure from filesystem");
-            const response = await fetch('/src/content/workshop-structure.md?t=' + Date.now());
-            if (!response.ok) {
-              throw new Error(`Failed to fetch workshop structure: ${response.status}`);
+        console.log("Building structure from bundled files in production mode");
+        
+        // Create a mapping of folders to files
+        const folderFiles = {};
+        
+        // Collect all markdown files by folder
+        Object.keys(contentMap).forEach(path => {
+          if (path.endsWith('.md')) {
+            const [folder, file] = path.split('/', 2);
+            
+            if (!folderFiles[folder]) {
+              folderFiles[folder] = [];
             }
-            text = await response.text();
+            
+            folderFiles[folder].push(file);
           }
-        } catch (fetchError) {
-          console.error("Error fetching structure from filesystem:", fetchError);
-          // Last attempt from contentMap
-          text = contentMap['workshop-structure.md'];
-          if (!text) {
-            throw new Error("Workshop structure not found in contentMap or filesystem");
+        });
+        
+        // Process each folder in order
+        Object.keys(folderFiles)
+          .sort()
+          .forEach(folder => {
+            // Only process numbered folders (e.g., 01-introduction)
+            if (!/^\d{2}-[a-z-]+$/.test(folder)) {
+              return;
+            }
+            
+            // Extract module number and title
+            const [, moduleNum, moduleTitle] = folder.match(/^(\d{2})-(.+)$/);
+            
+            // Create a part object
+            const part = {
+              id: parseInt(moduleNum),
+              title: moduleTitle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+              sections: []
+            };
+            
+            // Sort files and process each one
+            folderFiles[folder]
+              .sort()
+              .forEach(file => {
+                // Only process numbered markdown files
+                if (!/^\d{2}-[a-z-]+\.md$/.test(file)) {
+                  return;
+                }
+                
+                // Extract section number and title
+                const [, sectionNum, sectionTitle] = file.match(/^(\d{2})-(.+)\.md$/);
+                
+                // Extract a better title from the content if possible
+                let fileTitle = sectionTitle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                
+                const content = contentMap[`${folder}/${file}`];
+                if (content) {
+                  const titleMatch = content.match(/^#\s+(.*)/m);
+                  if (titleMatch) {
+                    fileTitle = titleMatch[1].trim();
+                  }
+                }
+                
+                // Add the section
+                part.sections.push({
+                  id: parseInt(sectionNum),
+                  title: fileTitle,
+                  slug: `${folder}/${file.replace(/\.md$/, '')}`
+                });
+              });
+            
+            // Only add parts with sections
+            if (part.sections.length > 0) {
+              structure.parts.push(part);
+            }
+          });
+      } else {
+        // For development, scan directory structure
+        try {
+          // Fetch the root directory structure to get the module folders
+          const rootResponse = await fetch('/src/content?t=' + Date.now());
+          if (!rootResponse.ok) {
+            console.error(`Failed to fetch content directory: ${rootResponse.status}`);
+            throw new Error('Failed to fetch content directory');
           }
+          
+          const rootDir = await rootResponse.json();
+          
+          // Filter and sort folders (only include numbered folders like 01-introduction, etc.)
+          const moduleFolders = rootDir.folders
+            .filter(folder => /^\d{2}-[a-z-]+$/.test(folder))
+            .sort();
+          
+          // Process each module folder to build parts
+          for (const moduleFolder of moduleFolders) {
+            // Extract module number and title from folder name (e.g., "01-introduction")
+            const [, moduleNum, moduleTitle] = moduleFolder.match(/^(\d{2})-(.+)$/);
+            
+            // Create a part object for this module
+            const part = {
+              id: parseInt(moduleNum),
+              title: moduleTitle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+              sections: []
+            };
+            
+            // Fetch the module directory to get markdown files
+            const moduleResponse = await fetch(`/src/content/${moduleFolder}?t=${Date.now()}`);
+            if (!moduleResponse.ok) {
+              console.warn(`Skipping module ${moduleFolder}: ${moduleResponse.status}`);
+              continue;
+            }
+            
+            const moduleDir = await moduleResponse.json();
+            
+            // Filter and sort markdown files
+            const markdownFiles = moduleDir.files
+              .filter(file => file.endsWith('.md'))
+              .sort();
+            
+            // Process each markdown file to build sections
+            for (const mdFile of markdownFiles) {
+              // Extract section number and title from file name (e.g., "01-welcome.md")
+              const [, sectionNum, sectionTitle] = mdFile.match(/^(\d{2})-(.+)\.md$/);
+              
+              // Read the first line of the markdown file to get the section title
+              let fileTitle = sectionTitle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+              
+              try {
+                const fileResponse = await fetch(`/src/content/${moduleFolder}/${mdFile}?t=${Date.now()}`);
+                if (fileResponse.ok) {
+                  const content = await fileResponse.text();
+                  const titleMatch = content.match(/^#\s+(.*)/);
+                  if (titleMatch) {
+                    fileTitle = titleMatch[1].trim();
+                  }
+                }
+              } catch (error) {
+                console.warn(`Could not read title from ${mdFile}:`, error);
+              }
+              
+              // Add the section to the part
+              part.sections.push({
+                id: parseInt(sectionNum),
+                title: fileTitle,
+                slug: `${moduleFolder}/${sectionNum}-${sectionTitle}`
+              });
+            }
+            
+            // Add the part to the structure
+            structure.parts.push(part);
+          }
+          
+          // Sort parts by ID
+          structure.parts.sort((a, b) => a.id - b.id);
+        } catch (error) {
+          console.error("Error scanning directory structure:", error);
+          throw error;
         }
       }
-
-      const structure = this.parseWorkshopStructure(text);
-
+      
+      // If no parts were found, this is a problem
+      if (structure.parts.length === 0) {
+        console.error("No modules found in content directory");
+        throw new Error("No modules found in content directory");
+      }
+      
       // Update cache
       this.structureCache = structure;
       this.lastFetchTime.set('structure', Date.now());
-
+      
       return structure;
     } catch (error) {
       console.error('Error loading workshop structure:', error);
@@ -122,24 +257,35 @@ class ContentService {
         }
       } else {
         try {
-          // First try to use contentMap in development too (for easier debugging)
+          // First try contentMap for faster loading (if available)
           text = contentMap[fileName];
+          
           if (!text) {
-            // If not in contentMap, fall back to fetch
-            console.log(`Content file ${fileName} not found in contentMap, fetching from filesystem`);
-            const response = await fetch(`/src/content/${fileName}?t=${Date.now()}`);
+            console.log(`Content file ${fileName} not in contentMap, fetching from filesystem`);
+            
+            // Require a folder structure in the path for markdown content
+            if (!fileName.includes('/')) {
+              throw new Error(`Invalid content path: ${fileName} - must use folder structure (e.g., "01-introduction/01-welcome")`);
+            }
+            
+            // Try with the direct path
+            let response = await fetch(`/src/content/${fileName}?t=${Date.now()}`);
+            
+            // Try adding .md extension if needed
+            if (!response.ok && !fileName.endsWith('.md')) {
+              console.log(`Trying with .md extension: /src/content/${fileName}.md`);
+              response = await fetch(`/src/content/${fileName}.md?t=${Date.now()}`);
+            }
+            
             if (!response.ok) {
               throw new Error(`Failed to fetch content: ${response.status}`);
             }
+            
             text = await response.text();
           }
         } catch (fetchError) {
           console.error(`Error fetching ${fileName} from filesystem:`, fetchError);
-          // Last resort - try contentMap again
-          text = contentMap[fileName];
-          if (!text) {
-            throw new Error(`Content file ${fileName} not found in contentMap or filesystem`);
-          }
+          throw fetchError;
         }
       }
 
@@ -182,76 +328,6 @@ class ContentService {
     }
   }
 
-  // Parse the workshop structure markdown into a structured object
-  parseWorkshopStructure(markdown) {
-    console.log("Parsing workshop structure from markdown");
-    const lines = markdown.split('\n');
-    console.log(`Found ${lines.length} lines in the markdown file`);
-
-    const structure = {
-      title: '',
-      description: '',
-      parts: []
-    };
-
-    let currentPart = null;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      // Parse workshop title (H1)
-      if (line.startsWith('# ')) {
-        structure.title = line.substring(2).trim();
-        console.log(`Found workshop title: ${structure.title}`);
-      } 
-      // Parse description (text after title and before first H2)
-      else if (structure.title && !structure.description && !line.startsWith('## ') && line) {
-        structure.description = line;
-        console.log(`Found workshop description: ${structure.description}`);
-      }
-      // Parse part title (H2)
-      else if (line.startsWith('## ')) {
-        const partTitle = line.substring(3).trim();
-        console.log(`Found part: ${partTitle}`);
-
-        if (currentPart !== null && currentPart.title && currentPart.sections.length === 0) {
-          // Skip parts with no sections
-          console.warn(`Part "${currentPart.title}" has no sections`);
-        }
-
-        currentPart = {
-          id: structure.parts.length + 1,
-          title: partTitle,
-          sections: []
-        };
-        structure.parts.push(currentPart);
-      }
-      // Parse section (list item with link)
-      else if (currentPart && line.startsWith('- [')) {
-        const titleMatch = line.match(/- \[(.*?)\]\((.*?)\)/);
-        if (titleMatch) {
-          const title = titleMatch[1];
-          const slug = titleMatch[2].replace('.md', '');
-          console.log(`Found section: ${title} (${slug}) in part ${currentPart.title}`);
-
-          // Check for duplicate slugs
-          const isDuplicate = currentPart.sections.some(s => s.slug === slug);
-          if (isDuplicate) {
-            console.warn(`Duplicate section slug found: ${slug} in part ${currentPart.title}`);
-          } else {
-            currentPart.sections.push({
-              id: currentPart.sections.length + 1,
-              title,
-              slug
-            });
-          }
-        }
-      }
-    }
-
-    return structure;
-  }
-
   async exportWorkshopContent() {
     try {
       const structure = await this.getWorkshopStructure();
@@ -267,7 +343,7 @@ class ContentService {
           // If the section has a slug, get its content
           if (section.slug) {
             try {
-              const sectionContent = contentMap[section.slug + '.md'];
+              const sectionContent = await this.getContent(section.slug + '.md');
               if (sectionContent) {
                 // Remove the first heading (title) as we already added it
                 const contentWithoutTitle = sectionContent.replace(/^#.*?\n/, '');
@@ -275,7 +351,7 @@ class ContentService {
               } else {
                 markdownContent += '*Content not available*\n\n';
               }
-            } catch (e) {
+            } catch {
               markdownContent += '*Error loading content*\n\n';
             }
           } else {

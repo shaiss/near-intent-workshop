@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -30,7 +29,7 @@ export default function Home() {
             A hands-on workshop for building next-generation dApps with NEAR's intent-centric architecture
           </p>
           <div className="flex flex-wrap gap-4">
-            <Link to={createPageUrl("Section?slug=welcome")}>
+            <Link to={createPageUrl("Section?slug=01-introduction/01-welcome")}>
               <Button className="bg-black text-white neo-button text-lg px-8 py-6 font-bold">
                 Start Workshop <ArrowRight className="ml-2" />
               </Button>
@@ -116,7 +115,7 @@ export default function Home() {
             <div className="mb-4 w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold text-xl">1</div>
             <h3 className="text-xl font-bold mb-2">Core Concepts</h3>
             <p className="flex-grow mb-4">Master the fundamentals of NEAR Intents, Smart Wallet Abstraction, and Intent-Centric Architecture. Understand how these components work together to create seamless blockchain experiences.</p>
-            <Link to={createPageUrl("Section?slug=intents-concept")}>
+            <Link to={createPageUrl("Section?slug=02-understanding-building-blocks/01-intents-concept")}>
               <Button className="w-full bg-white neo-button font-bold">
                 Start Learning
               </Button>
@@ -126,7 +125,7 @@ export default function Home() {
             <div className="mb-4 w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold text-xl">2</div>
             <h3 className="text-xl font-bold mb-2">Technical Implementation</h3>
             <p className="flex-grow mb-4">Dive into practical implementation with hands-on examples. Build verifiers, solvers, and smart wallets while learning best practices for production-ready code.</p>
-            <Link to={createPageUrl("Section?slug=local-contract")}>
+            <Link to={createPageUrl("Section?slug=03-building-backend/01-local-contract")}>
               <Button className="w-full bg-white text-black neo-button font-bold">
                 Start Building
               </Button>
@@ -136,7 +135,7 @@ export default function Home() {
             <div className="mb-4 w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold text-xl">3</div>
             <h3 className="text-xl font-bold mb-2">Advanced Integration</h3>
             <p className="flex-grow mb-4">Learn advanced patterns for cross-chain operations, composability with DeFi protocols, and integrating with the broader NEAR ecosystem including Aurora and BOS.</p>
-            <Link to={createPageUrl("Section?slug=cross-chain")}>
+            <Link to={createPageUrl("Section?slug=02-understanding-building-blocks/04-cross-chain")}>
               <Button className="w-full bg-white text-black neo-button font-bold">
                 Explore Advanced
               </Button>
@@ -177,12 +176,12 @@ export default function Home() {
         <h2 className="text-3xl font-black mb-4">Ready to Begin?</h2>
         <p className="text-xl mb-6">Start your journey with NEAR Intents and revolutionize your dApp development approach</p>
         <div className="flex flex-wrap gap-4">
-          <Link to={createPageUrl("Section?slug=welcome")}>
+          <Link to={createPageUrl("Section?slug=01-introduction/01-welcome")}>
             <Button className="bg-black text-white neo-button text-lg px-6 py-3 font-bold">
               Start the Workshop
             </Button>
           </Link>
-          <Link to={createPageUrl("Section?slug=overview")}>
+          <Link to={createPageUrl("Section?slug=01-introduction/02-overview")}>
             <Button className="bg-white text-black neo-button text-lg px-6 py-3 font-bold">
               Quick Overview
             </Button>

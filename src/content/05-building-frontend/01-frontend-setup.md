@@ -1,4 +1,4 @@
-# 5.1: Setting Up Your Frontend Environment
+# Setting Up Your Frontend Environment
 
 **Estimated Time:** 20 minutes  
 **Prerequisites:** Completed backend contracts from Module 3, smart wallet implementation from Module 4

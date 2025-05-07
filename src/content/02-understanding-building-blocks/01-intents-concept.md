@@ -1,4 +1,4 @@
-# 2.1: Intents - The "What," Not the "How"
+# Intents - The "What," Not the "How"
 
 **Estimated Time:** 25 minutes
 **Prerequisites:** Completed Section 1: Introduction

@@ -315,9 +315,7 @@ export class SolverNode {
 }
 ```
 
-In the next section, we'll explore how to execute intents and monitor their status.
-
-# 5.5: Displaying and Selecting Solver Options
+# Displaying and Selecting Solver Options
 
 **Time**: 20 minutes  
 **Pre-requisite**: Intent submission from 5.4, understanding of Solver contracts from Module 3

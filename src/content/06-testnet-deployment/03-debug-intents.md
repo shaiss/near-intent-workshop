@@ -1,4 +1,4 @@
-# 6.3: Debugging Intent Execution on Testnet
+# Debugging Intent Execution on Testnet
 
 **Time**: 30 minutes  
 **Pre-requisite**: Deployed contracts from 6.1, basic CLI usage from 6.2

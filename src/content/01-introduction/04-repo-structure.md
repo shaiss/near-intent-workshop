@@ -1,4 +1,4 @@
-# 1.4: Exploring the Workshop Codebase Structure
+# Exploring the Workshop Codebase Structure
 
 **Estimated Time:** 20 minutes
 **Prerequisites:** Completed environment setup from section 1.3

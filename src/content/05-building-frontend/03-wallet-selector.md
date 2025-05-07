@@ -1,4 +1,4 @@
-# 5.3: Integrating with NEAR Wallet Selector for Multiple Wallet Options
+# Integrating with NEAR Wallet Selector for Multiple Wallet Options
 
 **Estimated Time:** 20 minutes  
 **Prerequisites:** Wallet connection from section 5.2, understanding of Session Keys from Module 4

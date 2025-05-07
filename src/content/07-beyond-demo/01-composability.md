@@ -1,4 +1,4 @@
-# 7.1: Extending Your Intent Architecture with Composability
+# Extending Your Intent Architecture with Composability
 
 **Estimated Time:** 25 minutes  
 **Prerequisites:** Completed testnet deployment from Module 6

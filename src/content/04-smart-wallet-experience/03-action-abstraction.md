@@ -1,4 +1,4 @@
-# 4.3: Creating User-Friendly Action Abstractions
+# Creating User-Friendly Action Abstractions
 
 **Time**: 20 minutes  
 **Pre-requisite**: Understanding of session keys and intent structures from previous sections

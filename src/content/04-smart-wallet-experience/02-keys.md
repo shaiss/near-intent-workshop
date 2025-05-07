@@ -1,4 +1,4 @@
-# 4.2: Secure Key Management for Smart Wallets
+# Secure Key Management for Smart Wallets
 
 **Estimated Time:** 25 minutes
 **Prerequisites:** Understanding of session-based smart wallets from section 4.1

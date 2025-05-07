@@ -1,4 +1,4 @@
-# 8.3: Workshop Wrap-up & Your Accomplishments
+# Workshop Wrap-up & Your Accomplishments
 
 **Time**: 10 minutes  
 **Pre-requisite**: Completed all previous modules

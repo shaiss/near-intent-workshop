@@ -1,4 +1,4 @@
-# 6.4: Testing Your Intent Architecture with Solver Simulations
+# Testing Your Intent Architecture with Solver Simulations
 
 **Time**: 40 minutes  
 **Pre-requisite**: Deployed contracts from 6.1, debugging knowledge from 6.3

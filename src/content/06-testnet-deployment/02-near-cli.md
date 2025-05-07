@@ -1,4 +1,4 @@
-# 6.2: Interacting with Deployed Contracts Using NEAR CLI
+# Interacting with Deployed Contracts Using NEAR CLI
 
 **Time**: 25 minutes  
 **Pre-requisite**: Deployed contracts from 6.1, understanding of contract methods from Module 3

@@ -1,4 +1,4 @@
-# 7.2: Advanced Use Cases for Intent Architecture
+# Advanced Use Cases for Intent Architecture
 
 **Time**: 30 minutes  
 **Pre-requisite**: Understanding of composability from 7.1

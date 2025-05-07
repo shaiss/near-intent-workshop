@@ -1,4 +1,4 @@
-# 3.1: From Concepts to Code - Building Your First NEAR Smart Contract
+# From Concepts to Code - Building Your First NEAR Smart Contract
 
 **Estimated Time:** 35 minutes  
 **Prerequisites:** Completion of Module 2, basic Rust familiarity helpful but not required

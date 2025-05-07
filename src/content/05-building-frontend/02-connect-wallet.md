@@ -253,9 +253,7 @@ export function useSessionKey() {
 }
 ```
 
-In the next section, we'll implement the interface for submitting intents using these wallet components.
-
-# 5.2: Connecting Wallets with Session Key Authorization
+# Connecting Wallets with Session Key Authorization
 
 **Time**: 20 minutes  
 **Pre-requisite**: Frontend setup from 5.1, understanding of Session Keys from Module 4

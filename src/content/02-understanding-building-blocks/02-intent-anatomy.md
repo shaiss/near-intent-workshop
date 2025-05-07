@@ -1,4 +1,4 @@
-# 2.2: Anatomy of an Intent - Peeling Back the Layers
+# Anatomy of an Intent - Peeling Back the Layers
 
 **Estimated Time:** 30 minutes
 **Prerequisites:** Understanding of intent concepts from section 2.1

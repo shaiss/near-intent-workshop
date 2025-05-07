@@ -1,4 +1,4 @@
-# 8.2: Project Ideas & Next Steps
+# Project Ideas & Next Steps
 
 **Time**: 20 minutes  
 **Pre-requisite**: Completed workshop implementation

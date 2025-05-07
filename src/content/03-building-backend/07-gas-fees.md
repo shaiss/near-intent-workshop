@@ -1,4 +1,4 @@
-# 3.7: Understanding Gas & Fees in Intent Systems
+# Understanding Gas & Fees in Intent Systems
 
 **Estimated Time:** 20 minutes
 **Prerequisites:** Completed previous sections on contract implementation

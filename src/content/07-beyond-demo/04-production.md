@@ -1,4 +1,4 @@
-# 7.4: Moving Your Intent Architecture to Production
+# Moving Your Intent Architecture to Production
 
 **Time**: 35 minutes  
 **Pre-requisite**: Understanding of cross-chain concepts from 7.3

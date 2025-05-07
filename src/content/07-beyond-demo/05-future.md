@@ -1,4 +1,4 @@
-# 7.5: The Future of Intent Architecture
+# The Future of Intent Architecture
 
 **Estimated Time:** 30 minutes  
 **Prerequisites:** Understanding of production considerations from section 7.4

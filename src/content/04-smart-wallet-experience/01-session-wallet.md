@@ -1,4 +1,4 @@
-# 4.1: Session-based Smart Wallets - Bridging Intent Architecture to User Experience
+# Session-based Smart Wallets - Bridging Intent Architecture to User Experience
 
 **Time**: 15 minutes  
 **Pre-requisite**: Understanding of intent architecture from Module 3

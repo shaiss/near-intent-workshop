@@ -1,4 +1,4 @@
-# 2.3: Smart Wallet Abstraction - Simplifying Web3 Interactions
+# Smart Wallet Abstraction - Simplifying Web3 Interactions
 
 **Estimated Time:** 25 minutes
 **Prerequisites:** Understanding of intent concepts and anatomy from sections 2.1-2.2

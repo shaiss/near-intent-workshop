@@ -1,4 +1,4 @@
-# 4.4: Testing Your Smart Wallet Implementation
+# Testing Your Smart Wallet Implementation
 
 **Time**: 20 minutes  
 **Pre-requisite**: Understanding of the session-based wallet and action abstractions from previous sections

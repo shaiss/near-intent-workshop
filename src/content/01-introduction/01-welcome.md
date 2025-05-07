@@ -1,4 +1,4 @@
-# 1.1: Welcome to the Future of dApp Development!
+# Welcome to the Future of dApp Development!
 
 **Estimated Time:** 15 minutes
 **Prerequisites:** Basic JavaScript knowledge, familiarity with web development

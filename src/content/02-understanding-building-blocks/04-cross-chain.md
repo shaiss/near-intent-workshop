@@ -1,4 +1,4 @@
-# 2.4: Cross-Chain Intents & User Experience
+# Cross-Chain Intents & User Experience
 
 We've seen how Intents define user goals ([2.1](mdc:./01-intents-concept.md)), how their Anatomy allows for rich expression ([2.2](mdc:./02-intent-anatomy.md)), and how Smart Wallets simplify user interactions ([2.3](mdc:./03-smart-wallet.md)). Now, let's tackle one of Web3's biggest UX hurdles: **cross-chain interactions**.
 

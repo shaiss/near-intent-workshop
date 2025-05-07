@@ -1,4 +1,4 @@
-# 3.3: The Solver Contract - Fulfilling User Intents
+# The Solver Contract - Fulfilling User Intents
 
 In the [previous section](mdc:./02-intent-verifier.md), we built a Verifier contract that validates intents and initiates cross-contract calls. Now, we'll implement the **Solver** contract - the component that actually executes the user's intent.
 

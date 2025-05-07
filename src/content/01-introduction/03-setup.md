@@ -1,4 +1,4 @@
-# 1.3: Setting Up Your Developer Environment
+# Setting Up Your Developer Environment
 
 Now that we've explored the key concepts behind NEAR's Intent-Centric architecture (as discussed in the [previous section](mdc:./02-overview.md)), it's time to roll up our sleeves and prepare your local development environment. This setup is crucial for building, testing, and deploying the components like Verifiers, Solvers, and Smart Wallets that bring intents to life.
 

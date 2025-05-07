@@ -1,4 +1,4 @@
-# 7.3: Cross-Chain Intent Architecture
+# Cross-Chain Intent Architecture
 
 **Time**: 30 minutes  
 **Pre-requisite**: Understanding of advanced use cases from 7.2

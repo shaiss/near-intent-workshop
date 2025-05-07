@@ -1,4 +1,4 @@
-# 3.4: Advanced Contract Interactions - Mastering Cross-Contract Calls
+# Advanced Contract Interactions - Mastering Cross-Contract Calls
 
 **Estimated Time:** 30 minutes
 **Prerequisites:** Completed Verifier and Solver contract implementation from sections 3.2-3.3

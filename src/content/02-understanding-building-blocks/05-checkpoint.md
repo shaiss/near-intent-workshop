@@ -1,4 +1,4 @@
-# 2.5: Checkpoint - Consolidating Your Understanding
+# Checkpoint - Consolidating Your Understanding
 
 **Estimated Time:** 20 minutes
 **Prerequisites:** Completed sections 2.1-2.4

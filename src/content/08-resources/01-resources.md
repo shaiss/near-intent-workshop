@@ -1,4 +1,4 @@
-# 8.1: Resources for Further Learning
+# Resources for Further Learning
 
 **Estimated Time:** 15 minutes  
 **Prerequisites:** Completed all previous workshop modules 1-7

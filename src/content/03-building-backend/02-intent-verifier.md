@@ -1,4 +1,4 @@
-# 3.2: The Intent Verifier - Building a Full-Featured Contract
+# The Intent Verifier - Building a Full-Featured Contract
 
 In the [previous section](mdc:./01-local-contract.md), we created a basic Verifier contract. Now, we'll enhance it with proper state management, robust validation logic, testing capabilities, and crucially, the ability to interact with other contracts on the blockchain.
 

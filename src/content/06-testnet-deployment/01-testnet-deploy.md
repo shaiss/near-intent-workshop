@@ -1,4 +1,4 @@
-# 6.1: Deploying Your Intent Architecture to NEAR Testnet
+# Deploying Your Intent Architecture to NEAR Testnet
 
 **Estimated Time:** 30 minutes  
 **Prerequisites:** Completed contracts from Module 3, frontend from Module 5

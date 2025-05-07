@@ -1,112 +1,548 @@
-# Wallet Selector Integration
+# 5.3: Integrating with NEAR Wallet Selector for Multiple Wallet Options
 
-## Overview of NEAR Wallet Selector
+**Estimated Time:** 20 minutes  
+**Prerequisites:** Wallet connection from section 5.2, understanding of Session Keys from Module 4
+**Learning Objectives:**
 
-NEAR Wallet Selector is a modular library that simplifies wallet integration for NEAR applications. It provides a unified interface for connecting to various NEAR wallets.
+- Integrate NEAR Wallet Selector to support multiple wallet options
+- Connect wallet authentication to the smart wallet abstraction layer
+- Implement secure session key management in the frontend
 
-## Setting Up Wallet Selector
+## Enhancing Wallet Options for Users
 
-First, let's install the necessary packages:
+In the previous section, we implemented basic wallet connectivity using near-api-js. However, in a production dApp, users expect multiple wallet options. The NEAR Wallet Selector provides a consistent interface for integrating with various NEAR-compatible wallets while maintaining our session key approach.
+
+> 💡 **Web2 Parallel**: This is like offering "Sign in with Google/Facebook/Apple" options in a Web2 app while maintaining a consistent session token system regardless of how users authenticate.
+
+## Frontend-Backend Integration Architecture
+
+The following diagram illustrates how our frontend components connect to the blockchain through the wallet and smart contract layers:
+
+```mermaid
+flowchart LR
+    subgraph "Frontend (React/Next.js)"
+    UI[User Interface]
+    WC[Wallet Connector]
+    end
+
+    subgraph "Middleware"
+    WS[Wallet Selector]
+    end
+
+    subgraph "Blockchain"
+    SW[Smart Wallet]
+    SC[Smart Contracts]
+    end
+
+    UI --> |User Input| WC
+    WC --> |Connect| WS
+    WS --> |Authenticate| SW
+    SW --> |Submit Intents| SC
+    SC --> |Return Results| UI
+```
+
+This architecture enables a seamless user experience where:
+
+1. The frontend captures user intent through intuitive interfaces
+2. The wallet connector and selector handle authentication
+3. The smart wallet abstracts blockchain complexity
+4. Smart contracts process the actual intents
+5. Results flow back to the UI for user feedback
+
+## Understanding NEAR Wallet Selector
+
+NEAR Wallet Selector is a library that simplifies wallet integration by providing:
+
+1. **Multiple wallet support** - Including NEAR Wallet, MyNearWallet, Ledger, and more
+2. **Consistent interface** - A unified API regardless of wallet implementation
+3. **Modal UI** - A pre-built wallet selection interface
+
+Let's integrate it with our session key management system:
+
+## Installing the Dependencies
+
+First, let's add the necessary packages:
 
 ```bash
-npm install @near-wallet-selector/core @near-wallet-selector/near-wallet near-api-js
+npm install @near-wallet-selector/core @near-wallet-selector/modal-ui @near-wallet-selector/near-wallet @near-wallet-selector/my-near-wallet @near-wallet-selector/sender @near-wallet-selector/meteor-wallet @near-wallet-selector/ledger
 ```
 
-## Basic Integration
+## Updating Our Wallet Context
 
-The core setup involves initializing the wallet selector with appropriate modules:
+We'll update our WalletContext to use the NEAR Wallet Selector library while maintaining our session key approach:
 
-```javascript
-import { setupWalletSelector } from '@near-wallet-selector/core';
-import { setupNearWallet } from '@near-wallet-selector/near-wallet';
+```jsx
+// src/context/WalletContext.js
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { connect, keyStores, KeyPair, utils } from "near-api-js";
+import { setupWalletSelector } from "@near-wallet-selector/core";
+import { setupModal } from "@near-wallet-selector/modal-ui";
+import { setupNearWallet } from "@near-wallet-selector/near-wallet";
+import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { setupSender } from "@near-wallet-selector/sender";
+import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
+import { setupLedger } from "@near-wallet-selector/ledger";
+import { getConfig, CONTRACT_ADDRESSES } from "../utils/near";
+import { SessionKeyManager } from "../services/SessionKeyManager";
 
-export const initWallet = async () => {
-  const selector = await setupWalletSelector({
-    network: 'testnet',
-    modules: [setupNearWallet()],
-  });
+// Import modal UI styles
+import "@near-wallet-selector/modal-ui/styles.css";
 
-  return selector;
-};
-```
+// Context creation
+const WalletContext = createContext(null);
 
-## Creating a Connect Button
+export function useWallet() {
+  return useContext(WalletContext);
+}
 
-To allow users to connect their wallets, create a simple connection button:
+export function WalletProvider({ children }) {
+  // State variables
+  const [accountId, setAccountId] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [sessionKey, setSessionKey] = useState(null);
+  const [sessionAccount, setSessionAccount] = useState(null);
+  const [walletSelector, setWalletSelector] = useState(null);
+  const [modal, setModal] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-```javascript
-const ConnectWallet = ({ selector }) => {
-  const handleConnect = async () => {
-    const wallet = await selector.wallet('near-wallet');
-    await wallet.signIn({
-      contractId: 'your-contract.testnet',
-      methodNames: ['verify_intent'],
-    });
+  // Instantiate SessionKeyManager from Module 4
+  const [keyManager] = useState(() => new SessionKeyManager());
+
+  // Network configuration
+  const [networkId] = useState("testnet");
+  const config = getConfig(networkId);
+  const verifierContractId = CONTRACT_ADDRESSES[networkId].verifierContract;
+
+  // Initialize Wallet Selector
+  useEffect(() => {
+    const initWalletSelector = async () => {
+      try {
+        const selector = await setupWalletSelector({
+          network: networkId,
+          modules: [
+            setupNearWallet(),
+            setupMyNearWallet(),
+            setupSender(),
+            setupMeteorWallet(),
+            setupLedger(),
+          ],
+        });
+
+        const newModal = setupModal(selector, {
+          contractId: verifierContractId,
+        });
+
+        setWalletSelector(selector);
+        setModal(newModal);
+
+        // Check if a wallet is already signed in
+        const state = selector.store.getState();
+        const accounts = state.accounts;
+
+        if (accounts.length > 0) {
+          const accountId = accounts[0].accountId;
+          setAccountId(accountId);
+
+          // Check if we have a session key for this account
+          try {
+            // Prompt for password - In a real app, you might use a modal
+            const password = prompt(
+              "Enter your session password to unlock your wallet:"
+            );
+
+            if (password) {
+              const existingKey = keyManager.getSessionKey(accountId, password);
+
+              if (existingKey) {
+                setSessionKey(existingKey);
+                await initializeSessionAccount(
+                  accountId,
+                  existingKey.privateKey
+                );
+                setIsConnected(true);
+              }
+            }
+          } catch (err) {
+            console.error("Failed to load existing session:", err);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to initialize wallet selector:", err);
+        setError("Wallet initialization failed");
+      }
+    };
+
+    initWalletSelector();
+  }, []);
+
+  // Initialize a NEAR account using a session key
+  const initializeSessionAccount = async (accountId, privateKey) => {
+    try {
+      // Create an in-memory keystore for the session key
+      const keyStore = new keyStores.InMemoryKeyStore();
+
+      // Load the private key into a KeyPair object
+      const keyPair = KeyPair.fromString(privateKey);
+
+      // Add the key to the keystore for the account
+      await keyStore.setKey(networkId, accountId, keyPair);
+
+      // Connect to NEAR with this keystore
+      const nearConnection = await connect({
+        ...config,
+        keyStore,
+        headers: {},
+      });
+
+      // Get the account object that will use the session key
+      const account = await nearConnection.account(accountId);
+      setSessionAccount(account);
+
+      return account;
+    } catch (err) {
+      console.error("Failed to initialize session account:", err);
+      setError("Failed to initialize session: " + err.message);
+      throw err;
+    }
   };
 
-  return <button onClick={handleConnect}>Connect Wallet</button>;
-};
+  // Connect wallet and authorize session key using Wallet Selector
+  const connectWallet = async () => {
+    if (!modal) {
+      setError("Wallet selector not initialized");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Open the wallet selector modal
+      modal.show();
+
+      // The modal handles the wallet selection and connection
+      // We'll subscribe to account changes to detect when a user connects
+      const subscription = walletSelector.store.observable.subscribe(
+        async (state) => {
+          if (state.accounts.length > 0) {
+            const userAccountId = state.accounts[0].accountId;
+
+            // Check if this is a new connection (not the one we already processed)
+            if (userAccountId !== accountId) {
+              setAccountId(userAccountId);
+
+              // Generate a new session key for this user
+              const newSessionKey = keyManager.generateSessionKey(
+                userAccountId,
+                verifierContractId,
+                ["verify_intent"], // Methods this key can call
+                "0.25" // 0.25 NEAR allowance for gas fees
+              );
+
+              // Prompt user for a password to encrypt the session key
+              const password = prompt(
+                "Create a password to secure your session:"
+              );
+              if (!password) {
+                setLoading(false);
+                return;
+              }
+
+              try {
+                // Get selected wallet
+                const wallet = await walletSelector.wallet();
+
+                // Add function call access key using the selected wallet
+                await wallet.signAndSendAddKey({
+                  contractId: verifierContractId,
+                  methodNames: ["verify_intent"],
+                  allowance: utils.format.parseNearAmount("0.25"),
+                  publicKey: newSessionKey.publicKey,
+                });
+
+                // Store the session key securely
+                keyManager.storeSessionKey(newSessionKey, password);
+
+                // Save the account ID
+                localStorage.setItem("nearAccountId", userAccountId);
+
+                // Initialize the session account with the new key
+                await initializeSessionAccount(
+                  userAccountId,
+                  newSessionKey.privateKey
+                );
+
+                // Update state
+                setSessionKey(newSessionKey);
+                setIsConnected(true);
+
+                // Unsubscribe after processing the connection
+                subscription.unsubscribe();
+              } catch (err) {
+                console.error("Failed to authorize session key:", err);
+                setError("Failed to authorize session key: " + err.message);
+              }
+            }
+          }
+        }
+      );
+    } catch (err) {
+      console.error("Wallet connection failed:", err);
+      setError("Connection failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Disconnect wallet and clean up
+  const disconnectWallet = async () => {
+    try {
+      // Remove session key if we have one
+      if (accountId && sessionKey) {
+        keyManager.removeSessionKey(accountId);
+      }
+
+      // Clear local storage
+      localStorage.removeItem("nearAccountId");
+
+      // Sign out from wallet selector
+      if (walletSelector) {
+        const wallet = await walletSelector.wallet();
+        await wallet.signOut();
+      }
+
+      // Reset state
+      setAccountId(null);
+      setSessionKey(null);
+      setSessionAccount(null);
+      setIsConnected(false);
+    } catch (err) {
+      console.error("Disconnect failed:", err);
+      setError("Disconnect failed: " + err.message);
+    }
+  };
+
+  // Context value
+  const value = {
+    accountId,
+    isConnected,
+    sessionKey,
+    sessionAccount,
+    walletSelector,
+    modal,
+    loading,
+    error,
+    connectWallet,
+    disconnectWallet,
+  };
+
+  return (
+    <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
+  );
+}
 ```
 
-## Managing Wallet State
+## Creating an Enhanced Connect Button
 
-Track connection state for a better user experience:
+Let's create an improved wallet connection button that works with the wallet selector:
 
-```javascript
-import { useEffect, useState } from 'react';
+```jsx
+// src/components/WalletConnection/EnhancedConnectButton.jsx
+import React from "react";
+import { useWallet } from "../../context/WalletContext";
 
-const WalletConnection = ({ selector }) => {
-  const [accountId, setAccountId] = useState(null);
-  
-  useEffect(() => {
-    // Subscribe to account changes
-    const subscription = selector.store.observable
-      .subscribe((state) => {
-        const accounts = state.accounts || [];
-        if (accounts.length) {
-          setAccountId(accounts[0].accountId);
-        } else {
-          setAccountId(null);
-        }
-      });
-    
-    return () => subscription.unsubscribe();
-  }, [selector]);
-  
+function EnhancedConnectButton() {
+  const {
+    accountId,
+    isConnected,
+    sessionKey,
+    loading,
+    error,
+    connectWallet,
+    disconnectWallet,
+  } = useWallet();
+
+  if (loading) {
+    return (
+      <button className="button loading" disabled>
+        Connecting...
+      </button>
+    );
+  }
+
+  if (isConnected) {
+    return (
+      <div className="wallet-connected">
+        <div className="wallet-info">
+          <span className="account-id">{accountId}</span>
+          {sessionKey && (
+            <span className="session-status">
+              Session active until{" "}
+              {new Date(sessionKey.expires).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+        <button onClick={disconnectWallet} className="disconnect-button">
+          Disconnect
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      {accountId ? (
-        <div>Connected: {accountId}</div>
-      ) : (
-        <ConnectWallet selector={selector} />
-      )}
+    <button onClick={connectWallet} className="connect-button">
+      Connect Wallet
+    </button>
+  );
+}
+
+export default EnhancedConnectButton;
+```
+
+## Creating a Wallet Options Display
+
+Let's also create a component that displays information about the available wallet options:
+
+```jsx
+// src/components/WalletConnection/WalletOptions.jsx
+import React, { useEffect, useState } from "react";
+import { useWallet } from "../../context/WalletContext";
+
+function WalletOptions() {
+  const { walletSelector, connectWallet } = useWallet();
+  const [modules, setModules] = useState([]);
+
+  useEffect(() => {
+    if (walletSelector) {
+      setModules(walletSelector.options.modules);
+    }
+  }, [walletSelector]);
+
+  if (!walletSelector || modules.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="wallet-options">
+      <h3>Available Wallet Options</h3>
+      <div className="wallet-list">
+        {modules.map((module, index) => (
+          <div key={index} className="wallet-option">
+            <img
+              src={module.metadata.iconUrl}
+              alt={module.metadata.name}
+              width="32"
+              height="32"
+            />
+            <span>{module.metadata.name}</span>
+          </div>
+        ))}
+      </div>
+      <button onClick={connectWallet} className="select-wallet-button">
+        Select Wallet
+      </button>
+      <div className="wallet-description">
+        <p>
+          Connect with any of these wallets to authorize a session key. After
+          connecting once, you can submit intents without needing to approve
+          each transaction!
+        </p>
+      </div>
     </div>
   );
-};
+}
+
+export default WalletOptions;
 ```
 
-## Handling Sign Out
+## Updating Our Dashboard to Use Wallet Selector
 
-Provide a way for users to disconnect:
+Now, let's update the Dashboard to use our enhanced wallet components:
 
-```javascript
-const SignOutButton = ({ selector }) => {
-  const handleSignOut = async () => {
-    const wallet = await selector.wallet();
-    await wallet.signOut();
-  };
-  
-  return <button onClick={handleSignOut}>Sign Out</button>;
-};
+```jsx
+// src/pages/Dashboard.jsx
+import React from "react";
+import EnhancedConnectButton from "../components/WalletConnection/EnhancedConnectButton";
+import WalletOptions from "../components/WalletConnection/WalletOptions";
+import SessionKeyManagerUI from "../components/WalletConnection/SessionKeyManager";
+import { useWallet } from "../context/WalletContext";
+
+function Dashboard() {
+  const { isConnected, accountId, sessionKey } = useWallet();
+
+  return (
+    <div className="dashboard">
+      <header className="app-header">
+        <h1>NEAR Intent Architecture</h1>
+        <EnhancedConnectButton />
+      </header>
+
+      <main className="main-content">
+        {!isConnected ? (
+          <div className="welcome-container">
+            <div className="welcome-card">
+              <h2>Welcome to NEAR Intent Architecture</h2>
+              <p>Connect your wallet to get started with intents!</p>
+              <WalletOptions />
+            </div>
+          </div>
+        ) : (
+          <div className="account-container">
+            <div className="account-info-card">
+              <h2>Account Connected</h2>
+              <p>
+                <strong>Account ID:</strong> {accountId}
+              </p>
+              <p>
+                <strong>Session Expires:</strong>{" "}
+                {sessionKey
+                  ? new Date(sessionKey.expires).toLocaleString()
+                  : "Unknown"}
+              </p>
+              <p className="session-key-info">
+                You're using a session key that allows you to submit intents
+                without approving each transaction in your wallet!
+              </p>
+            </div>
+
+            <SessionKeyManagerUI />
+
+            {/* We'll add Intent Form here in the next section */}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default Dashboard;
 ```
 
-## Integration with Intent Architecture
+## How the Wallet Selector Enhances Our Session Key Approach
 
-When using wallet selector with intents, you'll need to:
+The NEAR Wallet Selector complements our session key system by:
 
-1. Capture user intent through your UI
-2. Use the selected wallet to sign the intent
-3. Submit the signed intent to a verifier
-4. Track the status of the intent resolution
+1. **Providing multiple wallet options** - Users can choose their preferred wallet
+2. **Maintaining a consistent experience** - The session key flow remains the same regardless of wallet
+3. **Handling wallet-specific logic** - Different wallets may have different APIs for adding keys
+4. **Improving UX with a polished interface** - The modal provides a professional wallet selection experience
 
-In the next section, we'll explore how to build a session-based smart wallet that extends this functionality.
+## Extending Our Smart Wallet Patterns
+
+This integration extends the smart wallet patterns from Module 4 in several ways:
+
+1. **Multi-wallet support** - The same session key management works across wallet providers
+2. **Improved user experience** - Professional modal UI for wallet selection
+3. **Device-specific options** - Support for hardware wallets like Ledger for the initial authorization
+4. **Account subscriptions** - Reactive state management with wallet selector's observable store
+
+## Next Steps
+
+With our wallet connection flow now complete and supporting multiple wallet providers, we're ready to build the intent submission form in the next section. Our enhanced wallet selection system will allow users to:
+
+1. Select from a variety of NEAR wallets
+2. Authorize session keys that enable a streamlined user experience
+3. Manage their active session securely
+
+In the next section, we'll create the intent submission form that leverages these session keys to enable frictionless transactions.

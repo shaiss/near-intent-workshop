@@ -58,6 +58,107 @@ The content is organized into these primary modules:
    - Future roadmap
    - Workshop wrap-up
 
+## Section Transitions and Signposting
+
+### Module-to-Module Transitions
+Every module should connect smoothly to the next, using these transition patterns:
+
+#### End of Module (Last File)
+The final file of each module should:
+1. **Recap Key Learnings**: Summarize 3-5 main concepts covered in the module
+2. **Foreshadow Next Module**: Explain how the next module builds on these foundations
+3. **Explicit Link**: Include a clear link to the first file of the next module
+
+Example format:
+```markdown
+## Module Recap
+
+In this module, you've learned:
+- [Key concept 1] which allows you to...
+- [Key concept 2] that forms the foundation for...
+- [Key concept 3] that you'll apply in the next sections
+
+## Next Steps
+
+Now that you understand [current module's focus], you're ready to [next module's focus]. In the next module, we'll build on these concepts by [brief preview of what's coming].
+
+Continue to [Next Module Title](mdc:../XX-next-module/01-first-file.md)
+```
+
+#### Beginning of Module (First File)
+The first file of each module should:
+1. **Acknowledge Previous Learning**: Reference relevant concepts from the previous module
+2. **Set Context**: Explain how this module fits into the overall learning journey
+3. **Preview Content**: Outline what will be covered in the current module
+
+Example format:
+```markdown
+# X.1: Introduction to [Module Topic]
+
+In the previous module, you learned about [key previous concepts]. Now, we'll build on that foundation to [explain new module focus].
+
+This module will cover:
+- [Topic 1] which builds on your understanding of [previous concept]
+- [Topic 2] that will enable you to [new capability]
+- [Topic 3] essential for [bigger picture goal]
+```
+
+### Specific Transition Examples
+
+1. **Section 1 → Section 2**:
+   - End of `01-introduction/04-repo-structure.md`:
+     ```markdown
+     In this introduction, we've covered the workshop's goals, key concepts, environment setup, and project structure. These fundamentals will be essential as we now explore each building block in greater detail.
+
+     Continue to [Understanding Intent-Centric Architecture](mdc:../02-understanding-building-blocks/01-intents-concept.md)
+     ```
+   - Beginning of `02-understanding-building-blocks/01-intents-concept.md`:
+     ```markdown
+     # 2.1: Understanding Intent-Centric Architecture
+
+     In the introduction, we briefly touched on intents as a key Web3 innovation. Now, let's dive deeper into what makes this approach so powerful for blockchain development.
+     ```
+
+2. **Section 2 → Section 3**:
+   - End of `02-understanding-building-blocks/05-checkpoint.md`:
+     ```markdown
+     Now that you understand the conceptual foundation of intents, smart wallets, and cross-chain capabilities, we're ready to implement these ideas in code. In the next section, we'll build the smart contracts that power our intent-based system.
+
+     Continue to [Building Smart Contracts](mdc:../03-building-backend/01-local-contract.md)
+     ```
+
+3. **Section 3 → Section 4**:
+   - End of `03-building-backend/07-gas-fees.md`:
+     ```markdown
+     While direct interaction with smart contracts involves complexities like gas fees and transaction signing, we can create a much better user experience. In the next section, we'll explore how smart wallet abstractions can simplify these interactions.
+
+     Continue to [Smart Wallet Experience](mdc:../04-smart-wallet-experience/01-session-wallet.md)
+     ```
+
+### Internal Signposting
+
+Within modules, use these signposting techniques:
+
+1. **Forward References**:
+   ```markdown
+   This concept will be especially important when we build [future topic] in Section X.Y.
+   ```
+
+2. **Backward References**:
+   ```markdown
+   As we covered in Section X.Y, [concept] allows us to [capability]. Now we'll expand on this by...
+   ```
+
+3. **Connection Statements**:
+   ```markdown
+   Notice how this approach connects to [related concept] from earlier sections.
+   ```
+
+4. **Learning Path Markers**:
+   ```markdown
+   We're now halfway through our journey from concept to deployment. So far, we've covered [x, y, z] and next we'll explore...
+   ```
+
 ## Content Dependencies
 When writing content, be aware of dependencies:
 - Later modules assume knowledge from earlier modules

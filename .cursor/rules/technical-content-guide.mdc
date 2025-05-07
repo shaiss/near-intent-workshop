@@ -5,6 +5,72 @@ alwaysApply: false
 ---
 # Technical Content Guidelines for NEAR Workshop
 
+## Web2-to-Web3 Analogies Framework
+When introducing blockchain concepts, always provide Web2 parallels to make the content more accessible to developers transitioning to Web3:
+
+### Analogy Format
+Structure complex concept explanations using this format:
+```markdown
+## Understanding [Blockchain Concept]
+
+**Web2 Parallel:** In traditional web applications, [describe how something works in Web2]
+
+**Web3 Approach:** In blockchain development, [describe how the concept works in Web3]
+
+This is similar to [concrete example from everyday tech that illustrates the parallel]
+```
+
+### Essential Analogies to Include
+When explaining these core concepts, always include Web2 parallels:
+
+1. **Smart Contracts**
+   - Web2: Backend APIs with automatic enforcement
+   - Example: "Smart contracts are like APIs that automatically enforce their own rules, rather than relying on a central server's enforcement"
+
+2. **Gas Fees**
+   - Web2: Serverless computing costs  
+   - Example: "Gas fees are like pay-per-use serverless functions, except the cost is passed directly to users rather than absorbed by the developer"
+
+3. **Blockchain Storage**
+   - Web2: Databases with special constraints
+   - Example: "Contract storage is like a key-value database where writes are extremely expensive and size is severely limited"
+
+4. **Testnet vs Mainnet**
+   - Web2: Staging vs Production environments
+   - Example: "NEAR Testnet is like a staging environment where you can test with play money before deploying to the production mainnet"
+
+5. **Wallet Authentication**
+   - Web2: OAuth or social login
+   - Example: "Connecting a wallet is similar to 'Sign in with Google,' except the authentication happens via cryptographic proof rather than a central provider"
+
+6. **Intent Architecture**
+   - Web2: Form validation and API processing
+   - Example: "Intents are like structured API requests, where the verifier acts as form validation and the solver implements the business logic"
+
+7. **Session Keys**
+   - Web2: Authentication tokens
+   - Example: "Session keys work like JWT tokens in web apps, allowing temporary authenticated access without requiring password entry for every action"
+
+8. **Account Abstraction**
+   - Web2: Payment processors that hide complexity
+   - Example: "Account abstraction is like how Apple Pay hides all the complexity of credit card processing behind a simple interface"
+
+### Diagram Pairing
+Include a visual comparison where possible:
+```markdown
+**Web2 Flow:**
+```mermaid
+flowchart LR
+    User-->Frontend-->Backend-->Database-->Backend-->Frontend-->User
+```
+
+**Web3 Flow:**
+```mermaid
+flowchart LR
+    User-->Frontend-->Wallet-->Blockchain-->Frontend-->User
+```
+```
+
 ## Code Examples
 - All code examples should be complete and functional
 - Include all necessary imports and dependencies
@@ -36,6 +102,13 @@ alwaysApply: false
 - Keep content updated with the latest NEAR protocol changes
 - Clearly mark experimental or upcoming features
 - Link to official NEAR documentation for reference
+
+## Explaining Technical Concepts
+- Start with the problem being solved before introducing the solution
+- Use analogies to familiar concepts when introducing new ideas
+- Provide visual aids (diagrams, flowcharts) for complex processes
+- Bridge from simple to complex with progressive explanations
+- Include code comments that explain "why" not just "what"
 
 ## Common Patterns
 - Follow established patterns for intent structures

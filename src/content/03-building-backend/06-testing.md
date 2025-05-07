@@ -1,386 +1,439 @@
-# Testing Execution
+# Testing Your Intent System
 
-## The Importance of Testing Intent Systems
+**Time**: 20 minutes  
+**Pre-requisite**: Understanding of the Verifier and Solver contracts from previous sections
 
-Testing is crucial for intent-based systems because:
+## Why Testing Matters for Intent Systems
 
-1. They often handle user assets and funds
-2. Multiple contracts interact in complex ways
-3. Edge cases can lead to unexpected behavior
-4. Solver competition requires fair comparisons
+Testing is even more critical for intent-based systems than traditional Web2 applications because:
 
-## Unit Testing Your Contracts
+1. **Financial Impact**: Intent systems often handle user assets and funds
+2. **Contract Interactions**: Multiple contracts interact in complex ways that are hard to debug after deployment
+3. **Edge Cases**: Intent execution involves many potential edge cases that must be properly handled
+4. **Competition Fairness**: Solver competition requires fair comparisons and predictable outcomes
 
-Let's add comprehensive tests to our verifier and solver:
+> 💡 **Web2 Parallel**: Think of testing blockchain contracts like testing financial transaction systems or payment processors - thoroughness is essential because errors can directly impact users' funds.
+
+## Testing Strategy for Intent Systems
+
+We'll explore three levels of testing for our intent architecture:
+
+1. **Unit Testing**: Testing individual contract methods in isolation
+2. **Integration Testing**: Testing the interactions between contracts
+3. **End-to-End Testing**: Testing the complete flow from intent submission to execution
+
+Let's implement each of these approaches.
+
+## Unit Testing With Rust
+
+### Setting Up the Test Environment
+
+Unit tests in Rust smart contracts use the built-in testing framework with special utilities from the NEAR SDK:
 
 ```rust
-// In verifier/src/lib.rs
 #[cfg(test)]
 mod tests {
     use super::*;
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::testing_env;
 
-    #[test]
-    fn test_verify_valid_intent() {
-        let mut context = VMContextBuilder::new();
-        context.predecessor_account_id(accounts(1));
-        testing_env!(context.build());
-
-        let mut contract = Verifier::new(accounts(0));
-
-        let intent = Intent {
-            id: "test-intent-1".to_string(),
-            user_account: accounts(1).to_string(),
-            action: "swap".to_string(),
-            input_token: "USDC".to_string(),
-            input_amount: 1000,
-            output_token: "NEAR".to_string(),
-            min_output_amount: Some(95),
-            max_slippage: 0.5,
-            deadline: None,
-        };
-
-        assert!(contract.verify_intent(intent));
-        assert!(contract.is_intent_verified("test-intent-1".to_string()));
-    }
-
-    #[test]
-    #[should_panic(expected = "Input amount must be greater than 0")]
-    fn test_zero_amount_intent() {
-        let mut context = VMContextBuilder::new();
-        context.predecessor_account_id(accounts(1));
-        testing_env!(context.build());
-
-        let mut contract = Verifier::new(accounts(0));
-
-        let intent = Intent {
-            id: "test-intent-2".to_string(),
-            user_account: accounts(1).to_string(),
-            action: "swap".to_string(),
-            input_token: "USDC".to_string(),
-            input_amount: 0, // Zero amount should fail
-            output_token: "NEAR".to_string(),
-            min_output_amount: Some(95),
-            max_slippage: 0.5,
-            deadline: None,
-        };
-
-        contract.verify_intent(intent); // Should panic
+    // Helper function to set up a simulated blockchain environment
+    // Similar to mocking a database or API in Web2 testing
+    fn get_context(predecessor_account_id: AccountId) -> VMContextBuilder {
+        let mut builder = VMContextBuilder::new();
+        builder
+            .current_account_id(accounts(0))  // The contract account (like your API's hostname)
+            .signer_account_id(predecessor_account_id.clone())  // Who signed the transaction
+            .predecessor_account_id(predecessor_account_id)  // Who called the contract (like the API caller)
+            .block_timestamp(100_000_000);    // Current blockchain timestamp
+        builder
     }
 }
 ```
 
-Similarly for the solver:
+### Unit Testing the Verifier Contract
 
 ```rust
-// In solver/src/lib.rs
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use near_sdk::test_utils::{accounts, VMContextBuilder};
-    use near_sdk::testing_env;
+#[test]
+fn test_verify_valid_intent() {
+    // Set up the simulated blockchain environment with accounts(1) as caller
+    // accounts(0), accounts(1), etc. are test utility functions that generate test account IDs
+    let context = get_context(accounts(1));
+    testing_env!(context.build());
 
-    #[test]
-    fn test_solve_intent() {
-        let mut context = VMContextBuilder::new();
-        context.predecessor_account_id(accounts(0));
-        testing_env!(context.build());
+    // Create and initialize the contract
+    let mut contract = Verifier::new(accounts(0));
 
-        let mut contract = Solver::new(accounts(0), 50); // 0.5% fee (50 basis points)
+    // Create a test intent
+    let intent = Intent {
+        id: "test-intent-1".to_string(),
+        user_account: accounts(1).to_string(),  // Same as our caller
+        action: "swap".to_string(),
+        input_token: "USDC".to_string(),
+        input_amount: 1000,
+        output_token: "NEAR".to_string(),
+        min_output_amount: Some(95),
+        max_slippage: 0.5,
+        deadline: Some(200_000_000),  // Later than our block_timestamp
+    };
 
-        let result = contract.solve_intent(
-            "test-intent-1".to_string(),
-            accounts(1),
-            10000 // 10000 tokens
-        );
+    // Verify that it passes validation
+    assert!(contract.verify_intent(intent));
+    assert!(contract.is_intent_verified("test-intent-1".to_string()));
+}
 
-        assert!(result.success);
-        assert_eq!(result.intent_id, "test-intent-1");
-        assert_eq!(result.fee_amount, 50); // 0.5% of 10000
-        assert!(contract.has_executed("test-intent-1".to_string()));
-    }
+#[test]
+#[should_panic(expected = "Input amount must be greater than 0")]
+fn test_zero_amount_intent() {
+    let context = get_context(accounts(1));
+    testing_env!(context.build());
 
-    #[test]
-    fn test_fee_calculation() {
-        let mut context = VMContextBuilder::new();
-        context.predecessor_account_id(accounts(0));
-        testing_env!(context.build());
+    let mut contract = Verifier::new(accounts(0));
 
-        let mut contract = Solver::new(accounts(0), 200); // 2% fee
+    let intent = Intent {
+        id: "test-intent-2".to_string(),
+        user_account: accounts(1).to_string(),
+        action: "swap".to_string(),
+        input_token: "USDC".to_string(),
+        input_amount: 0, // Zero amount should fail
+        output_token: "NEAR".to_string(),
+        min_output_amount: Some(95),
+        max_slippage: 0.5,
+        deadline: Some(200_000_000),
+    };
 
-        let result = contract.solve_intent(
-            "test-intent-2".to_string(),
-            accounts(1),
-            5000 // 5000 tokens
-        );
-
-        assert_eq!(result.fee_amount, 100); // 2% of 5000 = 100
-    }
+    // This should panic with "Input amount must be greater than 0"
+    contract.verify_intent(intent);
 }
 ```
 
-## Integration Testing
+### Unit Testing the Solver Contract
 
-For integration testing, create scripts that test the complete flow:
+```rust
+#[test]
+fn test_solve_intent() {
+    let context = get_context(accounts(0));
+    testing_env!(context.build());
 
-1. Submit an intent to the verifier
-2. Verify the intent is correctly registered
-3. Pass the verified intent to a solver
-4. Check the solver executes correctly
-5. Validate the results match expectations
+    let mut contract = Solver::new(accounts(0), 50); // 0.5% fee (50 basis points)
 
-## Testing with NEAR CLI
+    let result = contract.solve_intent(
+        "test-intent-1".to_string(),
+        accounts(1), // User account
+        10000 // 10000 tokens
+    );
 
-You can also test your contracts directly on testnet:
+    assert!(result.success);
+    assert_eq!(result.intent_id, "test-intent-1");
+    assert_eq!(result.fee_amount, 50); // 0.5% of 10000 = 50
+    assert!(contract.has_executed("test-intent-1".to_string()));
+}
+```
+
+> 💡 **Web2 Parallel**: This is similar to unit testing controllers or service objects in a Web2 backend, mocking out external dependencies.
+
+## Command-Line Integration Testing
+
+Once deployed, you can use NEAR CLI to perform integration tests from the command line:
 
 ```bash
-# Submit intent to verifier
+# Step 1: Submit intent to verifier
 near call verifier.testnet verify_intent '{
   "intent": {
     "id": "test-1",
     "user_account": "your-account.testnet",
     "action": "swap",
     "input_token": "usdc.testnet",
-    "input_amount": "1000000000", 
+    "input_amount": 1000000000,
     "output_token": "wrap.testnet",
-    "min_output_amount": "95000000",
+    "min_output_amount": 95000000,
     "max_slippage": 0.5,
     "deadline": null
   }
 }' --accountId your-account.testnet
 
-# Check intent status
+# Step 2: Check intent status
 near view verifier.testnet is_intent_verified '{"intent_id": "test-1"}'
 
-# Execute with solver
+# Step 3: Execute with solver
 near call solver.testnet solve_intent '{
   "intent_id": "test-1",
   "user": "your-account.testnet",
-  "input_amount": "1000000000"
+  "input_amount": 1000000000
 }' --accountId verifier.testnet
 ```
 
-## Simulation Testing
+> 💡 **Web2 Parallel**: This is like testing a REST API using curl or Postman, issuing commands and checking responses.
 
-For more comprehensive testing, you can use simulation:
+## JavaScript Integration Testing (near-api-js)
 
-1. Create test accounts with known balances
-2. Submit intents with varying parameters
-3. Execute across multiple solvers
-4. Compare performance metrics
-5. Test edge cases (slippage limits, deadlines, etc.)
+For more complex automated testing, you can use JavaScript with the `near-api-js` library. This is particularly useful for integration testing across contracts.
+
+### Setting Up the JS Test Environment
+
+First, create a test directory and install dependencies:
+
+```bash
+mkdir -p tests/integration
+cd tests/integration
+npm init -y
+npm install near-api-js bn.js jest
+```
+
+Create a test configuration file:
+
+```javascript
+// config.js
+module.exports = {
+  // Use testnet for integration testing
+  networkId: "testnet",
+  nodeUrl: "https://rpc.testnet.near.org",
+  walletUrl: "https://wallet.testnet.near.org",
+  helperUrl: "https://helper.testnet.near.org",
+  explorerUrl: "https://explorer.testnet.near.org",
+
+  // Configure your accounts here
+  verifierAccount: "verifier.your-account.testnet",
+  solverAccount: "solver.your-account.testnet",
+  testUserAccount: "your-account.testnet",
+
+  // You'll need to have this keyfile for the test user account
+  testUserKey: "./your-account.testnet.json",
+};
+```
+
+### Creating a NEAR Connection Helper
+
+```javascript
+// near-connection.js
+const nearAPI = require("near-api-js");
+const fs = require("fs");
+const config = require("./config");
+
+async function initNEAR() {
+  // Configure connection to NEAR
+  const keyFile = JSON.parse(fs.readFileSync(config.testUserKey));
+  const keyStore = new nearAPI.keyStores.InMemoryKeyStore();
+
+  // Add the key to the keystore
+  await keyStore.setKey(
+    config.networkId,
+    config.testUserAccount,
+    nearAPI.utils.KeyPair.fromString(keyFile.private_key)
+  );
+
+  // Connect to NEAR
+  const near = await nearAPI.connect({
+    networkId: config.networkId,
+    nodeUrl: config.nodeUrl,
+    walletUrl: config.walletUrl,
+    helperUrl: config.helperUrl,
+    explorerUrl: config.explorerUrl,
+    keyStore: keyStore,
+  });
+
+  // Get the account object
+  const account = await near.account(config.testUserAccount);
+
+  // Return objects needed for testing
+  return {
+    near,
+    account,
+    // Create contract interfaces
+    verifierContract: new nearAPI.Contract(account, config.verifierAccount, {
+      viewMethods: ["is_intent_verified"],
+      changeMethods: ["verify_intent", "verify_and_solve"],
+    }),
+    solverContract: new nearAPI.Contract(account, config.solverAccount, {
+      viewMethods: ["has_executed"],
+      changeMethods: ["solve_intent"],
+    }),
+  };
+}
+
+module.exports = { initNEAR };
+```
+
+> 💡 **Web2 Parallel**: This is similar to setting up a API client library with authentication in a Web2 test suite.
+
+### Writing Integration Tests
+
+```javascript
+// intent-integration.test.js
+const { initNEAR } = require("./near-connection");
+const { v4: uuidv4 } = require("uuid");
+
+describe("Intent System Integration Tests", () => {
+  let testObjects;
+  let intentId;
+
+  beforeAll(async () => {
+    testObjects = await initNEAR();
+    intentId = `test-${uuidv4()}`;
+  });
+
+  test("should verify an intent", async () => {
+    const { verifierContract } = testObjects;
+
+    // Create a test intent
+    const intent = {
+      id: intentId,
+      user_account: testObjects.account.accountId,
+      action: "swap",
+      input_token: "USDC",
+      input_amount: 1000,
+      output_token: "NEAR",
+      min_output_amount: null,
+      max_slippage: 0.5,
+      deadline: null,
+    };
+
+    // Verify the intent
+    const result = await verifierContract.verify_intent({
+      intent: intent,
+    });
+
+    // Check if intent was verified
+    const isVerified = await verifierContract.is_intent_verified({
+      intent_id: intentId,
+    });
+
+    expect(result).toBe(true);
+    expect(isVerified).toBe(true);
+  });
+
+  test("should execute a verified intent", async () => {
+    const { verifierContract, solverContract } = testObjects;
+
+    // Execute the intent
+    await verifierContract.verify_and_solve(
+      {
+        intent: {
+          id: intentId,
+          user_account: testObjects.account.accountId,
+          action: "swap",
+          input_token: "USDC",
+          input_amount: 1000,
+          output_token: "NEAR",
+          min_output_amount: null,
+          max_slippage: 0.5,
+          deadline: null,
+        },
+        solver_account: solverContract.contractId,
+      },
+      {
+        gas: "300000000000000", // 300 TGas
+      }
+    );
+
+    // Check if solver executed the intent
+    // Note: This might need a delay since cross-contract calls are asynchronous
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    const hasExecuted = await solverContract.has_executed({
+      intent_id: intentId,
+    });
+
+    expect(hasExecuted).toBe(true);
+  });
+});
+```
+
+You can run these tests with Jest:
+
+```bash
+npx jest intent-integration.test.js
+```
+
+> 💡 **Web2 Parallel**: This is similar to integration testing of a Web2 microservice architecture where one service calls another.
+
+## Advanced Testing Considerations
+
+### Gas Usage Testing
+
+In production systems, monitoring gas consumption is important:
+
+```javascript
+// Basic gas consumption measurement
+async function measureGasUsage(txHash) {
+  const provider = new nearAPI.providers.JsonRpcProvider({
+    url: config.nodeUrl,
+  });
+  const txStatus = await provider.txStatus(txHash, config.testUserAccount);
+
+  // Calculate total gas burned
+  const totalGasBurned = txStatus.receipts_outcome.reduce(
+    (sum, receipt) => sum + parseInt(receipt.outcome.gas_burnt),
+    0
+  );
+
+  console.log(`Transaction ${txHash} burned ${totalGasBurned} gas units`);
+  return totalGasBurned;
+}
+```
+
+### Simulating Solver Competition
+
+For more complex scenarios like solver competition, you can set up multiple solver contracts and compare their results:
+
+```javascript
+async function testSolverCompetition(verifierContract, solvers, intent) {
+  const results = [];
+
+  // Submit the same intent to multiple solvers
+  for (const solver of solvers) {
+    const txResult = await verifierContract.verify_and_solve(
+      {
+        intent: intent,
+        solver_account: solver.contractId,
+      },
+      { gas: "300000000000000" }
+    );
+
+    // Collect results
+    const executionResult = await solver.get_execution_result({
+      intent_id: intent.id,
+    });
+    results.push({
+      solver: solver.contractId,
+      outputAmount: executionResult.output_amount,
+      feeAmount: executionResult.fee_amount,
+      txHash: txResult.transaction.hash,
+    });
+  }
+
+  // Find the best result (lowest fee or highest output)
+  results.sort((a, b) => b.outputAmount - a.outputAmount);
+  console.log("Best solver execution:", results[0]);
+
+  return results;
+}
+```
 
 ## Debugging Tips
 
-When testing intent systems:
+When testing intent systems, use these techniques for effective debugging:
 
-1. Use detailed logging in your contracts
-2. Track state changes at each step
-3. Verify token balances before and after execution
-4. Test with small amounts first
-5. Use NEAR Explorer to track transaction execution
+1. **NEAR Explorer**: Look up transaction hashes to see detailed execution information
 
-# Setting Up the Test Environment
+   - https://explorer.testnet.near.org/transactions/YOUR_TX_HASH
 
-Before testing our intent system, we need to set up a proper test environment:
+2. **Log Analysis**: Use verbose logging in your contracts with `env::log_str()` and check logs in transaction details
 
-```javascript
-const nearAPI = require('near-api-js');
-const BN = require('bn.js');
+3. **Mock External Calls**: For unit tests, simulate the behavior of external contracts
 
-// Configuration for local development
-const config = {
-  networkId: 'local',
-  nodeUrl: 'http://localhost:3030',
-  walletUrl: 'http://localhost:4000/wallet',
-  helperUrl: 'http://localhost:3000',
-  explorerUrl: 'http://localhost:3000',
-  keyPath: '/tmp/near-dev-keys',
-};
+4. **Step-by-Step Testing**: Test each component individually before testing the full integration
 
-// Initialize NEAR connection
-async function initNEAR() {
-  const near = await nearAPI.connect(config);
-  const account = await near.account('test.near');
-  return { near, account };
-}
-```
+5. **Transaction Tracing**: For complex issues, enable transaction tracing at the RPC level
 
-## Deploying Contracts for Testing
+## Summary
 
-```javascript
-async function deployContracts() {
-  const { near, account } = await initNEAR();
-  
-  // Deploy verifier contract
-  await account.createAndDeployContract(
-    'verifier.test.near',
-    fs.readFileSync('./out/verifier.wasm'),
-    {
-      method: 'new',
-      args: { owner_id: 'test.near' },
-      gas: new BN('300000000000000'),
-    }
-  );
-  
-  // Deploy solver contract
-  await account.createAndDeployContract(
-    'solver.test.near',
-    fs.readFileSync('./out/solver.wasm'),
-    {
-      method: 'new',
-      args: { 
-        owner_id: 'test.near',
-        verifier_id: 'verifier.test.near'
-      },
-      gas: new BN('300000000000000'),
-    }
-  );
-  
-  return {
-    verifierContract: new nearAPI.Contract(
-      account,
-      'verifier.test.near',
-      { viewMethods: ['get_intent', 'get_pending_intents'], changeMethods: ['submit_intent'] }
-    ),
-    solverContract: new nearAPI.Contract(
-      account,
-      'solver.test.near',
-      { viewMethods: [], changeMethods: ['solve_intent'] }
-    )
-  };
-}
-```
+Testing intent systems requires a comprehensive approach:
 
-## Creating Test Intents
+1. **Unit Tests**: Verify individual contract methods and logic
+2. **CLI Testing**: Quick integration testing using NEAR CLI
+3. **JavaScript Integration Tests**: Automated testing of the full intent flow
+4. **Performance Testing**: Measure gas consumption and execution costs
+5. **Competition Simulation**: Test multiple solver scenarios if applicable
 
-```javascript
-async function createTestIntent(verifierContract) {
-  const intentId = await verifierContract.submit_intent({
-    action: 'swap',
-    input: JSON.stringify({
-      token: 'usdc.test.near',
-      amount: '100'
-    }),
-    output: JSON.stringify({
-      token: 'near',
-      minAmount: '10'
-    }),
-    constraints: JSON.stringify({
-      maxSlippage: '0.5%',
-      deadline: Date.now() + 3600000 // 1 hour from now
-    })
-  });
-  
-  console.log('Created intent with ID:', intentId);
-  return intentId;
-}
-```
-
-## Testing Intent Execution
-
-```javascript
-async function testIntentExecution() {
-  const { verifierContract, solverContract } = await deployContracts();
-  
-  // Create a test intent
-  const intentId = await createTestIntent(verifierContract);
-  
-  // Check intent details
-  const intent = await verifierContract.get_intent({ intent_id: intentId });
-  console.log('Intent details:', intent);
-  
-  // Solve the intent
-  await solverContract.solve_intent({ intent_id: intentId });
-  
-  // Verify intent was executed
-  const updatedIntent = await verifierContract.get_intent({ intent_id: intentId });
-  console.log('Updated intent status:', updatedIntent.status);
-  
-  if (updatedIntent.status === 'Executed') {
-    console.log('Intent execution test passed!');
-  } else {
-    console.log('Intent execution test failed!');
-  }
-}
-
-testIntentExecution().catch(console.error);
-```
-
-## Integration Testing
-
-Integration tests validate the entire intent flow from creation to execution:
-
-```javascript
-async function runIntegrationTests() {
-  // 1. Setup test environment
-  const { account, verifierContract, solverContract } = await setupTestEnvironment();
-  
-  // 2. Create mock tokens for testing
-  const { usdcToken, nearToken } = await createMockTokens(account);
-  
-  // 3. Fund test account with tokens
-  await fundAccountWithTokens(account, usdcToken, '1000');
-  
-  // 4. Submit swap intent
-  const intentId = await createSwapIntent(verifierContract, usdcToken, nearToken);
-  
-  // 5. Execute intent through solver
-  await executeIntent(solverContract, intentId);
-  
-  // 6. Verify balances after execution
-  await verifyBalances(account, usdcToken, nearToken);
-  
-  console.log('All integration tests passed!');
-}
-```
-
-## Measuring Performance
-
-Performance testing is crucial for production-ready intent systems:
-
-```javascript
-async function runPerformanceTests() {
-  const { verifierContract, solverContract } = await deployContracts();
-  
-  // Measure intent submission time
-  const startSubmit = Date.now();
-  const intentId = await createTestIntent(verifierContract);
-  const submitTime = Date.now() - startSubmit;
-  console.log(`Intent submission took ${submitTime}ms`);
-  
-  // Measure intent execution time
-  const startExecution = Date.now();
-  await solverContract.solve_intent({ intent_id: intentId });
-  const executionTime = Date.now() - startExecution;
-  console.log(`Intent execution took ${executionTime}ms`);
-  
-  // Measure gas consumption
-  // This requires more complex setup with receipt tracking
-}
-```
-
-## Debugging Failed Intents
-
-Tools and techniques for debugging intent execution:
-
-```javascript
-async function debugIntent(intentId) {
-  const { verifierContract } = await initContracts();
-  
-  // Get intent details
-  const intent = await verifierContract.get_intent({ intent_id: intentId });
-  console.log('Intent details:', intent);
-  
-  // Check if there are any execution logs
-  // This requires additional logging in your contracts
-  
-  // Simulate execution to find issues
-  try {
-    // Your simulation code here
-  } catch (error) {
-    console.log('Simulation error:', error);
-    // Analyze error for debugging
-  }
-}
+By implementing tests at each of these levels, you'll build a robust and reliable intent system that safely handles user assets and provides predictable execution.

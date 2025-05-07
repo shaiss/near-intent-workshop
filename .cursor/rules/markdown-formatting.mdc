@@ -5,6 +5,35 @@ alwaysApply: false
 ---
 # Markdown Content Formatting Guide
 
+## Section Metadata and Structure
+Every content section should include standard metadata for consistency. Use this format at the beginning of each main section file:
+
+```markdown
+# X.Y: Section Title
+
+**Estimated Time:** XX minutes
+**Prerequisites:** [Previous sections or skills required]
+**Learning Objectives:**
+- By the end of this section, you will be able to [specific, measurable outcome]
+- [Add 2-4 clear learning objectives]
+
+## Introduction
+
+Brief introduction paragraph(s) explaining what this section covers.
+
+## [Main Content Headings]
+
+Content paragraphs with explanations, examples, and code snippets.
+
+## Summary
+
+Brief recap of what was covered.
+
+## Next Steps
+
+Preview of the next section with explicit link to the next module.
+```
+
 ## Basic Document Structure
 Every markdown file should follow this structure:
 ```markdown
@@ -40,6 +69,35 @@ function example() {
 ```
 ````
 
+Always include the language identifier for proper syntax highlighting:
+- ````javascript` for JavaScript code
+- ````rust` for Rust code
+- ````bash` or ````shell` for terminal commands
+- ````json` for JSON data
+
+## Command Line Formatting
+Format command line examples consistently:
+```markdown
+```bash
+$ npm install near-api-js
+$ near login
+```
+```
+
+Always use the `$` prefix for command prompts to distinguish commands from output.
+
+## Placeholder Formatting
+Use a consistent format for placeholders:
+```markdown
+<PLACEHOLDER_NAME>  # Correct format, with all-caps
+```
+
+Avoid inconsistent formats like:
+```markdown
+[placeholder]  # Avoid this format
+YOUR_VARIABLE  # Avoid this without angle brackets
+```
+
 ## Images and Diagrams
 Place images in the `src/content/images/` folder and reference them:
 ```markdown
@@ -65,16 +123,31 @@ Use blockquotes for important information:
 > **Warning:** This highlights a common mistake or issue to avoid.
 ```
 
+## Core Concept Boxes
+Use distinctive formatting for core concepts that will be referenced throughout the workshop:
+
+```markdown
+> **CORE CONCEPT: Verifier Contracts**
+> 
+> A verifier contract acts as the gatekeeper for intent execution. It validates that:
+> - The intent format is correct
+> - The intent is properly signed by the user
+> - The requested action is permitted
+> - Any constraints (time limits, etc.) are satisfied
+> 
+> Only after passing verification is an intent forwarded to a solver contract for execution.
+```
+
 ## Task Instructions
 Use checklists for step-by-step instructions:
 ```markdown
 1. First, initialize the project:
    ```bash
-   npm init -y
+   $ npm init -y
    ```
 2. Install dependencies:
    ```bash
-   npm install near-api-js
+   $ npm install near-api-js
    ```
 3. Create the main file structure...
 ```
@@ -96,3 +169,5 @@ Gas used: 2,345,678
 - Explain concepts before showing code
 - Include troubleshooting tips where appropriate
 - Link to official documentation when relevant
+- Use second-person address consistently ("you will learn" not "we will cover")
+- Maintain consistent terminology throughout all sections

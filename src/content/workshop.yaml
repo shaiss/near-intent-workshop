@@ -1,12 +1,12 @@
 title: NEAR INTENTS
 author: Shai Perednik
-version: 1.0.0
-release_date: 2024-06-01
+version: 0.1.0
+release_date: 2025-05-06
 description: >
   A hands-on workshop to learn about NEAR Intents, building blocks, and smart wallet experiences.
 organization: NEAR Foundation
 website: https://near.org
-contact_email: hello@near.org
+contact_email: shai.perednik@near.foundation
 license: CC BY-NC-SA 4.0
 github_repo: https://github.com/shaiss/near-intent-workshop
 tags:
@@ -20,7 +20,7 @@ long_description: |
 call_to_action:
   text: "Start Workshop"
   link_type: "internal" # internal (to a workshop page) or external (to a URL)
-  target: "/sections/01-introduction/01-overview" # slug or URL
+  target: "01-introduction/01-welcome" # slug or URL
 
 # What you will learn section
 what_you_will_learn:

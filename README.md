@@ -1,4 +1,3 @@
-
 # NEAR Intents & Smart Wallet Abstraction Workshop
 
 An interactive workshop application built with Vite+React to teach developers about NEAR's intent-centric architecture and smart wallet abstraction.
@@ -41,6 +40,10 @@ npm run build
 - `/src/components/` - React components including UI elements
 - `/src/pages/` - Main application pages
 - `/src/hooks/` - Custom React hooks for wallet and intent functionality
+- `/src/services/` - Application services
+- `/src/utils/` - Utility functions
+- `/src/lib/` - Libraries and external modules
+- `/src/api/` - API related-files
 
 ## Workshop Content
 

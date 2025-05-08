@@ -37,6 +37,12 @@ import { v4 as uuidv4 } from "uuid";
 import { utils } from "near-api-js";
 import { CONTRACT_ADDRESSES } from "../utils/near";
 
+const VERIFIER_CONTRACT_ID =
+  process.env.REACT_APP_VERIFIER_ID || "<YOUR_VERIFIER_CONTRACT_ID>";
+const DEFAULT_SOLVER_ID =
+  process.env.REACT_APP_DEFAULT_SOLVER_ID || "<YOUR_DEFAULT_SOLVER_ID>";
+const DEFAULT_FUNCTION_CALL_GAS = "100000000000000"; // 100 TGas
+
 export class IntentService {
   constructor(sessionAccount, networkId = "testnet") {
     this.sessionAccount = sessionAccount;
@@ -73,8 +79,10 @@ export class IntentService {
       ? utils.format.parseNearAmount(minOutputAmount.toString())
       : null;
 
-    // Set default deadline 1 hour from now if not provided
-    const deadline = params.deadline || Date.now() + 60 * 60 * 1000;
+    // Convert minutes to nanoseconds from epoch
+    const deadline = params.deadlineInMinutes
+      ? (Date.now() + params.deadlineInMinutes * 60 * 1000) * 1_000_000 // ms to ns
+      : null; // No deadline if not specified
 
     // Create the intent object matching our Rust struct
     return {
@@ -86,7 +94,7 @@ export class IntentService {
       output_token: outputToken,
       min_output_amount: minOutputAmountYocto,
       max_slippage: maxSlippage || 0.5,
-      deadline: Math.floor(deadline / 1000), // Convert to seconds
+      deadline: deadline,
     };
   }
 
@@ -112,10 +120,26 @@ export class IntentService {
         intentId: intent.id,
       };
     } catch (error) {
-      console.error("Failed to submit intent:", error);
+      console.error("Intent submission via Wallet Selector failed:", error);
+      // Map common errors
+      let userMessage = `Intent submission failed: ${
+        error.message || "Unknown error"
+      }`;
+      if (error.message?.includes("User rejected the request")) {
+        userMessage = "Transaction cancelled in wallet.";
+      } else if (error.message?.includes("Exceeded the allowance")) {
+        userMessage =
+          "Transaction failed: Session key allowance may be insufficient.";
+      } else if (
+        error.message?.includes("502 Bad Gateway") ||
+        error.message?.includes("RPC node error")
+      ) {
+        userMessage =
+          "Network error: Could not reach the NEAR network. Please check your connection and try again.";
+      }
       return {
         success: false,
-        error: error.message,
+        error: userMessage,
         intentId: intent.id,
       };
     }

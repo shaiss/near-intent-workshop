@@ -92,11 +92,6 @@ import "@near-wallet-selector/modal-ui/styles.css";
 const WalletContext = createContext(null);
 
 export function useWallet() {
-  return useContext(WalletContext);
-}
-
-export function WalletProvider({ children }) {
-  // State variables
   const [accountId, setAccountId] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [sessionKey, setSessionKey] = useState(null);
@@ -112,7 +107,8 @@ export function WalletProvider({ children }) {
   // Network configuration
   const [networkId] = useState("testnet");
   const config = getConfig(networkId);
-  const verifierContractId = CONTRACT_ADDRESSES[networkId].verifierContract;
+  const VERIFIER_CONTRACT_ID =
+    process.env.REACT_APP_VERIFIER_ID || "<YOUR_VERIFIER_CONTRACT_ID>";
 
   // Initialize Wallet Selector
   useEffect(() => {
@@ -130,7 +126,7 @@ export function WalletProvider({ children }) {
         });
 
         const newModal = setupModal(selector, {
-          contractId: verifierContractId,
+          contractId: VERIFIER_CONTRACT_ID,
         });
 
         setWalletSelector(selector);
@@ -146,9 +142,11 @@ export function WalletProvider({ children }) {
 
           // Check if we have a session key for this account
           try {
-            // Prompt for password - In a real app, you might use a modal
+            // WARNING: Using prompt() for passwords is HIGHLY INSECURE and bad UX!
+            // It's used here ONLY for simplified demonstration.
+            // Real applications MUST use a proper password input field within a secure UI modal.
             const password = prompt(
-              "Enter your session password to unlock your wallet:"
+              "Enter password to encrypt session key for this browser:"
             );
 
             if (password) {
@@ -167,6 +165,34 @@ export function WalletProvider({ children }) {
             console.error("Failed to load existing session:", err);
           }
         }
+
+        // Subscribe to accounts changes
+        const subscription = selector.store.observable
+          .pipe(
+            // Add distinctUntilChanged operator if needed to avoid redundant updates
+          )
+          .subscribe((state) => {
+            console.log("WalletSelector State Change:", state);
+            const accounts = state.accounts.filter((acc) => acc.active);
+            setAccounts(accounts);
+            if (accounts.length > 0) {
+              setAccountId(accounts[0].accountId);
+              // Optionally: automatically try to load/authorize session key here
+            } else {
+              setAccountId(null);
+              setSessionKey(null); // Clear session key on disconnect
+            }
+          });
+
+        setInitialized(true);
+        // Return the unsubscribe function for cleanup
+        return () => {
+          subscription.unsubscribe();
+          selector.off("signedIn", handleSignIn);
+          selector.off("signedOut", handleSignOut);
+          if(modal) modal.hide();
+          console.log("WalletProvider cleaned up.");
+        };
       } catch (err) {
         console.error("Failed to initialize wallet selector:", err);
         setError("Wallet initialization failed");
@@ -235,7 +261,7 @@ export function WalletProvider({ children }) {
               // Generate a new session key for this user
               const newSessionKey = keyManager.generateSessionKey(
                 userAccountId,
-                verifierContractId,
+                VERIFIER_CONTRACT_ID,
                 ["verify_intent"], // Methods this key can call
                 "0.25" // 0.25 NEAR allowance for gas fees
               );
@@ -255,12 +281,13 @@ export function WalletProvider({ children }) {
 
                 // Add function call access key using the selected wallet
                 await wallet.signAndSendAddKey({
-                  contractId: verifierContractId,
+                  contractId: VERIFIER_CONTRACT_ID,
                   methodNames: ["verify_intent"],
                   allowance: utils.format.parseNearAmount("0.25"),
                   publicKey: newSessionKey.publicKey,
                 });
 
+                // IMPORTANT SECURITY REMINDER: Storing private keys (even session keys) in
                 // Store the session key securely
                 keyManager.storeSessionKey(newSessionKey, password);
 
@@ -322,6 +349,50 @@ export function WalletProvider({ children }) {
       setError("Disconnect failed: " + err.message);
     }
   };
+
+  // Simplified error handling
+  const signIntent = async (intent) => {
+    if (!walletSelector || !accountId || !sessionKey) {
+      throw new Error("Wallet or session key not initialized");
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const wallet = await walletSelector.wallet();
+      // Example: Calling a verify_intent method on a contract
+      const result = await wallet.signAndSendTransaction({
+        signerId: accountId, // The account originating the transaction
+        receiverId: VERIFIER_CONTRACT_ID, // Your verifier contract ID
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "verify_intent",
+              args: { intent: intent }, // Your intent object
+              gas: DEFAULT_FUNCTION_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
+      });
+      return result;
+    } catch (error) {
+      console.error("Failed to sign and send transaction:", error);
+      let userMessage = `Transaction failed: ${error.message || 'Unknown error'}.`;
+      // Basic error mapping (expand this based on common errors)
+      if (error.message?.includes("User rejected the request")) {
+        userMessage = "Transaction cancelled in wallet.";
+      } else if (error.message?.includes("Exceeded the allowance")) {
+        userMessage = "Transaction failed: The session key allowance might be insufficient for this action. Please try re-authorizing the session.";
+      } else if (error.message?.includes("Not enough balance")) {
+        userMessage = "Transaction failed due to insufficient balance.";
+      }
+      // Consider using error codes or more specific error types if available
+      throw new Error(userMessage); // Re-throw user-friendly error
+    }
+  }, [walletSelector, accountId]); // Dependencies for useCallback
 
   // Context value
   const value = {
@@ -546,3 +617,34 @@ With our wallet connection flow now complete and supporting multiple wallet prov
 3. Manage their active session securely
 
 In the next section, we'll create the intent submission form that leverages these session keys to enable frictionless transactions.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant ReactApp
+    participant WalletSelectorModal as Wallet Selector Modal
+    participant SelectedWallet as Selected NEAR Wallet (e.g., MyNearWallet)
+    participant NEARBlockchain
+
+    User->>ReactApp: Clicks "Connect Wallet"
+    ReactApp->>WalletSelectorModal: Show available wallets
+    User->>WalletSelectorModal: Selects a wallet (e.g., MyNearWallet)
+    WalletSelectorModal->>SelectedWallet: Initiate connection
+    SelectedWallet->>User: Prompt for account selection & approval
+    User->>SelectedWallet: Selects account, Approves connection
+    SelectedWallet->>WalletSelectorModal: Returns connection info (accounts)
+    WalletSelectorModal->>ReactApp: Update state with accounts, selected wallet
+    ReactApp->>User: Display connected state
+
+    Note over ReactApp, SelectedWallet: Later, for signing:
+    ReactApp->>SelectedWallet: Request transaction signing (via Wallet Selector interface)
+    SelectedWallet->>User: Prompt for transaction approval
+    User->>SelectedWallet: Approves transaction
+    SelectedWallet->>NEARBlockchain: Submit signed transaction
+    NEARBlockchain-->>SelectedWallet: Transaction result
+    SelectedWallet-->>ReactApp: Return result
+```
+
+Figure 1: Wallet Connection and Transaction Signing Flow with Wallet Selector.
+
+## Setting Up Wallet Selector

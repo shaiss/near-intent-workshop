@@ -223,22 +223,31 @@ near deploy --accountId verifier.yourname.testnet \
 Now, let's test our integrated system:
 
 ```bash
-# First, ensure both contracts are deployed
-# Then, call verify_and_solve with a test intent
-near call verifier.yourname.testnet verify_and_solve '{
-  "intent": {
-    "id": "intent-123",
-    "user_account": "yourname.testnet",
-    "action": "swap",
-    "input_token": "USDC",
-    "input_amount": 1000000000000000000000000,
-    "output_token": "NEAR",
-    "min_output_amount": null,
-    "max_slippage": 0.5,
-    "deadline": null
-  },
-  "solver_account": "solver.yourname.testnet"
-}' --accountId yourname.testnet --gas 300000000000000
+# Verifier calls Solver's solve_intent_for_account
+# Replace <YOUR_ACCOUNT_ID> with your actual NEAR testnet account ID
+# Ensure verifier.<YOUR_ACCOUNT_ID>.testnet and solver.<YOUR_ACCOUNT_ID>.testnet are deployed
+
+# Step 1: Prepare intent arguments in a file (e.g., xc_intent_args.json)
+# Create a file named xc_intent_args.json with the following content:
+# {
+#   "intent": {
+#     "intent_id": "xc-intent-001",
+#     "user_account": "alice.<YOUR_ACCOUNT_ID>.testnet",
+#     "input_token": "usdc.near",
+#     "input_amount": "100000000",
+#     "output_token": "wnear.near",
+#     "min_output_amount": "90",
+#     "max_slippage": 0.05,
+#     "deadline": 0,
+#     "verifier_id": "verifier.<YOUR_ACCOUNT_ID>.testnet"
+#   }
+# }
+
+# Step 2: Call the verify_intent function using the arguments file
+near call verifier.<YOUR_ACCOUNT_ID>.testnet verify_intent --argsFile xc_intent_args.json --accountId alice.<YOUR_ACCOUNT_ID>.testnet --gas 300000000000000
+
+# Check logs for verifier.<YOUR_ACCOUNT_ID>.testnet and solver.<YOUR_ACCOUNT_ID>.testnet to see the flow and callback results.
+# You might use near-cli or a NEAR explorer.
 ```
 
 ### Debugging Cross-Contract Calls
@@ -316,3 +325,28 @@ When implementing cross-contract interactions, follow these guidelines:
 ## Next Steps
 
 You now have a complete intent-processing backend with the Verifier and Solver contracts properly connected through asynchronous cross-contract calls. In the [next section](mdc:./05-testing.md), we'll explore how to thoroughly test our smart contracts to ensure they're robust and secure before deploying to production.
+
+// Assuming Intent is defined and imported (e.g., from verifier or a shared module)
+// If not, we define a local version for this example #[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize, Debug, Clone)] #[serde(crate = "near_sdk::serde")] #[serde(rename_all = "camelCase")]
+pub struct Intent {
+pub intent_id: String,
+pub user_account: AccountId,
+pub input_token: String,
+pub input_amount: u128,
+pub output_token: String,
+pub min_output_amount: u128,
+pub max_slippage: f64, // Simplified for example
+pub deadline: Timestamp,
+pub verifier_id: AccountId,
+}
+
+// Structure for verify_intent arguments (when calling Verifier) #[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize, Debug)] #[serde(crate = "near_sdk::serde")] #[serde(rename_all = "camelCase")]
+pub struct IntentParams {
+pub intent: Intent,
+}
+
+// Structure for solve_intent_for_account arguments (when Verifier calls Solver) #[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize, Debug, Clone)] #[serde(crate = "near_sdk::serde")] #[serde(rename_all = "camelCase")]
+pub struct IntentForSolver {
+pub intent_payload: Intent,
+pub originator_account_id: AccountId,
+}

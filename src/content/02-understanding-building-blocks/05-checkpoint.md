@@ -16,22 +16,19 @@ Here's a simplified view of how the key components we've discussed in this modul
 
 ```mermaid
 graph LR
-    User[User] -->|Expresses Goal| SmartWallet[Smart Wallet]
-    SmartWallet -->|Signs & Submits| Intent[Intent Object (The "What")]
-    Intent -->|Sent To| Verifier[Verifier (The "Rule-Checker")]
-    Verifier -- Validated Intent --> Solver[Solver Network (The "How-Finder")]
-    Solver -->|Proposes Solution to| Verifier
-    Verifier -->|Selects & Relays to| SmartWallet
-    SmartWallet -->|Executes via| ExecutionLayer[Execution Layer]
-
-    subgraph ExecutionLayer [Execution (Potentially Cross-Chain)]
-        direction LR
-        LocalChain[Local Chain Logic]
-        CC_Resolver[Cross-Chain Resolver/Bridge]
-    end
-
-    CC_Resolver --> OtherChain[Other Blockchain(s)]
+    A[User Goal] --> B(Intent: What User Wants);
+    B --> C{Verifier: Validates Intent Rules};
+    C -- Valid --> D[Solver: Finds How to Achieve Intent];
+    C -- Invalid --> E[Feedback: Rejected];
+    D --> F(Smart Wallet: User's Agent for Secure Execution);
+    F --> G{Blockchain(s): Where Action Happens};
+    G --> H[Outcome Achieved];
+    H --> A;
 ```
+
+Figure 1: Simplified Interaction Flow of Key Components.
+
+This high-level flow should now be familiar. Each component plays a vital role in translating a user's abstract goal into a concrete, secure, and optimized on-chain (or cross-chain) reality.
 
 ## Self-Assessment Questions
 
@@ -88,15 +85,19 @@ So far, we've explored the theoretical concepts behind intent architecture. In t
 
 If you're new to Rust, don't worry! Here's a quick preview of how some JavaScript concepts map to Rust:
 
-| JavaScript                             | Rust                                      | Key Difference                    |
-| -------------------------------------- | ----------------------------------------- | --------------------------------- |
-| `let x = 5;`                           | `let x: i32 = 5;`                         | Explicit typing in Rust           |
-| `const obj = { name: "Alice" };`       | `struct User { name: String }`            | Structured data                   |
-| `function add(a, b) { return a + b; }` | `fn add(a: i32, b: i32) -> i32 { a + b }` | Type signatures                   |
-| `try/catch`                            | `Result<T, E>`                            | Error handling with return values |
-| `null/undefined`                       | `Option<T>`                               | No null values in Rust            |
+| JavaScript (Dynamic Typing)            | Rust (Static Typing)                                                             | Key Difference                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `let x = 5;`                           | `let x: i32 = 5;`                                                                | Explicit typing in Rust (though often inferred) |
+| `let name = "Alice";`                  | `let name: String = "Alice".to_string();`                                        | String types, ownership                         |
+| `let arr = [1, 2, 3];`                 | `let arr: Vec<i32> = vec![1, 2, 3];`                                             | Vector type, explicit element type              |
+| `function add(a, b) { return a + b; }` | `fn add(a: i32, b: i32) -> i32 { a + b }`                                        | Typed parameters and return value               |
+| `if (x > 0) { ... }`                   | `if x > 0 { ... }`                                                               | Similar control flow, but no parentheses needed |
+| `for (let i=0; i<5; i++) { ... }`      | `for i in 0..5 { ... }`                                                          | More idiomatic loop (iterator based)            |
+| `let obj = { key: "val" };`            | `struct MyStruct { key: String } let obj = MyStruct { key: "val".to_string() };` | Structs for complex data, explicitness          |
 
-We'll explore these differences in more detail in the next module, with code examples that demonstrate how to implement our intent architecture components.
+This table highlights some common differences. While Rust requires more explicitness upfront, its strong type system and compiler checks catch many errors at compile-time that might only appear at runtime in JavaScript. Note that Rust also has powerful type inference, so explicit type annotations like `let x: i32 = 5;` are often not needed if the type can be clearly determined from the context (e.g., `let x = 5;` would usually suffice, and the compiler infers `i32` by default for integers unless specified otherwise).
+
+As you move into [Module 3: Building the Backend (Smart Contracts)](mdc:../03-building-backend/01-local-contract.md), you'll get hands-on experience with Rust's syntax and paradigms.
 
 ## Next Up: Building the Backend
 

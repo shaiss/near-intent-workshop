@@ -16,13 +16,16 @@ Let's recall where the Verifier fits in our overall architecture:
 
 ```mermaid
 graph LR
-    User[User] -->|Expresses Goal| SmartWallet[Smart Wallet]
-    SmartWallet -->|Signs & Submits| Intent[Intent Object]
-    Intent -->|Sent To| Verifier[Verifier Contract]
-    Verifier -- Validated Intent --> Solver[Solver Network]
-    Verifier -->|Selects Solver Solution| SmartWallet
-    SmartWallet -->|Executes Solution| Blockchain[NEAR Blockchain]
+    User -->|Submits Intent| VerifierContract[Verifier Contract]
+    VerifierContract -->|Validates| VerifierContract
+    VerifierContract -- Intent OK --> SolverContract[Solver Contract]
+    SolverContract -->|Executes Logic| Blockchain
+    Blockchain -->|Result| User
 ```
+
+Figure 1: Verifier Contract's Role in the Intent Flow.
+
+In this module, we will build a simplified version of this Verifier contract.
 
 **The Verifier contract** is the on-chain rule-checker that validates user intents, ensuring they are well-formed, authorized, and follow the system's constraints. Once deployed on NEAR, this contract will be callable by users (or their Smart Wallets) and will interact with Solver contracts.
 
@@ -115,7 +118,10 @@ Now, let's create a basic intent verification contract in `src/lib.rs`:
 
 ```rust
 // Import necessary components from the NEAR SDK
-use near_sdk::{env, near_bindgen, serde::{Deserialize, Serialize}};
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::json_types::U128;
+use near_sdk::serde::{Deserialize, Serialize};
+use near_sdk::{env, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, Timestamp};
 
 // This macro marks our struct as a NEAR contract
 // It generates the boilerplate code to make our struct compatible with the NEAR runtime
@@ -129,19 +135,26 @@ pub struct Verifier {
 
 // Define what an Intent looks like in our system
 // These derive macros enable conversion to/from JSON for the Intent struct
-#[derive(Serialize, Deserialize)]
-// This tells the serialization framework to use the version of serde from the NEAR SDK
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
 #[serde(crate = "near_sdk::serde")]
+#[serde(rename_all = "camelCase")]
 pub struct Intent {
-    pub action: String,         // What the user wants to do (e.g., "swap", "transfer")
-    pub input_token: String,    // Token the user is providing
+    pub user_account: AccountId,
+    pub input_token: String, // e.g., "usdc.near"
     pub input_amount: u128,     // Amount of the input token
                                // u128 is good for token amounts - it can handle very large numbers
                                // without risk of overflow, and tokens shouldn't be negative
     pub output_token: String,   // Token the user wants to receive
-    pub max_slippage: f64,      // Maximum acceptable price difference (as a percentage)
-                               // Note: f64 is fine for this example, but in production
-                               // fixed-point arithmetic might be preferred for financial calculations
+    pub min_output_amount: u128,
+    pub max_slippage: f64,    // e.g., 0.01 for 1%
+    // IMPORTANT: Using f64 for financial calculations like slippage is generally
+    // discouraged in production smart contracts due to potential precision issues and
+    // non-deterministic behavior across different WebAssembly runtimes or toolchains.
+    // For production, consider using integer-based fixed-point arithmetic or a dedicated
+    // decimal type library. This f64 is for educational illustration of the logic flow ONLY.
+    pub deadline: Timestamp,  // Unix timestamp in nanoseconds
+    // --- New fields for Verifier ---
+    pub intent_id: String,    // Unique ID for the intent
 }
 
 // This marks the implementation block for our contract methods
@@ -176,7 +189,10 @@ mod tests {
             input_token: "NEAR".to_string(),
             input_amount: 1000000000000000000000000, // 1 NEAR (in yoctoNEAR)
             output_token: "USDC".to_string(),
+            min_output_amount: 0,
             max_slippage: 0.5,
+            deadline: 0,
+            intent_id: "".to_string(),
         };
         assert_eq!(verifier.verify_intent(intent), true);
     }

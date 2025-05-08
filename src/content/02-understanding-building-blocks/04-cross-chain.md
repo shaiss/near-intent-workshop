@@ -77,39 +77,45 @@ Achieving this seamless cross-chain UX relies on several interconnected componen
 Here's how these components might fit together:
 
 ```mermaid
-graph TD
-    User[End User] --> DAppUI[dApp User Interface]
+sequenceDiagram
+    participant User
+    participant DApp as dApp (on NEAR)
+    participant SmartWallet as Smart Wallet (on NEAR)
+    participant VerifierNEAR as Verifier (on NEAR)
+    participant SolverService as Solver (Off-chain)
+    participant Bridge as Bridge (e.g., Rainbow Bridge)
+    participant TargetChainApp as dApp/Contract (on Target Chain, e.g., Ethereum)
 
-    subgraph SmartWallet [User's Smart Wallet]
-        DAppUI --> SW_Interaction[Sign Intent / Authorize Session]
+    User->>+DApp: Expresses Cross-Chain Intent (e.g., "Swap NEAR for ETH on Uniswap")
+    DApp->>SmartWallet: Formulate & Propose Intent
+    SmartWallet->>User: Request Signature for Intent
+    User->>SmartWallet: Sign Intent
+    SmartWallet->>+VerifierNEAR: Submit Signed Intent
+    VerifierNEAR->>VerifierNEAR: Validate Intent (rules, user permissions on NEAR)
+    alt Intent Valid on NEAR
+        VerifierNEAR-->>-SolverService: Intent available
+        SolverService->>SolverService: Find Cross-Chain Solution (e.g., path via Bridge)
+        SolverService->>SmartWallet: Propose Solution (Steps: 1. Lock NEAR, 2. Bridge, 3. Swap on ETH)
+        SmartWallet->>User: Request Approval for Solution (multi-step)
+        User->>SmartWallet: Approve Solution
+        SmartWallet->>+Bridge: Execute Step 1 (e.g., Lock NEAR, get proof)
+        Bridge-->>-SmartWallet: Confirmation & Proof
+        SmartWallet->>+Bridge: Execute Step 2 (Relay proof to Target Chain side of Bridge)
+        Bridge-->>-TargetChainApp: Trigger action on Target Chain (e.g., mint bridged NEAR, then swap for ETH)
+        TargetChainApp-->>Bridge: Result of Swap
+        Bridge-->>-SmartWallet: Forward Result
+        SmartWallet-->>DApp: Update Status
+        DApp-->>-User: Display Result
+    else Intent Invalid on NEAR
+        VerifierNEAR-->>-SmartWallet: Reject Intent
+        SmartWallet-->>DApp: Notify Rejection
+        DApp-->>-User: Show Error
     end
-
-    SW_Interaction --> IntentObject[Formatted & Signed Intent]
-    IntentObject --> Verifier[Verifier Contract(s)]
-
-    Verifier -- Validated Intent --> CCR[Cross-Chain Resolver / Solver Network]
-
-    CCR -->|Chooses Path| ChainAdapters
-
-    subgraph ChainAdapters [Chain-Specific Adapters / Bridge Interfaces]
-        AdapterETH[Ethereum Adapter / Bridge UI]
-        AdapterNEAR[NEAR Adapter / Bridge UI]
-        AdapterPolygon[Polygon Adapter / Bridge UI]
-    end
-
-    AdapterETH -->|Interact| Ethereum[Ethereum Blockchain]
-    AdapterNEAR -->|Interact| NEAR[NEAR Blockchain]
-    AdapterPolygon -->|Interact| Polygon[Polygon Blockchain]
-
-    BlockchainEvents{{Blockchain Events}} --> CCR
-    CCR -- Updates --> DAppUI
-    DAppUI -- Feedback --> User
 ```
 
-- The **Cross-Chain Resolver / Solver Network** is pivotal. It takes the validated intent and determines the sequence of operations across different chains and bridges.
-- **Chain Adapters** abstract the specific protocols of each blockchain and bridge.
+Figure 1: Sequence Diagram Illustrating a Cross-Chain Intent Workflow.
 
-## Building Effective Cross-Chain Applications: Key Principles
+### Key Challenges in Cross-Chain Intents
 
 1.  **User-Goal Focus**: Always design from the user's desired outcome, not the underlying blockchain mechanics.
 2.  **Maximize Abstraction**: Hide chain-specific details, bridging steps, and gas considerations from the user whenever possible.

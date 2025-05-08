@@ -113,7 +113,8 @@ Let's create a `package.json` with the necessary dependencies:
     "@near-wallet-selector/my-near-wallet": "^8.1.1",
     "crypto-js": "^4.1.1",
     "react-router-dom": "^6.10.0",
-    "styled-components": "^5.3.9"
+    "styled-components": "^5.3.9",
+    "react-scripts": "5.0.1"
   },
   "devDependencies": {
     "vite": "^4.3.9",
@@ -127,53 +128,42 @@ Let's create a `package.json` with the necessary dependencies:
 }
 ```
 
+> **Note**: Library versions listed are examples. Always check for the latest stable and compatible versions of `near-api-js`, `@near-wallet-selector/*`, React, and other dependencies when starting your project.
+
 ## NEAR Blockchain Configuration
 
 Let's set up our blockchain connection configuration:
 
 ```javascript
 // src/utils/near.js
-import { connect } from "near-api-js";
+import { connect, keyStores, WalletConnection } from "near-api-js";
 
-// Network configuration
-export const NETWORK_CONFIG = {
-  testnet: {
-    networkId: "testnet",
-    nodeUrl: "https://rpc.testnet.near.org",
-    walletUrl: "https://wallet.testnet.near.org",
-    helperUrl: "https://helper.testnet.near.org",
-    explorerUrl: "https://explorer.testnet.near.org",
-  },
-  mainnet: {
-    networkId: "mainnet",
-    nodeUrl: "https://rpc.mainnet.near.org",
-    walletUrl: "https://wallet.near.org",
-    helperUrl: "https://helper.mainnet.near.org",
-    explorerUrl: "https://explorer.mainnet.near.org",
-  },
+// Configuration - Use environment variables in a real app!
+const NEAR_ENV = process.env.REACT_APP_NEAR_ENV || "testnet";
+const CONTRACT_VERIFIER_ID =
+  process.env.REACT_APP_VERIFIER_ID || "<YOUR_VERIFIER_CONTRACT_ID>"; // Placeholder
+const CONTRACT_SOLVER_ID =
+  process.env.REACT_APP_SOLVER_ID || "<YOUR_SOLVER_CONTRACT_ID>"; // Placeholder
+
+export const nearConfig = {
+  networkId: NEAR_ENV,
+  nodeUrl: `https://rpc.${NEAR_ENV}.near.org`,
+  contractVerifierId: CONTRACT_VERIFIER_ID,
+  contractSolverId: CONTRACT_SOLVER_ID,
+  walletUrl: `https://wallet.${NEAR_ENV}.near.org`,
+  helperUrl: `https://helper.${NEAR_ENV}.near.org`,
+  explorerUrl: `https://explorer.${NEAR_ENV}.near.org`,
+  keyStore: new keyStores.BrowserLocalStorageKeyStore(), // WARNING: Review security implications
 };
 
-// Contract addresses - will be updated during testnet deployment
-export const CONTRACT_ADDRESSES = {
-  testnet: {
-    verifierContract: "verifier.testnet",
-    solverContract: "solver.testnet",
-  },
-  mainnet: {
-    verifierContract: "",
-    solverContract: "",
-  },
-};
-
-// Get active network configuration
-export function getConfig(network = "testnet") {
-  return NETWORK_CONFIG[network];
-}
-
-// Connect to NEAR blockchain
-export async function connectToNear(network = "testnet") {
-  const nearConfig = getConfig(network);
-  return await connect(nearConfig);
+// Initialize connection to NEAR
+export async function initNearConnection() {
+  const nearConnection = await connect(nearConfig);
+  const walletConnection = new WalletConnection(
+    nearConnection,
+    nearConfig.keyStore
+  );
+  return { nearConnection, walletConnection };
 }
 ```
 
@@ -184,39 +174,31 @@ Let's define our contract interfaces to ensure consistent method calls throughou
 ```javascript
 // src/utils/contracts.js
 import { Contract } from "near-api-js";
+import { nearConfig } from "./near";
 
-// Define interface for the Verifier contract
-export function getVerifierContract(account, contractId) {
-  return new Contract(account, contractId, {
-    viewMethods: ["get_solvers", "get_intent_status", "is_intent_verified"],
-    changeMethods: ["verify_intent", "register_solver"],
-  });
+// Function to initialize a contract interface
+export function getContract(account, contractId, methods) {
+  return new Contract(
+    account, // The account object created from near.account(accountId)
+    contractId, // Account ID of the contract (e.g., nearConfig.contractVerifierId)
+    methods // { viewMethods: [...], changeMethods: [...] }
+  );
 }
 
-// Define interface for the Solver contract
-export function getSolverContract(account, contractId) {
-  return new Contract(account, contractId, {
-    viewMethods: [
-      "get_solver_info",
-      "get_supported_actions",
-      "get_solver_fees",
-    ],
-    changeMethods: ["solve_intent", "cancel_intent"],
-  });
-}
+// Example usage (you'll use this later):
+/*
+const { nearConnection, account } = await initNearConnection();
 
-// Standard intent structure that matches our Rust contracts
-export const INTENT_STRUCTURE = {
-  id: "", // Unique identifier
-  user_account: "", // User's NEAR account
-  action: "", // Type of action (e.g., "swap")
-  input_token: "", // Token the user is providing
-  input_amount: "0", // Amount of input token
-  output_token: "", // Token the user wants
-  min_output_amount: null, // Minimum acceptable output
-  max_slippage: 0.5, // Maximum acceptable slippage
-  deadline: null, // Optional expiration time
-};
+const verifierContract = getContract(account, nearConfig.contractVerifierId, {
+  viewMethods: ['is_intent_verified', 'get_intent_status'],
+  changeMethods: ['verify_intent', 'execute_with_solver'],
+});
+
+const solverContract = getContract(account, nearConfig.contractSolverId, {
+  viewMethods: ['get_execution_results', 'has_executed'],
+  changeMethods: ['solve_intent'],
+});
+*/
 ```
 
 ## Integrating the Session Wallet from Module 4

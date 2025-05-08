@@ -131,7 +131,7 @@ export class SessionKeyManager {
     const keyPair = KeyPair.fromRandom("ed25519");
 
     // Return all the information needed to use this key
-    return {
+    const sessionKey = {
       accountId,
       contractId,
       methodNames,
@@ -140,7 +140,17 @@ export class SessionKeyManager {
       publicKey: keyPair.getPublicKey().toString(),
       created: Date.now(),
       expires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
+      id: `sess_${accountId}_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`, // Generate a unique ID
     };
+    console.log(
+      "Generated new session key for",
+      accountId,
+      "ID:",
+      sessionKey.id
+    );
+    return sessionKey;
   }
 
   /**
@@ -415,3 +425,21 @@ async function submitIntent(sessionConnection, intent) {
 ```
 
 In the next section, we'll explore how to create user-friendly abstractions that hide the complexity of intents and blockchain interactions behind simple action interfaces.
+
+```mermaid
+flowchart TD
+    A[User Action: e.g., Login / Initiate Session] --> B{KeyManager.getSessionKey(password)};
+    B -- Key Exists & Password Valid --> C[Key Decrypted from localStorage];
+    B -- No Key / Invalid Password --> D{KeyManager.generateSessionKey()};
+    D --> E[New KeyPair Generated];
+    E --> F{KeyManager.storeSessionKey(keyPair, password)};
+    F --> G[Key Encrypted & Stored in localStorage];
+    C --> H[Session KeyPair Ready for Use];
+    G --> H;
+    H --> I[dApp Uses Session Key to Sign Transactions for Verifier];
+    I --> J{NEAR Blockchain};
+```
+
+Figure 1: Session Key Generation, Storage, and Retrieval Flow.
+
+This flow illustrates how session keys can be managed with password-based encryption, providing a balance between security and user convenience for persistent sessions.

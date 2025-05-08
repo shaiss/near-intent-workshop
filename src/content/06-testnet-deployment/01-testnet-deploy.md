@@ -64,50 +64,49 @@ near create-account smart-wallet.yourname.testnet --masterAccount yourname.testn
 
 Your main account (`yourname.testnet`) funds these subaccounts, covering their initial storage costs - similar to how you might allocate resources to different microservices in a Web2 architecture.
 
-## Deploying the Contracts
+## Deploying the Core Contracts
 
-From your project root directory (where the `contracts` folder is located), deploy each contract:
-
-### 1. Deploy the Verifier Contract
+Navigate to your project's root directory in your terminal.
 
 ```bash
-near deploy --accountId verifier.yourname.testnet \
-  --wasmFile ./contracts/verifier/target/wasm32-unknown-unknown/release/verifier.wasm \
+# 1. Deploy Verifier Contract
+# Replace <YOUR_ACCOUNT_ID> with your actual NEAR testnet account ID
+near deploy --wasmFile contracts/verifier/res/verifier_contract.wasm \
+  --accountId verifier.<YOUR_ACCOUNT_ID>.testnet \
   --initFunction new \
-  --initArgs '{"owner_id": "yourname.testnet"}'
+  --initArgs '{"owner_id": "<YOUR_ACCOUNT_ID>.testnet"}'
+
+# 2. Deploy Solver Contract
+near deploy --wasmFile contracts/solver/res/solver_contract.wasm \
+  --accountId solver.<YOUR_ACCOUNT_ID>.testnet \
+  --initFunction new \
+  --initArgs '{"owner_id": "<YOUR_ACCOUNT_ID>.testnet", "verifier_contract_id": "verifier.<YOUR_ACCOUNT_ID>.testnet"}'
+
+# 3. Register Solver with Verifier
+near call verifier.<YOUR_ACCOUNT_ID>.testnet add_trusted_solver \
+  '{"solver_id": "solver.<YOUR_ACCOUNT_ID>.testnet"}' \
+  --accountId <YOUR_ACCOUNT_ID>.testnet
 ```
 
-### 2. Deploy the Solver Contract
+## Deploying the Smart Wallet Contract
 
 ```bash
-near deploy --accountId solver.yourname.testnet \
-  --wasmFile ./contracts/solver/target/wasm32-unknown-unknown/release/solver.wasm \
+# 3. Deploy the Smart Wallet Contract (Illustrative)
+# Replace <YOUR_ACCOUNT_ID> with your actual NEAR testnet account ID
+
+# IMPORTANT CLARIFICATION:
+# Module 4 focused on CLIENT-SIDE wallet abstractions (managing keys/sessions in JS).
+# This step shows deploying an ON-CHAIN smart contract wallet (smart_wallet.wasm).
+# This is a more advanced concept where the user's account *is* a smart contract.
+# This workshop DOES NOT provide the source code for or build this specific `smart_wallet.wasm`.
+# This deployment is shown for completeness IF your architecture uses an on-chain wallet contract.
+# If you are only using the client-side abstractions from Module 4, you can SKIP this step.
+# If you intend to use an on-chain wallet, you would need to build or obtain this WASM separately.
+
+near deploy --wasmFile path/to/smart_wallet.wasm \
+  --accountId smart-wallet.<YOUR_ACCOUNT_ID>.testnet \
   --initFunction new \
-  --initArgs '{"owner_id": "yourname.testnet", "execution_fee": 20}'
-```
-
-### 3. Deploy the Smart Wallet Contract from Module 4
-
-```bash
-near deploy --accountId smart-wallet.yourname.testnet \
-  --wasmFile ./contracts/smart-wallet/target/wasm32-unknown-unknown/release/smart_wallet.wasm \
-  --initFunction new \
-  --initArgs '{"owner_id": "yourname.testnet"}'
-```
-
-> 💡 **Note**: We're using a one-step deploy and initialize approach with the `--initFunction` and `--initArgs` flags. This ensures the contract is initialized atomically with deployment, similar to how you might set up a database schema during service deployment in Web2.
-
-## Alternative Two-Step Deployment
-
-If you prefer to see the deployment and initialization as separate steps (perhaps for better visibility into each process), you can use this approach instead:
-
-```bash
-# Deploy first
-near deploy --accountId verifier.yourname.testnet \
-  --wasmFile ./contracts/verifier/target/wasm32-unknown-unknown/release/verifier.wasm
-
-# Then initialize
-near call verifier.yourname.testnet new '{"owner_id": "yourname.testnet"}' --accountId yourname.testnet
+  --initArgs '{"owner_id": "<YOUR_ACCOUNT_ID>.testnet"}'
 ```
 
 ## Verifying Successful Deployment
@@ -142,14 +141,13 @@ You should see your account ID returned by each command. You can also check the 
 Now that your contracts are on testnet, update your frontend configuration from Module 5 to point to these deployed contracts:
 
 ```javascript
-// In your frontend's near.js or similar config file
-export const CONTRACT_ADDRESSES = {
-  testnet: {
-    verifierContract: "verifier.yourname.testnet",
-    solverContract: "solver.yourname.testnet",
-    smartWalletContract: "smart-wallet.yourname.testnet",
-  },
-  // ... other environments
+// Example update (use environment variables ideally)
+export const nearConfig = {
+  // ... other config
+  contractVerifierId: "verifier.<YOUR_ACCOUNT_ID>.testnet",
+  contractSolverId: "solver.<YOUR_ACCOUNT_ID>.testnet",
+  // Add this line ONLY if you deployed and are using the on-chain smart wallet contract
+  // contractSmartWalletId: "smart-wallet.<YOUR_ACCOUNT_ID>.testnet",
 };
 ```
 
@@ -162,3 +160,50 @@ After deploying your contracts, you'll need to:
 3. Monitor your contracts' performance and state through transactions
 
 In the next section, we'll explore how to use NEAR CLI to interact with your deployed contracts for efficient testing and debugging.
+
+## Testing the verify_intent Function
+
+```bash
+# Example: Test the verify_intent function on the deployed Verifier
+# Replace <YOUR_ACCOUNT_ID> and alice.<YOUR_ACCOUNT_ID>.testnet with appropriate accounts
+
+# Create intent_args.json file with intent data:
+# {
+#   "intent": {
+#     "intent_id": "deploy-test-001",
+#     "user_account": "alice.<YOUR_ACCOUNT_ID>.testnet",
+#     "input_token": "usdc.testnet",
+#     "input_amount": "1000000",
+#     "output_token": "wrap.testnet",
+#     "min_output_amount": "950000000000000000000000",
+#     "max_slippage": 0.01,
+#     "deadline": null,
+#     "verifier_id": "verifier.<YOUR_ACCOUNT_ID>.testnet"
+#   }
+# }
+
+near call verifier.<YOUR_ACCOUNT_ID>.testnet verify_intent \
+  --argsFile intent_args.json \
+  --accountId alice.<YOUR_ACCOUNT_ID>.testnet
+```
+
+```mermaid
+flowchart TD
+    A[Developer Machine] -->|Build WASM| B(Verifier Contract WASM);
+    A -->|Build WASM| C(Solver Contract WASM);
+    A -->|Build WASM| D(Smart Wallet Contract WASM);
+    A -- near deploy --> E{NEAR Testnet Blockchain};
+    E -- Creates Account & Deploys --> F[verifier.<YOUR_ACCOUNT_ID>.testnet];
+    E -- Creates Account & Deploys --> G[solver.<YOUR_ACCOUNT_ID>.testnet];
+    E -- Creates Account & Deploys --> H[smart-wallet.<YOUR_ACCOUNT_ID>.testnet];
+    A -- near call (Register) --> F;
+    F -- Stores Solver ID --> F;
+```
+
+Figure 1: Testnet Deployment Flow Overview.
+
+## Preparing Account Structure
+
+```bash
+# ... existing code ...
+```

@@ -27,7 +27,7 @@ pub enum StorageKey {
 
 // Our contract, now with state fields for tracking ownership and verified intents
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Verifier {
     // The account that can perform admin operations
     pub owner_id: AccountId,
@@ -36,6 +36,12 @@ pub struct Verifier {
     // Now we're using a more efficient data structure for production use cases
     // LookupMap is a key-value store optimized for O(1) lookups
     pub verified_intents: UnorderedSet<String>,
+
+    // Potentially a list of trusted solvers, or rules for solver selection
+    trusted_solvers: UnorderedSet<AccountId>,
+
+    // Store verified intents that are awaiting solver action
+    verified_intents_map: UnorderedMap<String, Intent>, // intent_id -> Intent
 }
 
 // Default initialization - required by NEAR SDK if we don't use #[derive(Default)]
@@ -71,6 +77,8 @@ impl Verifier {
             owner_id,
             // Create a new empty set with a unique storage prefix
             verified_intents: UnorderedSet::new(StorageKey::VerifiedIntents),
+            trusted_solvers: UnorderedSet::new(StorageKey::VerifiedIntents),
+            verified_intents_map: UnorderedMap::new(StorageKey::VerifiedIntents),
         }
     }
 

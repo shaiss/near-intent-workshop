@@ -152,8 +152,11 @@ Below are simplified JSON representations of what these intents might look like.
     },
     "toAsset": {
       "type": "fungible_token",
-      "id": "aurora.token.near", // Hypothetical bridged asset on NEAR
-      "destinationChain": "near"
+      "id": "aurora.token.near",
+      "amount": "100000000",
+      "sourceChain": "aurora",
+      "destinationChain": "near",
+      "destinationEnvironment": "Aurora (on NEAR)"
     }
   },
   "preferences": {
@@ -161,6 +164,19 @@ Below are simplified JSON representations of what these intents might look like.
   }
 }
 ```
+
+### User-Defined Intent
+
+```json
+{
+  "user": "user.near",
+  "intent": "I want to swap my 100 USDC for NEAR tokens, ensuring I get the best possible rate within the next 5 minutes, and I don't want to pay more than 0.1 NEAR in total fees."
+}
+```
+
+> **Note on Real-World Implementations**: While the examples above use illustrative text for simplicity, actual intents are structured data, often in JSON. Values like token IDs (e.g., `"usdc.token.near"`) or user accounts (e.g., `"user.near"`) would typically be managed as named constants, configuration variables, or derived programmatically in production applications, rather than being hardcoded repeatedly.
+
+This is a **declarative** approach.
 
 ## Benefits of Intent Architecture
 
@@ -192,3 +208,29 @@ A typical intent goes through several stages:
 ## Next Steps: Anatomy of an Intent
 
 Now that we understand the core concept of what an intent is and why it's powerful, let's prepare to dissect its structure. In the next section, [2.2 Intent Anatomy](mdc:./02-intent-anatomy.md), we'll examine the typical components and data fields that make up an intent object in more detail, paving the way to understand how they are processed and validated.
+
+```mermaid
+graph TD
+    A[User Expresses Goal: "I want to swap 100 USDC for NEAR"] --> B{System}
+    B --> C[Option 1: Use Ref.Finance via NEAR]
+    B --> D[Option 2: Use Uniswap via Aurora/ETH]
+    B --> E[Option 3: Use CEX API if available]
+    C --> F[Result: 100 USDC = 250 NEAR (example)]
+    D --> G[Result: 100 USDC = 248 NEAR (example)]
+    E --> H[Result: 100 USDC = 251 NEAR (example)]
+    System --> I((System Chooses Option 3 for best rate))
+```
+
+Figure 1: System Determining Optimal Path for a User's Swap Intent.
+
+This is powerful because:
+
+// Imperative approach - you tell the system _how_ to do everything
+async function bookFlightImperative(flightDetails, paymentDetails) {
+// Assume userId and userEmail are defined elsewhere in a real application
+const userId = 'user123'; // Example value
+const userEmail = 'user@example.com'; // Example value
+
+// 1. Check flight availability
+// ... existing code ...
+}

@@ -125,10 +125,10 @@ This command will open a web browser and ask you to authorize the NEAR CLI to us
 
 Let's verify that your NEAR CLI is correctly configured and can communicate with your testnet account.
 
-Replace `yourname.testnet` with your actual testnet account ID:
+Replace `<YOUR_ACCOUNT_ID.testnet>` with your actual testnet account ID:
 
 ```bash
-near state yourname.testnet
+near state <YOUR_ACCOUNT_ID.testnet>
 ```
 
 - **Expected Output**: You should see a JSON object detailing your account's current state, such as its balance (it might have a small amount of NEAR if automatically funded by the testnet wallet), code hash (if any contract is deployed), and storage usage. If you see an error like "Account ID #yourname.testnet does not exist", double-check the account ID and ensure the `near login` process was completed successfully.

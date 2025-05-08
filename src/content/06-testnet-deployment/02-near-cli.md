@@ -159,23 +159,31 @@ near view verifier.yourname.testnet get_solvers '{}'
 For complex function calls, using JSON files keeps your commands clean:
 
 ```bash
-# Create intent.json
-echo '{
-  "intent": {
-    "id": "cli-intent-5",
-    "user_account": "yourname.testnet",
-    "action": "swap",
-    "input_token": "USDC",
-    "input_amount": "1000000000",
-    "output_token": "wNEAR",
-    "min_output_amount": null,
-    "max_slippage": 0.5,
-    "deadline": 1698523278
-  }
-}' > intent.json
+# Create intent.json with the intent data:
+# Note: Ensure the field names (`intent_id`, `user_account`, etc.) EXACTLY match the
+# fields in your Rust `Intent` struct definition (considering potential serde renames).
+# {
+#   "intent": {
+#     "intent_id": "cli-intent-001",
+#     "user_account": "<YOUR_ACCOUNT_ID>.testnet",
+#     "input_token": "usdc.testnet",
+#     "input_amount": "5000000",
+#     "output_token": "wrap.testnet",
+#     "min_output_amount": "4700000000000000000000000",
+#     "max_slippage": 0.01,
+#     // Deadline must be a u64 timestamp in NANOSECONDS.
+#     // Example: null for no deadline, or a future timestamp like "1735689600000000000" (Jan 1 2025 00:00:00 UTC)
+#     // Ensure this value is passed as a string if it's very large, to avoid JSON number limitations.
+#     "deadline": null,
+#     "verifier_id": "verifier.<YOUR_ACCOUNT_ID>.testnet"
+#   }
+# }
 
-# Call with file
-near call verifier.yourname.testnet verify_intent "$(cat intent.json)" --accountId yourname.testnet
+# Submit an intent to the Verifier
+near call verifier.yourname.testnet verify_intent \
+  --argsFile intent.json \
+  --accountId yourname.testnet \
+  --gas 300000000000000
 ```
 
 > ⚠️ **Important**: Ensure the JSON structure exactly matches what the contract expects. For numbers like `deadline`, use a numeric value (not a string) as required by the Rust `u64` type.
@@ -226,3 +234,63 @@ Now that you can interact with your contracts via CLI, you can:
 3. Verify that your contract integrations work as expected
 
 In the next section, we'll explore adding debug logs to your contracts to better understand execution flow and troubleshoot issues when they arise.
+
+```bash
+# Replace <YOUR_ACCOUNT_ID> with your actual account ID
+
+# View Verifier owner
+near view verifier.<YOUR_ACCOUNT_ID>.testnet get_owner_id
+
+# View Solver fee
+near view solver.<YOUR_ACCOUNT_ID>.testnet get_fee
+
+# Check if an intent is verified
+near view verifier.<YOUR_ACCOUNT_ID>.testnet is_intent_verified '{"intent_id": "intent-123"}'
+
+# Check if solver executed an intent
+near view solver.<YOUR_ACCOUNT_ID>.testnet has_executed '{"intent_id": "intent-123"}'
+```
+
+```bash
+# Replace <YOUR_ACCOUNT_ID> with your actual account ID
+
+# Create intent.json with the intent data:
+# {
+#   "intent": {
+#     "intent_id": "cli-intent-001",
+#     "user_account": "<YOUR_ACCOUNT_ID>.testnet",
+#     "input_token": "usdc.testnet",
+#     "input_amount": "5000000",
+#     "output_token": "wrap.testnet",
+#     "min_output_amount": "4700000000000000000000000",
+#     "max_slippage": 0.01,
+#     // Deadline must be a u64 timestamp in NANOSECONDS.
+#     // Example: null for no deadline, or a future timestamp like "1735689600000000000" (Jan 1 2025 00:00:00 UTC)
+#     // Ensure this value is passed as a string if it's very large, to avoid JSON number limitations.
+#     "deadline": null,
+#     "verifier_id": "verifier.<YOUR_ACCOUNT_ID>.testnet"
+#   }
+# }
+
+# Submit an intent to the Verifier
+near call verifier.<YOUR_ACCOUNT_ID>.testnet verify_intent \
+  --argsFile intent.json \
+  --accountId <YOUR_ACCOUNT_ID>.testnet \
+  --gas 300000000000000
+
+# Example: Testing the illustrative smart wallet contract
+# This assumes you deployed the optional smart_wallet.wasm from 01-testnet-deploy.md
+# If you skipped that deployment, this call is not applicable.
+
+# Create add_key_args.json:
+# {
+#   "public_key": "ed25519:YourNewPublicKeyBase58",
+#   "contract_id": "verifier.<YOUR_ACCOUNT_ID>.testnet",
+#   "method_names": ["verify_intent"],
+#   "allowance": "250000000000000000000000"
+# }
+
+near call smart-wallet.<YOUR_ACCOUNT_ID>.testnet add_session_key \
+  --argsFile add_key_args.json \
+  --accountId <YOUR_ACCOUNT_ID>.testnet
+```

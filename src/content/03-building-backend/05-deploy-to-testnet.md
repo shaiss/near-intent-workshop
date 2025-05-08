@@ -33,10 +33,15 @@ cd path/to/your/project
 ### 🚀 Deploy the Verifier Contract
 
 ```bash
-near deploy --accountId yourname.testnet \
-  --wasmFile ./contracts/verifier/target/wasm32-unknown-unknown/release/verifier.wasm \
-  --initFunction new \
-  --initArgs '{"owner_id": "yourname.testnet"}'
+# Deploy Verifier Contract
+# Replace <YOUR_ACCOUNT_ID> with your actual NEAR testnet account ID
+near deploy --wasmFile verifier/res/verifier_contract.wasm --accountId verifier.<YOUR_ACCOUNT_ID>.testnet --initFunction new --initArgs '{"owner_id": "<YOUR_ACCOUNT_ID>.testnet"}'
+
+# Deploy Solver Contract
+near deploy --wasmFile solver/res/solver_contract.wasm --accountId solver.<YOUR_ACCOUNT_ID>.testnet --initFunction new --initArgs '{"owner_id": "<YOUR_ACCOUNT_ID>.testnet", "verifier_contract_id": "verifier.<YOUR_ACCOUNT_ID>.testnet"}'
+
+# Example: Register Solver with Verifier
+near call verifier.<YOUR_ACCOUNT_ID>.testnet add_trusted_solver '{"solver_id": "solver.<YOUR_ACCOUNT_ID>.testnet"}' --accountId <YOUR_ACCOUNT_ID>.testnet
 ```
 
 > 💡 **Web2 Parallel**: This is similar to deploying a validation service to your staging environment and initializing it with configuration parameters.
@@ -66,22 +71,30 @@ You should see your contract code and storage usage has increased.
 ### 🧪 Test the Verifier Contract
 
 ```bash
-near call verifier.yourname.testnet verify_intent '{
-  "intent": {
-    "id": "test-intent-1",
-    "user_account": "yourname.testnet",
-    "action": "swap",
-    "input_token": "USDC",
-    "input_amount": 100,
-    "output_token": "wNEAR",
-    "min_output_amount": null,
-    "max_slippage": 0.5,
-    "deadline": null
-  }
-}' --accountId yourname.testnet
-```
+# Example: User (alice.<YOUR_ACCOUNT_ID>.testnet) submits an intent to the Verifier
+# Replace <YOUR_ACCOUNT_ID> with your actual NEAR testnet account ID
 
-If successful, you should see output indicating the intent was verified.
+# Step 1: Prepare arguments in a file (e.g., intent_args.json)
+# Create a file named intent_args.json with the following content:
+# {
+#   "intent": {
+#     "intent_id": "testnet-intent-001",
+#     "user_account": "alice.<YOUR_ACCOUNT_ID>.testnet",
+#     "input_token": "usdc.testnet",
+#     "input_amount": "1000000",
+#     "output_token": "wrap.testnet",
+#     "min_output_amount": "950000000000000000000000",
+#     "max_slippage": 0.01,
+#     "deadline" : 0,
+#     "verifier_id": "verifier.<YOUR_ACCOUNT_ID>.testnet"
+#   }
+# }
+
+# Step 2: Call the verify_intent function using the arguments file
+near call verifier.<YOUR_ACCOUNT_ID>.testnet verify_intent --argsFile intent_args.json --accountId alice.<YOUR_ACCOUNT_ID>.testnet --gas 300000000000000
+
+# Monitor transaction status and contract logs using NEAR Explorer or near-cli
+```
 
 ### 🔄 Test the Complete Intent Flow
 

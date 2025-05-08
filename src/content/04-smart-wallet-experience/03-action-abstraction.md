@@ -42,65 +42,84 @@ pub struct Intent {
 
 Let's create a JavaScript action abstraction layer that generates these intent objects from simple user actions:
 
-```javascript
-// Intent creation library for common user actions
+// Configuration - In a real app, load these from a config file or environment variables
+const VERIFIER_CONTRACT_ID = "<YOUR_VERIFIER_CONTRACT_ID>"; // e.g., verifier.your-account.testnet
+const CURRENT_USER_ACCOUNT_ID = "<YOUR_USER_ACCOUNT_ID>"; // e.g., user-alice.testnet
+const DEFAULT_INTENT_EXECUTION_GAS = "100000000000000"; // 100 TGas, example
+
 class IntentBuilder {
-  constructor(userAccount) {
-    this.userAccount = userAccount;
-  }
-
-  // Generate a unique ID for this intent
-  generateIntentId() {
-    return `intent-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-  }
-
-  // Create a token swap intent
-  createSwapIntent(inputToken, inputAmount, outputToken, options = {}) {
-    return {
-      id: this.generateIntentId(),
-      user_account: this.userAccount,
-      action: "swap",
-      input_token: inputToken,
-      input_amount: inputAmount,
-      output_token: outputToken,
-      min_output_amount: options.minOutputAmount || null,
-      max_slippage: options.maxSlippage || 0.5,
-      deadline: options.deadline || null,
-    };
-  }
-
-  // Create a token transfer intent
-  createTransferIntent(token, amount, recipient, options = {}) {
-    return {
-      id: this.generateIntentId(),
-      user_account: this.userAccount,
-      action: "transfer",
-      input_token: token,
-      input_amount: amount,
-      output_token: token, // Same token for transfers
-      recipient: recipient, // Additional field for transfers
-      min_output_amount: options.minOutputAmount || amount, // Usually 100% for transfers
-      max_slippage: 0, // Usually no slippage for transfers
-      deadline: options.deadline || null,
-    };
-  }
-
-  // Create a staking intent
-  createStakeIntent(token, amount, validatorId, options = {}) {
-    return {
-      id: this.generateIntentId(),
-      user_account: this.userAccount,
-      action: "stake",
-      input_token: token,
-      input_amount: amount,
-      validator_id: validatorId, // Additional field for staking
-      min_output_amount: null, // Not applicable for staking
-      max_slippage: 0, // Usually no slippage for staking
-      deadline: options.deadline || null,
-    };
-  }
+constructor(userId = CURRENT_USER_ACCOUNT_ID, verifierId = VERIFIER_CONTRACT_ID) {
+this.userId = userId;
+this.verifierId = verifierId;
 }
-```
+
+// Generate a unique ID for this intent
+generateIntentId() {
+return `intent-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+}
+
+// Create a token swap intent
+createSwapIntent(inputToken, inputAmount, outputToken, options = {}) {
+return {
+id: this.generateIntentId(),
+user_account: this.userId,
+action: "swap",
+input_token: inputToken,
+input_amount: inputAmount,
+output_token: outputToken,
+min_output_amount: options.minOutputAmount || null,
+max_slippage: options.maxSlippage || 0.5,
+deadline: options.deadline || null,
+};
+}
+
+// Create a token transfer intent
+createTransferIntent({ token, amount, recipient }, options = {}) {
+console.log(
+`Building TRANSFER intent: ${amount} ${token} to ${recipient} for ${this.userId}`
+);
+// Similar to swap, this would need specific Verifier/Solver support.
+return {
+id: this.generateIntentId(),
+user_account: this.userId,
+action: "transfer",
+input_token: token,
+input_amount: amount,
+output_token: token, // Same token for transfers
+recipient: recipient, // Additional field for transfers
+min_output_amount: options.minOutputAmount || amount, // Usually 100% for transfers
+max_slippage: 0, // Usually no slippage for transfers
+deadline: options.deadline || null,
+};
+}
+
+// --- Illustrative Methods for Other Intent Types ---
+// Note: The Verifier and Solver contracts developed in Module 3 were primarily focused on validating
+// and executing "swap" actions. To fully support different action types like "transfer" or "stake",
+// the Verifier contract would need to be updated with specific validation logic for their unique
+// parameters (e.g., `recipient` for transfer, `validator_id` for stake), and the Solver(s)
+// would require corresponding execution logic. The following methods are included to illustrate
+// how an IntentBuilder could be expanded for such actions.
+
+// Create a staking intent
+createStakeIntent(token, amount, validatorId, options = {}) {
+console.log(
+`Building STAKE intent: ${amount} ${token} with validator ${validatorId} for ${this.userId}`
+);
+// Similar to transfer, this would need specific Verifier/Solver support.
+return {
+intentId: this.\_generateIntentId("stake"),
+user_account: this.userId,
+action: "stake",
+input_token: token,
+input_amount: amount,
+validator_id: validatorId, // Additional field for staking
+min_output_amount: null, // Not applicable for staking
+max_slippage: 0, // Usually no slippage for staking
+deadline: options.deadline || null,
+};
+}
+}
 
 ## Submitting Intents with Session Keys
 
@@ -213,7 +232,7 @@ class IntentService {
 
 Now we can create React components that use our `IntentService` to provide a simple user experience:
 
-```jsx
+````jsx
 import { useState, useEffect } from "react";
 import { IntentService } from "./intentService";
 import { SessionKeyManager } from "./sessionKeyManager";
@@ -250,25 +269,34 @@ function SwapForm({ accountId, sessionKey }) {
       return;
     }
 
-    setStatus("Submitting swap intent...");
+    setStatus("Processing swap intent...");
+    const result = await intentService.swap({
+      inputToken,
+      inputAmount: parseFloat(inputAmount),
+      outputToken,
+      maxSlippage,
+    });
 
-    try {
-      const result = await intentService.swap({
-        inputToken,
-        inputAmount: parseFloat(inputAmount),
-        outputToken,
-        maxSlippage,
-      });
-
-      if (result.success) {
-        setStatus(
-          `Swap intent submitted! Transaction: ${result.transactionHash}`
-        );
-      } else {
-        setStatus(`Error: ${result.error}`);
+    if (result.success) {
+      setStatus(`Swap successful! Transaction ID: ${result.transactionHash}`);
+    } else {
+      console.error("Swap failed:", result.error);
+      // User-friendly error mapping
+      let userMessage = "An unexpected error occurred. Please try again.";
+      if (result.error) {
+        if (result.error.includes("User rejected the request")) {
+          userMessage =
+            "You cancelled the transaction. Please try again if you wish to proceed.";
+        } else if (result.error.includes("Exceeded the allowance")) {
+          userMessage =
+            "The transaction failed. It seems there isn't enough allowance to cover the gas fees for this action with the session key. You might need to re-authorize the session or use your main wallet.";
+        } else if (result.error.includes("Not enough balance")) {
+          userMessage =
+            "The transaction failed. Please ensure your account has enough balance to cover the transaction amount and potential fees.";
+        }
+        // Add more known error mappings here
       }
-    } catch (error) {
-      setStatus(`Error: ${error.message}`);
+      setStatus(`Error: ${userMessage}`);
     }
   };
 
@@ -336,60 +364,162 @@ function SwapForm({ accountId, sessionKey }) {
 
 // Main wallet interface component
 function SmartWalletInterface() {
-  const [accountId, setAccountId] = useState(null);
-  const [sessionKey, setSessionKey] = useState(null);
-  const [keyManager] = useState(new SessionKeyManager());
-  const [walletConnected, setWalletConnected] = useState(false);
+  const [status, setStatus] = useState("");
+  const [sessionKeyInfo, setSessionKeyInfo] = useState(null);
+  const [userPassword, setUserPassword] = useState(""); // State for password input
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
 
-  // Handle wallet connection
-  const connectWallet = async () => {
+  // In a real app, these would come from config or auth state
+  const userAccountId = CURRENT_USER_ACCOUNT_ID;
+  const verifierContractId = VERIFIER_CONTRACT_ID;
+
+  const keyManager = new SessionKeyManager();
+  const intentService = new IntentService(userAccountId, verifierContractId, keyManager);
+
+  // Handle session key authorization
+  const handleAuthorizeSession = async () => {
     try {
-      // This is simplified - would use your wallet connection logic
-      const userAccountId = await promptUserForAccountId();
-      setAccountId(userAccountId);
-
-      // Try to load an existing session key
-      const existingKey = keyManager.getSessionKey(userAccountId, userPassword);
-
-      if (existingKey && !isExpired(existingKey)) {
-        setSessionKey(existingKey);
-        setWalletConnected(true);
+      setStatus("Requesting session key authorization...");
+      // In a real app, connect to the wallet (e.g., using WalletSelector)
+      // const walletConnection = await getWalletConnection();
+      // const account = walletConnection.account();
+      // For this example, we assume `authorizeNewSession` on KeyManager handles wallet interaction.
+      const newSessionKey = await keyManager.authorizeNewSession(userAccountId, verifierContractId, ["execute_intent"]);
+      if (newSessionKey) {
+        setShowPasswordPrompt(true); // Prompt for password to store the key
+        // The actual storage will happen after password input
+        setSessionKeyInfo(newSessionKey); // Temporarily hold key info
+        setStatus("Session key authorized by wallet. Enter password to store it for this session.");
       } else {
-        // Would redirect to wallet for authorization here
-        // For this example, we'll just simulate it
-        const newKey = await simulateKeyAuthorization(userAccountId);
-        setSessionKey(newKey);
-        setWalletConnected(true);
+        setStatus("Session key authorization failed or was cancelled.");
       }
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
+    } catch (err) {
+      console.error("Session authorization error:", err);
+      setStatus("Error authorizing session: " + err.message);
+    }
+  };
+
+  const handleStoreKeyWithPassword = async () => {
+    if (!userPassword || !sessionKeyInfo) {
+      setStatus("Password is required to store the session key.");
+      return;
+    }
+    try {
+      await keyManager.storeSessionKey(sessionKeyInfo, userPassword);
+      setStatus("Session key stored securely for this session.");
+      setShowPasswordPrompt(false);
+      setUserPassword(""); // Clear password
+    } catch (err) {
+      console.error("Failed to store session key:", err);
+      setStatus("Error storing session key: " + err.message);
+    }
+  };
+
+  // Attempt to load session key on component mount
+  useEffect(() => {
+    const loadKey = async () => {
+      // Simplified: In a real app, you might prompt for password if a key exists but isn't in memory.
+      // Or, if no password protection was used, just load it.
+      // For this example, we assume if a key needs loading, it implies a password was set.
+      // This part is more conceptual as direct load without password prompt if already stored encrypted.
+      const existingKey = localStorage.getItem(keyManager.storageKeyPrefix + userAccountId);
+      if (existingKey) {
+        setStatus("Encrypted session key found. Enter password to decrypt and use.");
+        setShowPasswordPrompt(true); // Prompt for password to decrypt existing key
+      }
+    };
+    // loadKey(); // Decide if you want to auto-prompt on load
+  }, [keyManager, userAccountId]);
+
+
+  // Example: Submit a swap intent
+  const handleSwap = async () => {
+    if (!sessionKeyInfo && !localStorage.getItem(keyManager.storageKeyPrefix + userAccountId)) {
+        setStatus("Please authorize a session key first or ensure it's loaded.");
+        return;
+    }
+    // If sessionKeyInfo is not set, but an encrypted key exists, prompt for password.
+    if (!sessionKeyInfo && localStorage.getItem(keyManager.storageKeyPrefix + userAccountId) && !showPasswordPrompt) {
+        setShowPasswordPrompt(true);
+        setStatus("Encrypted session key found. Enter password to decrypt and use for swap.");
+        return;
+    }
+
+    if (showPasswordPrompt && !sessionKeyInfo) { // If prompt is shown for loading an existing key
+        if (!userPassword) {
+            setStatus("Password needed to load the key for the swap.");
+            return;
+        }
+        try {
+            const loadedKey = await keyManager.getSessionKey(userAccountId, userPassword);
+            if (!loadedKey) {
+                setStatus("Failed to load session key with password. Swap cancelled.");
+                return;
+            }
+            setSessionKeyInfo(loadedKey); // Key is now in memory
+            setStatus("Session key loaded. Proceeding with swap.");
+            // Fall through to execute swap with the now loaded key
+        } catch (error) {
+            setStatus("Failed to load session key: " + error.message);
+            return;
+        }
+    }
+
+    const intentDetails = {
+      inputToken: "usdc.testnet",
+      inputAmount: 10, // 10 USDC
+      outputToken: "wrap.testnet",
+      maxSlippage: 0.01, // 1%
+    };
+    try {
+      setStatus("Processing swap intent...");
+      const result = await intentService.executeSwapIntent(intentDetails, userPassword); // Pass password if key needs loading by service
+      setStatus(`Swap successful! Transaction ID: ${result.transaction_outcome?.id}`);
+    } catch (err) {
+      // ... (user-friendly error handling as implemented before)
+      let userMessage = "An unexpected error occurred. Please try again.";
+      if (err.message) {
+        if (err.message.includes("User rejected the request")) {
+          userMessage = "You cancelled the transaction.";
+        } else if (err.message.includes("Exceeded the allowance")) {
+          userMessage = "Transaction failed due to allowance issues with the session key.";
+        } else if (err.message.includes("Not enough balance")) {
+          userMessage = "Transaction failed due to insufficient balance.";
+        } else if (err.message.includes("Failed to decrypt key") || err.message.includes("Invalid password")) {
+          userMessage = "Failed to decrypt session key. Please check your password.";
+        }
+      }
+      setStatus(`Error: ${userMessage}`);
+      console.error("Swap failed:", err);
     }
   };
 
   return (
-    <div className="smart-wallet-interface">
-      <h1>NEAR Intent Wallet</h1>
-
-      {!walletConnected ? (
-        <button onClick={connectWallet}>Connect Wallet</button>
-      ) : (
-        <div className="wallet-functions">
-          <div className="account-info">
-            <p>Connected: {accountId}</p>
-            <p>
-              Session expires: {new Date(sessionKey.expires).toLocaleString()}
-            </p>
-          </div>
-
-          <SwapForm accountId={accountId} sessionKey={sessionKey} />
-
-          {/* Additional action forms would go here */}
+    <div>
+      <h3>Smart Wallet Actions</h3>
+      <button onClick={handleAuthorizeSession}>Authorize New Session Key</button>
+      {showPasswordPrompt && (
+        <div>
+          <input
+            type="password"
+            value={userPassword}
+            onChange={(e) => setUserPassword(e.target.value)}
+            placeholder="Enter password for session key"
+          />
+          {sessionKeyInfo && !localStorage.getItem(keyManager.storageKeyPrefix + userAccountId + sessionKeyInfo.publicKey) ? (
+            <button onClick={handleStoreKeyWithPassword}>Store Session Key</button>
+          ) : (
+            <p>Enter password to load existing key for operations.</p>
+          )}
         </div>
       )}
+      <hr />
+      <h4>Swap Tokens</h4>
+      <button onClick={handleSwap}>Execute Swap (10 USDC for wNEAR)</button>
+      {status && <p>Status: {status}</p>}
     </div>
   );
 }
-```
 
 ## Creating Composable Actions
 
@@ -412,7 +542,7 @@ class IntentBuilder {
     // and include all required parameters in a structured way
     return {
       id: this.generateIntentId(),
-      user_account: this.userAccount,
+      user_account: this.userId,
       action: "swap_and_stake", // Custom compound action
       input_token: inputToken,
       input_amount: inputAmount,
@@ -447,7 +577,7 @@ class IntentService {
     return this.submitIntent(intent);
   }
 }
-```
+````
 
 The Verifier and Solver contracts would need to be extended to support this compound action, but the beauty of the intent architecture is that this could be added without changing existing action types or breaking existing dApps.
 

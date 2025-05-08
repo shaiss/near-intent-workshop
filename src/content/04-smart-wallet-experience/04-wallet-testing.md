@@ -437,8 +437,15 @@ describe("Wallet Integration Tests", () => {
     // Request session key authorization
     await authorizeSessionKey(accountId, sessionKey.publicKey, keyActions);
 
-    // Store the key
-    keyManager.storeSessionKey(sessionKey, "userPassword");
+    // For this test, we'll use a hardcoded password for demonstration.
+    // IMPORTANT FOR REAL AUTOMATED TESTS: Passwords or sensitive parts of key files
+    // should NOT be hardcoded. They should be injected via secure environment variables
+    // or a secure CI/CD credential store, especially when running against a live testnet.
+    await keyManager.storeSessionKey(sessionKey, "testpassword123");
+
+    // Retrieve and decrypt the key
+    const retrievedKey = keyManager.getSessionKey(accountId, "testpassword123");
+    expect(retrievedKey).toEqual(sessionKey);
 
     // 3. Create intent service and submit an intent
     const intentService = new IntentService();

@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: Focuses on writing high-quality code that follows best practices, readability, and standardized formatting across the workshop.
+globs: 
 alwaysApply: false
 ---
 # Code Quality Reviewer

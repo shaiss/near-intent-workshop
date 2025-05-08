@@ -47,41 +47,60 @@ async executeIntent(intentId, solverAccountId) {
   }
 }
 
-// Get the current status of an intent
+/**
+ * Get the current status of an intent from the Verifier contract
+ */
 async getIntentStatus(intentId) {
+  if (!this.nearContext?.account) {
+    throw new Error("Wallet not connected or account not available");
+  }
+  console.log(`Fetching status for intent: ${intentId}`);
+  // Note: This assumes the Verifier contract has a `get_intent_status` view method.
+  // Ensure this method is implemented in your Rust contract from Module 3.
   try {
-    const account = this.sessionAccount;
-
-    // Call view method on verifier contract
-    const status = await account.viewFunction({
-      contractId: this.verifierContractId,
-      methodName: 'get_intent_status',
-      args: { intent_id: intentId }
-    });
-
-    return { success: true, status };
+    const status = await this.nearContext.account.viewFunction(
+      this.verifierContractId,
+      "get_intent_status",
+      { intent_id: intentId }
+    );
+    console.log(`Intent ${intentId} status:`, status);
+    return status;
   } catch (error) {
-    console.error('Failed to get intent status:', error);
-    return { success: false, error: error.message };
+    console.error(`Error fetching status for intent ${intentId}:`, error);
+    throw new Error(`Could not fetch intent status: ${error.message}`);
   }
 }
 
-// Get execution results from a solver
-async getExecutionResults(intentId, solverAccountId) {
+/**
+ * Get the execution results for a completed intent (potentially from Solver)
+ */
+async getExecutionResults(intentId, solverId) {
+  if (!this.nearContext?.account) {
+    throw new Error("Wallet not connected or account not available");
+  }
+  if (!solverId) {
+    console.warn(`Cannot fetch execution results for ${intentId} without solverId.`);
+    return null; // Or handle based on where results are stored
+  }
+  console.log(`Fetching execution results for intent ${intentId} from solver ${solverId}`);
+  // Note: This assumes the Solver contract has a `get_execution_results` view method
+  // or similar method to retrieve outcome details.
+  // Ensure this method exists in your Solver contract from Module 3.
   try {
-    const account = this.sessionAccount;
-
-    // Call view method on solver contract
-    const results = await account.viewFunction({
-      contractId: solverAccountId,
-      methodName: 'get_execution_results',
-      args: { intent_id: intentId }
-    });
-
-    return { success: true, results };
+    // This assumes the solver stores results accessible via a view function
+    // The exact method name and return structure depend on your Solver contract implementation.
+    const results = await this.nearContext.account.viewFunction(
+      solverId, // Query the specific solver that executed
+      "get_execution_results", // Assumed method name
+      { intent_id: intentId }
+    );
+    console.log(`Execution results for ${intentId}:`, results);
+    return results;
   } catch (error) {
-    console.error('Failed to get execution results:', error);
-    return { success: false, error: error.message };
+    console.error(`Error fetching execution results for intent ${intentId} from ${solverId}:`, error);
+    // Don't throw an error here necessarily, maybe the results aren't stored this way
+    // or the solver hasn't completed / stored them yet.
+    return null;
   }
 }
 ```
@@ -162,10 +181,10 @@ export function IntentProvider({ children }) {
             intentId,
             solverAccountId
           );
-          if (resultsResponse.success) {
+          if (resultsResponse) {
             setExecutionResults((prev) => ({
               ...prev,
-              [intentId]: resultsResponse.results,
+              [intentId]: resultsResponse,
             }));
           }
         }, 2000); // Give the blockchain a moment to process
@@ -282,6 +301,8 @@ function ExecuteIntent({ intentId }) {
   } = useIntent();
 
   const [executing, setExecuting] = useState(false);
+  const [status, setStatus] = useState("Pending");
+  const [executionResult, setExecutionResult] = useState(null);
 
   // Get current status and selected solver
   const executionStatus = getExecutionStatus(intentId);
@@ -305,121 +326,15 @@ function ExecuteIntent({ intentId }) {
 
     setExecuting(true);
     try {
-      await executeIntent(intentId);
-    } finally {
-      setExecuting(false);
-    }
-  };
-
-  // Retry a failed execution
-  const handleRetry = async () => {
-    setExecuting(true);
-    try {
-      await retryExecution(intentId);
-    } finally {
-      setExecuting(false);
-    }
-  };
-
-  // Format the token amount for display
-  const formatAmount = (yoctoAmount, token) => {
-    if (!yoctoAmount) return "Unknown amount";
-    return `${utils.format.formatNearAmount(yoctoAmount, 4)} ${token}`;
-  };
-
-  return (
-    <div className="execute-intent">
-      <h3>Execute Intent</h3>
-
-      {!selectedSolverId ? (
-        <div className="no-solver-selected">
-          <p>Please select a solver above to execute this intent.</p>
-        </div>
-      ) : (
-        <>
-          <div className="selected-solver">
-            <p>
-              <strong>Selected Solver:</strong>{" "}
-              {selectedSolver?.details?.name || selectedSolverId}
-            </p>
-            {selectedSolver?.quote && (
-              <p>
-                <strong>Expected Output:</strong>{" "}
-                {formatAmount(
-                  selectedSolver.quote.output_amount,
-                  selectedSolver.quote.output_token
-                )}
-              </p>
-            )}
-          </div>
-
-          <div className="execution-status">
-            <p>
-              <strong>Status:</strong>
-              <span className={`status ${executionStatus}`}>
-                {executionStatus.charAt(0).toUpperCase() +
-                  executionStatus.slice(1)}
-              </span>
-            </p>
-          </div>
-
-          {executionError && (
-            <div className="execution-error">
-              <p>
-                <strong>Error:</strong> {executionError}
-              </p>
-              <button
-                onClick={handleRetry}
-                disabled={executing}
-                className="retry-button"
-              >
-                {executing ? "Retrying..." : "Retry Execution"}
-              </button>
-            </div>
-          )}
-
-          {executionResults && (
-            <div className="execution-results">
-              <h4>Execution Results</h4>
-              {executionResults.output_amount && (
-                <p>
-                  <strong>Received:</strong>{" "}
-                  {formatAmount(
-                    executionResults.output_amount,
-                    executionResults.output_token
-                  )}
-                </p>
-              )}
-              {executionResults.transaction_hash && (
-                <p>
-                  <strong>Transaction:</strong>
-                  <a
-                    href={`https://explorer.testnet.near.org/transactions/${executionResults.transaction_hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="explorer-link"
-                  >
-                    View in Explorer
-                  </a>
-                </p>
-              )}
-            </div>
-          )}
-
-          {canExecute && (
-            <button
-              onClick={handleExecute}
-              disabled={executing || !canExecute}
-              className="execute-button"
-            >
-              {executing ? "Executing..." : "Execute Intent"}
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-export default ExecuteIntent;
+      setStatus("Executing intent...");
+      const result = await executeIntent(intentId);
+      if (result.success) {
+        setStatus("Intent executed successfully!");
+        setExecutionResult(result.payload); // Assuming payload has results
+      } else {
+        setStatus(`Execution failed: ${result.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Execution error:", error);
+      let userMessage = `
 ```

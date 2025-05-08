@@ -334,6 +334,28 @@ In this section, we'll build components to:
 2. **Display solver details** including fees, execution strategies, and estimated outcomes
 3. **Enable users to select** their preferred solver for execution
 
+## Fetching Solver Information
+
+To present users with solver options, the frontend needs a way to discover available solvers and potentially get quotes or fee information from them for a specific intent. There are a few ways this can work:
+
+1.  **On-Chain Verifier Registry (Recommended for Decentralization)**: The Verifier contract maintains a list of registered/approved solvers. The frontend calls a `view` method on the Verifier (e.g., `get_registered_solvers()`) to get this list.
+2.  **Off-Chain Indexer/API (Used in Example Below)**: A separate backend service monitors the blockchain (or a specific Verifier) for verified intents and indexes available solvers and their capabilities. The frontend queries this API.
+3.  **Direct Solver Interaction (Less Common)**: The frontend could potentially query known solver contracts directly for their fees or capabilities, though this is less scalable.
+
+Our example below will use a conceptual **Off-Chain API** for simplicity, but an on-chain registry is often preferred for trust and decentralization.
+
+```javascript
+// src/services/solverService.js
+// This service simulates fetching solver info from an external API or indexer.
+// In a real app, replace with actual API calls or on-chain contract views.
+
+const SOLVER_API_BASE_URL = "https://api.example-solver-registry.com"; // Placeholder
+
+export const fetchSolversForIntent = async (intentId) => {
+  // ... existing code ...
+};
+```
+
 ## Connecting to the Verifier Contract for Solver Discovery
 
 First, let's enhance our IntentService to discover solvers for a specific intent:
@@ -553,12 +575,15 @@ function SolverList({ intentId }) {
   useEffect(() => {
     fetchSolversForIntent(intentId);
 
-    // Set up polling to refresh solver options
-    const interval = setInterval(() => {
-      fetchSolversForIntent(intentId);
-    }, 15000); // Poll every 15 seconds
+    // Simple polling - In production, consider WebSockets or more efficient methods
+    const interval = setInterval(async () => {
+      console.log("Polling for solver proposals...");
+      // Fetch proposals again
+      // ... (fetch logic)
+      // If proposals change or a good one appears, update state and maybe clear interval
+    }, 5000); // Poll every 5 seconds
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); // Cleanup on unmount
   }, [intentId]);
 
   const solvers = getSolversForIntent(intentId);

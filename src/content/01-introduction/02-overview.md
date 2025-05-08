@@ -77,33 +77,65 @@ sequenceDiagram
     end
 ```
 
+Figure 1: Typical Intent Workflow involving User, dApp, Verifier, Solver, and Smart Wallet.
+
+### Key Components in the Intent Lifecycle
+
+1. **User**: The end-user of the dApp. They want to accomplish a goal (e.g., swap tokens, purchase an NFT) without needing to understand the underlying blockchain complexities.
+2. **dApp (Decentralized Application)**: The application interface (e.g., a website) that the user interacts with. In our context, the dApp helps the user formulate their intent.
+3. **Intent (The User's Goal)**: Not an actor, but the central piece of information. It's a declarative statement of what the user wants to achieve (e.g., "Swap 10 USDC for NEAR within the next 5 minutes, with a maximum 0.5% price difference from market rate").
+
+- It's **outcome-driven**: Focuses on the "what," not the "how."
+- It can be **chain-agnostic**: The user's goal isn't necessarily tied to one specific blockchain; the system can figure out the best chain(s) to use. Think of wanting to book a flight (the outcome) and an intelligent travel agent (the system) finding the best airline and route, possibly involving multiple carriers, without you needing to specify each one.
+
+4. **Verifier (The Rule-Checker)**: A smart contract or service that checks if a user's stated intent is valid, secure, and meets predefined constraints. It acts as a crucial security layer, ensuring that any proposed solution genuinely matches the user's stated desires and protects them from malicious or incorrect fulfillment.
+5. **Solver (The Problem-Solver)**: An off-chain actor or service that finds the optimal way to fulfill a user's validated intent.
+
+- Solvers **compete** to provide the best execution path (e.g., best price for a swap, fastest execution, cheapest transaction). This is like getting quotes from multiple vendors before making a purchase, ensuring the user gets the best deal.
+- They can operate across multiple chains or protocols if the intent requires it.
+
+6. **Relayer (The Facilitator)**: An optional but often vital off-chain service that can submit transactions on behalf of the user.
+
+- Relayers are key to enabling **gasless transactions** (where the dApp or another service sponsors the network fees, so the user doesn't see them). In Web2, this is like a company paying for postage for a mail-in rebate—the user doesn't directly pay for sending the letter.
+- They can also help manage transaction submissions, retries, or other complexities, further abstracting the blockchain from the user. Think of them as a specialized middleware service that handles the nitty-gritty of blockchain communication.
+
+7. **Smart Wallet (The User's Agent)**: This isn't just a place to hold keys; it's an advanced, often contract-based, wallet that acts as the user's intelligent agent on the blockchain. It plays a huge role in improving UX by:
+
+- **Abstracting Signing**: Instead of users cryptographically approving every single action with potentially confusing technical details, smart wallets can enable more user-friendly approval mechanisms (e.g., approving a "session" for a limited time or for specific types of actions, much like logging into a website).
+- **Batching Transactions**: If a user's intent requires multiple on-chain steps, the smart wallet can bundle these into a single transaction, requiring only one approval from the user. This is like adding multiple items to an online shopping cart and paying once, instead of paying for each item separately.
+- **Managing Multi-Chain Logic**: For cross-chain intents, the smart wallet can handle the complexities of interacting with different networks.
+- **Enabling Gasless Experiences**: Works with Relayers so users don't have to manually pay gas fees.
+- **Session-Based Authentication**: Allows for smoother interactions over a period, contrasting with typical Web3 experiences that often require per-transaction authentication.
+
 ## Example Intent (The "What")
 
-Let's make the "Intent Object" more concrete. Here's what a simplified version might look like in JSON format.
-This example translates to: "The user wants to swap 100 units of the token 'USDC' for the token 'NEAR', and they are willing to accept a price that is no more than 0.5% different from the quoted market price (this is 'max slippage')."
+An intent is a structured piece of data, often in JSON format, that clearly defines the user's desired outcome. Here's a conceptual example:
 
 ```json
 {
-  "userAddress": "user.near",
-  "intent": {
-    "action": "swap",
-    "input": {
-      "token": "USDC.token.near",
-      "amount": "100000000" // Assuming 6 decimals for USDC
+  "user": "alice.near",
+  "intentType": "SWAP_TOKENS",
+  "parameters": {
+    "tokenIn": {
+      "contractId": "USDC.token.near",
+      "amount": "10000000"
     },
-    "output": {
-      "token": "NEAR"
-    }
+    "tokenOut": {
+      "contractId": "wrap.near"
+    },
+    "slippageTolerance": "0.005", // 0.5%
+    "deadline": "1704067200" // Unix timestamp for Jan 1, 2024, 00:00:00 UTC
   },
   "constraints": {
-    "maxSlippagePercent": "0.5", // e.g., 0.5%
-    "deadline": "1678886400" // Unix timestamp for expiry
-  },
-  "signature": "user_signature_over_intent_hash"
+    "maxGasFee": "100000000000000000000000", // 0.1 NEAR
+    "requiresSignature": true
+  }
 }
 ```
 
-_Note: The actual structure and fields can vary based on the specific implementation._
+In this example, the `amount` for `USDC.token.near` is `10000000`, which assumes the token has 6 decimal places (e.g., 10 USDC).
+
+Let's break down what this intent expresses:
 
 ## Benefits Revisited
 

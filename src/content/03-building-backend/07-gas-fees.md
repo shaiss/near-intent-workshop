@@ -249,19 +249,36 @@ The following diagram illustrates how smart wallet abstractions fit into our ove
 
 ```mermaid
 flowchart TD
-    A[User] -->|Interacts with| B(Smart Wallet)
-    B -->|Manages| C(Session Keys)
-    B -->|Signs| D(Intents)
-    B -->|Abstracts| E(Gas Fees)
-    subgraph "Security Layer"
-    C
-    E
+    A[User Interacts with dApp] --> B{Smart Wallet}
+    B --> |Manages Keys & Sessions| B
+    B --> |Abstracts Gas Fees (via Relayer)| C[Relayer Service]
+    C --> D[Pays Gas on NEAR Protocol]
+    B --> |Batches Transactions| E[Single User Approval]
+    E --> F[Multiple Actions on NEAR Protocol]
+    B --> |Facilitates Intent Signing| G[Signed Intent]
+    G --> H[Verifier Contract]
+
+    subgraph "User Experience Layer"
+        A
+        B
     end
-    subgraph "Interaction Layer"
-    D
+    subgraph "Infrastructure Layer"
+        C
+        D
+        F
+        H
     end
-    D -->|Submits to| F[Verifier Contract]
 ```
+
+Figure 1: Smart Wallet Architecture Abstracting Gas and Complexities.
+
+### Key Smart Wallet Features for Gas Abstraction:
+
+1. **Session Management**: Manages user sessions and keys to authenticate and authorize transactions.
+2. **Gas Fee Management**: Abstracts gas fee calculations and payments, allowing users to pay only for the actual computation and storage used.
+3. **Intent Batching**: Facilitates batching multiple intents into a single transaction, reducing gas costs and improving efficiency.
+4. **Intent Signing**: Allows users to sign intents securely and efficiently, reducing the complexity of interacting with the blockchain.
+5. **Relayer Service**: Handles gas fee payments on behalf of users, ensuring seamless transactions without the need for users to manage gas directly.
 
 ## Next Steps: Building the Smart Wallet Experience
 
@@ -275,3 +292,19 @@ Key topics we'll cover include:
 - Testing your smart wallet implementation
 
 These smart wallet abstractions will build directly on the contracts we've developed in this module, creating a complete intent-based system that's both powerful and user-friendly.
+
+// Potentially, if you were storing Fulfillment directly in contract state:
+// #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
+// #[serde(crate = "near_sdk::serde")]
+// #[serde(rename_all = "camelCase")]
+// pub struct Fulfillment { ... }
+
+// Enum to represent the status of an intent as it's processed #[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize, Debug)] #[serde(crate = "near_sdk::serde")] #[serde(rename_all = "camelCase")]
+pub enum IntentStatus {
+Pending, // Intent created, not yet verified
+Verified { by: AccountId }, // Verified by a specific Verifier contract
+Executing { with_solver: AccountId }, // A Solver has picked it up
+Completed { fulfillment: Fulfillment }, // Successfully executed, includes fulfillment details
+Failed { reason: String }, // Execution failed
+Expired, // Deadline passed before completion
+}

@@ -59,12 +59,13 @@ pub struct Solver {
 
 // Structure to represent the result of executing an intent
 // This is returned to the calling contract (Verifier) and/or stored for later retrieval
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize, Debug, Clone)]
 #[serde(crate = "near_sdk::serde")]
+#[serde(rename_all = "camelCase")]
 pub struct ExecutionResult {
     pub intent_id: String,       // Which intent was executed
     pub success: bool,           // Whether the execution was successful
-    pub output_amount: Balance,  // How many tokens were received/produced
+    pub output_amount: Option<u128>,  // How many tokens were received/produced
     pub fee_amount: Balance,     // How much fee was charged
 }
 
@@ -93,16 +94,17 @@ impl Solver {
         let fee_amount = (input_amount * self.execution_fee) / 10_000;
         let actual_input = input_amount - fee_amount;
 
-        // Simulate a swap with 3% slippage from expected rate
-        // Note: In production contracts, floating-point calculations like this should be avoided
-        // due to precision issues. Fixed-point libraries or integer-based calculations are preferred
-        // for financial operations to ensure deterministic behavior.
-        let expected_rate = 10; // 10 output tokens per input token
-        let actual_rate = 9.7;  // 3% worse than expected
+        // Simulate fetching an exchange rate (e.g., from an oracle or internal logic)
+        // WARNING: Using f64 for financial calculations is risky due to precision issues.
+        // This is for demonstration ONLY. Production contracts should use fixed-point math.
+        let actual_rate: f64 = 0.98; // Simulate getting 0.98 output_token per input_token
 
-        // Convert to floating point for the calculation, then back to u128
-        // This is a simplification - production code would use safer arithmetic
-        let output_amount = (actual_input as f64 * actual_rate) as u128;
+        // Calculate actual output based on the simulated rate
+        // MORE WARNINGS: Direct f64 multiplication and casting to u128 like this
+        // is highly problematic for production financial code. It loses precision and can panic.
+        // This simplified approach is PURELY for illustrating the Solver's role in determining an outcome.
+        // A production Solver would use robust fixed-point arithmetic throughout.
+        let calculated_output_amount = (actual_input as f64 * actual_rate) as u128;
 
         // Record the execution in our contract state
         self.executions.push(intent_id.clone());
@@ -113,7 +115,7 @@ impl Solver {
         ExecutionResult {
             intent_id,
             success: true,
-            output_amount,
+            output_amount: Some(calculated_output_amount),
             fee_amount,
         }
     }
@@ -268,10 +270,15 @@ cargo build --target wasm32-unknown-unknown --release
 Deploy to NEAR testnet, specifying the initialization function and arguments:
 
 ```bash
-near deploy --accountId solver.your-account.testnet \
-  --wasmFile ./target/wasm32-unknown-unknown/release/solver.wasm \
-  --initFunction new \
-  --initArgs '{"owner_id": "your-account.testnet", "execution_fee": 20}'
+# Build the Solver contract (assuming you are in the solver-contract directory)
+./build.sh
+
+# Deploy the Solver contract
+# Replace <YOUR_ACCOUNT_ID> with your actual NEAR testnet account ID
+near deploy --wasmFile res/solver_contract.wasm --accountId solver.<YOUR_ACCOUNT_ID>.testnet
+
+# Initialize the Solver contract (if it has an initialization method)
+# Example: near call solver.<YOUR_ACCOUNT_ID>.testnet new '{"owner_id": "<YOUR_ACCOUNT_ID>.testnet"}' --accountId <YOUR_ACCOUNT_ID>.testnet
 ```
 
 The `--initFunction new` parameter tells NEAR to call the `new` function immediately after deployment to initialize the contract state. The `--initArgs` parameter provides the JSON-formatted arguments for this initialization.
@@ -313,3 +320,9 @@ With both contracts deployed, a complete intent flow would involve:
 ## Next Steps
 
 You've now implemented both the Verifier and Solver contracts! These form the core backend infrastructure of your intent-based application. In the next section, [3.4 Cross-Contract Calls](mdc:./04-cross-contract-calls.md), we'll dive deeper into the asynchronous nature of contract interactions in NEAR and implement more sophisticated callback patterns to handle complex intent execution flows.
+
+```bash
+# Example: Call the solve_intent method
+# Replace <YOUR_ACCOUNT_ID> with your actual NEAR testnet account ID
+near call solver.<YOUR_ACCOUNT_ID>.testnet solve_intent '{ "intent_id": "intent-001", "user_account": "alice.near", "input_token": "usdc.near", "input_amount": "100000000", "output_token": "wnear.near", "min_output_amount": "9500000000000000000000000", "max_slippage": 0.01, "deadline": 0, "verifier_id": "verifier.<YOUR_ACCOUNT_ID>.testnet" }' --accountId <YOUR_ACCOUNT_ID>.testnet --gas 300000000000000
+```

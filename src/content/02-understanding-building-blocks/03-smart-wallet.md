@@ -82,48 +82,34 @@ While implementations vary, here's a conceptual structure:
 
 ```mermaid
 graph TD
-    UserIdentity[Main User Account/Identity (e.g., user.near)]
+    A[User Interacts with dApp] --> B(dApp Generates Intent);
+    B --> C{Smart Wallet (User's Agent)};
+    C -->|1. Session Key Auth| D[Action Authorized (No new signature needed)];
+    C -->|2. Requires Full Auth| E[User Prompted for Full Signature];
+    D --> F[Intent Sent to Verifier/Relayer];
+    E --> F;
+    F --> G(Solver Executes Intent);
+    G --> H[Result Returned to User via dApp];
 
-    subgraph SmartWalletContract [Smart Wallet Contract]
-        direction LR
-        SKM[Session Key Manager]
-        TR[Transaction Router]
-        AuthZ[Authorization Plugins]
-        IntentHandler[Intent Interaction Logic]
+    subgraph Smart Wallet Logic
+        C
+        I[Key Management (Full, Session, Temporary Keys)]
+        J[Spending Limits & Permissions]
+        K[Batching & Transaction Optimization]
+        L[Recovery Mechanisms]
+        M[Cross-Chain Coordination]
     end
 
-    UserIdentity --- SmartWalletContract
-
-    SKM --> SK1[Session Key 1 (Scope: dApp_A, Action: Swap, Time: 1hr)]
-    SKM --> SK2[Session Key 2 (Scope: dApp_B, Action: Transfer, Value: <10N)]
-
-    TR --> HandlerNEAR[NEAR Protocol Handler]
-    TR --> HandlerAurora[Aurora/EVM Handler]
-    TR --> HandlerCrossChain[Cross-Chain Bridge Handler]
-
-    AuthZ --> MultiSig[Multi-Sig Plugin]
-    AuthZ --> SocialRecovery[Social Recovery Plugin]
-    AuthZ --> SpendingLimits[Spending Limits Plugin]
-
-    IntentHandler --> VerifierInterface[Interface to Verifiers]
-    IntentHandler --> SolverSolutionExecutor[Solver Solution Executor]
-
-    RelayerService[(Relayer Service)] -- Gas Sponsorship & Tx Submission --> SmartWalletContract
+    C -.-> I;
+    C -.-> J;
+    C -.-> K;
+    C -.-> L;
+    C -.-> M;
 ```
 
-- **Session Key Manager**: Manages creation, permissions, and lifecycle of temporary keys.
-- **Transaction Router**: If the wallet supports multi-chain actions, this component (like a smart dispatcher) figures out which internal handler or external connection to use.
-- **Authorization Plugins**: Modules for multi-sig, social recovery, spending limits, etc.
-- **Intent Interaction Logic**: Code responsible for interacting with Verifiers and executing solutions from Solvers.
-- **Relayer Service (External)**: Facilitates gasless transactions.
+Figure 1: Smart Wallet's Role in Intent-Based Interactions and its Internal Logic.
 
-### Core Libraries
-
-A key library for dApp developers integrating various NEAR wallets (including those with smart wallet features) is **`@near-wallet-selector`**. It provides UI and logic for:
-
-- Wallet discovery and connection management.
-- Requesting transaction signing.
-- Managing session keys (for compatible wallets).
+Here's how smart wallets enhance the intent-driven experience:
 
 ## Benefits for User Experience (Revisited)
 

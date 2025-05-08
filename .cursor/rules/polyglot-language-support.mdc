@@ -1,0 +1,63 @@
+---
+description: Provides guidelines for handling multiple programming languages (JavaScript, TypeScript, Rust, Shell) within the workshop content, ensuring clarity, consistency, and appropriate language selection for different components.
+globs: 
+alwaysApply: false
+---
+# Polyglot Language Support Guidelines
+
+**Description:** Provides guidelines for handling multiple programming languages (JavaScript, TypeScript, Rust, Shell) within the workshop content, ensuring clarity, consistency, and appropriate language selection for different components.
+
+## Core Principle: Clarity and Consistency
+
+The primary goal is to provide a clear and consistent learning experience, even when multiple languages are involved. Users should ideally be able to follow a primary language track where appropriate, while understanding when and why other languages are necessary.
+
+## Language Domains
+
+Recognize that different parts of the intent architecture naturally lend themselves to specific languages:
+
+1.  **Smart Contracts (Verifier, Solver, Smart Wallet Contract):** Primarily **Rust** in this workshop, due to its performance, security features, and strong Wasm compilation support on NEAR.
+2.  **Frontend (UI, Client-Side Logic):** **JavaScript** or **TypeScript**. When providing frontend examples, strive for consistency in the chosen language (defaulting to JavaScript unless TypeScript-specific features are demonstrated or required).
+3.  **Scripts (Deployment, Testing, CLI Interaction):** **Shell/Bash** for command-line operations, **JavaScript/TypeScript** (using `near-api-js` or similar) for more complex scripting and integration tests.
+4.  **Data Formats:** **JSON** for data structures like intents when passed between systems or shown conceptually.
+
+## Presentation of Code Examples
+
+1.  **Clear Language Labeling:** ALWAYS use correct language identifiers in Markdown code blocks (e.g., ` ```rust`, ` ```javascript`, ` ```typescript`, ` ```bash`, ` ```json`). This is crucial for syntax highlighting and clarity. Refer to [markdown-formatting.mdc](mdc:src/content/cursor-rules/markdown-formatting.mdc).
+2.  **Contextual Relevance:** Present code examples in the language most relevant to the component being discussed.
+    -   When discussing smart contract logic -> Use Rust.
+    -   When discussing frontend UI or client-side wallet interactions -> Use JavaScript/TypeScript.
+    -   When discussing command-line operations -> Use Bash/Shell.
+3.  **Handling Language Choice (JS vs. TS):**
+    -   If the workshop implicitly targets JavaScript for the frontend, use JS examples consistently.
+    *   If the workshop aims to support both JS and TS, or explicitly uses TypeScript features:
+        *   **Preferred:** Provide examples primarily in TypeScript, as JS users can generally adapt TS examples more easily than vice-versa (by ignoring type annotations).
+        *   **Alternative (If Necessary):** If significant differences exist or clarity demands it, consider providing *both* JS and TS versions side-by-side or using a clear toggle mechanism (though Markdown doesn't natively support tabs). If showing both, keep them brief and focused on the differences. Clearly label each version.
+    -   Avoid mixing JS and TS syntax *within the same code block* inconsistently.
+4.  **Consistency within a Language:** Once a language is chosen for a specific domain (e.g., TypeScript for frontend service logic), maintain consistency in syntax, style, and conventions within that domain across different sections. Refer to [code-quality-reviewer.mdc](mdc:src/content/cursor-rules/code-quality-reviewer.mdc).
+
+## Explaining Language Transitions
+
+1.  **Explicitly State Transitions:** When shifting focus from one component (and its associated language) to another (e.g., moving from discussing the Rust Verifier contract to the JavaScript frontend interaction), clearly state this transition in the text.
+    -   Example: "Now that we've implemented the Verifier logic in Rust, let's switch to the frontend and see how to interact with it using JavaScript and `near-api-js`."
+2.  **Justify Language Choice:** Briefly explain *why* a specific language is being used for a particular component (e.g., "We use Rust for the smart contract because of its safety features and Wasm compilation... For the frontend, we'll use TypeScript to interact with the contract...").
+
+## Cross-Language Interaction Points
+
+When showing how components written in different languages interact (e.g., JS frontend calling a Rust contract):
+
+1.  **Focus on the Interface:** Emphasize the data structures (often JSON) and function signatures that form the interface between the components.
+2.  **Show Both Sides (If Necessary):** Sometimes it's helpful to show snippets from both sides of the interaction:
+    -   The JS code making the `functionCall`.
+    -   The corresponding Rust function signature being called.
+3.  **Data Serialization:** Highlight how data is serialized/deserialized between languages (e.g., JS objects become JSON strings passed as arguments, which are then deserialized into Rust structs using `serde`).
+
+## Review Checklist
+
+-   Are all code blocks clearly labeled with the correct language identifier?
+-   Is the language used appropriate for the component being discussed (Rust for contracts, JS/TS for frontend, Shell for CLI)?
+-   If both JS and TS examples are relevant, is the presentation clear and consistent?
+-   Are language transitions clearly signposted in the text?
+-   When showing cross-language interactions, is the interface (data structure, function signature) clear?
+-   Is the code style consistent within each language used?
+
+By following these guidelines, the workshop can effectively manage multiple languages, providing clarity for learners regardless of their primary language preference while accurately reflecting the polyglot nature of modern dApp development.

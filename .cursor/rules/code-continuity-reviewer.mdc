@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: Ensures that code across workshop modules builds logically, avoids overlap, and maintains consistency for a smooth learning progression.
+globs: 
 alwaysApply: false
 ---
 # Code Continuity Reviewer

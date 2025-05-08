@@ -184,22 +184,18 @@ Create a test configuration file:
 
 ```javascript
 // config.js
-module.exports = {
-  // Use testnet for integration testing
-  networkId: "testnet",
+const config = {
   nodeUrl: "https://rpc.testnet.near.org",
   walletUrl: "https://wallet.testnet.near.org",
-  helperUrl: "https://helper.testnet.near.org",
-  explorerUrl: "https://explorer.testnet.near.org",
-
-  // Configure your accounts here
-  verifierAccount: "verifier.your-account.testnet",
-  solverAccount: "solver.your-account.testnet",
-  testUserAccount: "your-account.testnet",
-
-  // You'll need to have this keyfile for the test user account
-  testUserKey: "./your-account.testnet.json",
+  keyPath: "~/.near-credentials/testnet/YOUR_TEST_ACCOUNT.json", // Path to your test account key file
+  networkId: "testnet",
+  // Replace these with your actual deployed contract account IDs on testnet
+  verifierContractId: "verifier.YOUR_ACCOUNT_ID.testnet",
+  solverContractId: "solver.YOUR_ACCOUNT_ID.testnet",
+  testUserAccountId: "YOUR_TEST_ACCOUNT.testnet", // The account ID corresponding to the keyPath
 };
+
+module.exports = config;
 ```
 
 ### Creating a NEAR Connection Helper
@@ -208,17 +204,25 @@ module.exports = {
 // near-connection.js
 const nearAPI = require("near-api-js");
 const fs = require("fs");
+const path = require("path");
 const config = require("./config");
 
+// Initialize connection to NEAR Testnet
 async function initNEAR() {
-  // Configure connection to NEAR
-  const keyFile = JSON.parse(fs.readFileSync(config.testUserKey));
+  // The key file (e.g., YOUR_TEST_ACCOUNT.testnet.json) is typically generated when you run `near login`
+  // and is stored in your `~/.near-credentials/testnet/` directory.
+  // For testing, you might copy the relevant key file into your project or provide the correct path.
+  // Ensure the `keyPath` in `config.js` points to a valid key file for `YOUR_TEST_ACCOUNT.testnet`.
+  const keyFilePath = path.resolve(
+    config.keyPath.replace("~", process.env.HOME)
+  );
+  const keyFile = JSON.parse(fs.readFileSync(keyFilePath));
   const keyStore = new nearAPI.keyStores.InMemoryKeyStore();
 
   // Add the key to the keystore
   await keyStore.setKey(
     config.networkId,
-    config.testUserAccount,
+    config.testUserAccountId,
     nearAPI.utils.KeyPair.fromString(keyFile.private_key)
   );
 
@@ -233,18 +237,18 @@ async function initNEAR() {
   });
 
   // Get the account object
-  const account = await near.account(config.testUserAccount);
+  const account = await near.account(config.testUserAccountId);
 
   // Return objects needed for testing
   return {
     near,
     account,
     // Create contract interfaces
-    verifierContract: new nearAPI.Contract(account, config.verifierAccount, {
+    verifierContract: new nearAPI.Contract(account, config.verifierContractId, {
       viewMethods: ["is_intent_verified"],
       changeMethods: ["verify_intent", "verify_and_solve"],
     }),
-    solverContract: new nearAPI.Contract(account, config.solverAccount, {
+    solverContract: new nearAPI.Contract(account, config.solverContractId, {
       viewMethods: ["has_executed"],
       changeMethods: ["solve_intent"],
     }),
@@ -327,8 +331,12 @@ describe("Intent System Integration Tests", () => {
     );
 
     // Check if solver executed the intent
-    // Note: This might need a delay since cross-contract calls are asynchronous
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    console.log("Waiting for cross-contract call to complete...");
+    // Waiting for a fixed duration can lead to flaky (if too short) or slow (if too long) tests.
+    // A more robust approach for production tests would be to poll a view method
+    // on the Solver contract (e.g., `solverContract.has_executed({ intent_id: testIntent.intent_id })`)
+    // until the expected state is reached or a timeout occurs.
+    await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds
 
     const hasExecuted = await solverContract.has_executed({
       intent_id: intentId,
@@ -359,7 +367,7 @@ async function measureGasUsage(txHash) {
   const provider = new nearAPI.providers.JsonRpcProvider({
     url: config.nodeUrl,
   });
-  const txStatus = await provider.txStatus(txHash, config.testUserAccount);
+  const txStatus = await provider.txStatus(txHash, config.testUserAccountId);
 
   // Calculate total gas burned
   const totalGasBurned = txStatus.receipts_outcome.reduce(
@@ -382,31 +390,45 @@ async function testSolverCompetition(verifierContract, solvers, intent) {
 
   // Submit the same intent to multiple solvers
   for (const solver of solvers) {
-    const txResult = await verifierContract.verify_and_solve(
-      {
-        intent: intent,
-        solver_account: solver.contractId,
-      },
-      { gas: "300000000000000" }
-    );
-
-    // Collect results
-    const executionResult = await solver.get_execution_result({
-      intent_id: intent.id,
-    });
-    results.push({
-      solver: solver.contractId,
-      outputAmount: executionResult.output_amount,
-      feeAmount: executionResult.fee_amount,
-      txHash: txResult.transaction.hash,
-    });
+    const proposal = await solver.propose_solution({ intent });
+    proposals.push({ solver_id: solver.contractId, proposal });
   }
 
-  // Find the best result (lowest fee or highest output)
-  results.sort((a, b) => b.outputAmount - a.outputAmount);
-  console.log("Best solver execution:", results[0]);
+  // 5. Select the best proposal (e.g., best output_amount for a swap)
+  const bestProposal = proposals.sort(
+    (a, b) => b.proposal.output_amount - a.proposal.output_amount
+  )[0];
 
-  return results;
+  // 6. Tell the Verifier to execute with the best solver
+  // This might involve the Verifier calling the chosen Solver to execute, or the user/test directly.
+  // The exact mechanism depends on the Verifier-Solver interaction design.
+  // The actual Solver contract in `03-solver-contract.md` returns ExecutionResult directly from `solve_intent`.
+  // For a cross-contract scenario, this result would typically come via a callback,
+  // or a view method would be needed to query the state set by that callback.
+  // const result = await bestProposal.solver.get_execution_result({ intent_id: intent.intent_id });
+  // For this conceptual test, we might check a state variable on the Verifier or Solver
+  // that is updated upon successful completion via a callback.
+  const executionTx = await verifierContract.execute_with_solver({
+    intent_id: intent.intent_id,
+    solver_id: bestProposal.solver_id,
+    solution_details: bestProposal.proposal, // Or just the necessary parts
+  });
+
+  // 7. Verify the final outcome on-chain
+  // Note: The `get_execution_result` method is hypothetical for this example.
+  // For this conceptual test, we might check a state variable on the Verifier or Solver
+  // that is updated upon successful completion via a callback.
+  const finalStatus = await verifierContract.get_intent_status({
+    intent_id: intent.intent_id,
+  });
+
+  console.log(
+    "Best proposal from:",
+    bestProposal.solver_id,
+    "Result:",
+    finalStatus
+  );
+  expect(finalStatus.status).toContain("Completed"); // Or similar success indicator
 }
 ```
 

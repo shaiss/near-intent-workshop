@@ -419,81 +419,31 @@ export function SolverSimulator() {
 
 For comprehensive frontend testing, simulate varied network conditions:
 
-```javascript
-// src/services/networkSimulator.js
-export class NetworkSimulator {
-  constructor() {
-    this.latency = 200; // ms
-    this.packetLoss = 0; // percentage (0-100)
-    this.enabled = false;
-
-    // Save the original fetch
-    this.originalFetch = window.fetch;
-  }
-
-  enable() {
-    if (this.enabled) return;
-
-    this.enabled = true;
-    window.fetch = this.createSimulatedFetch();
-    console.log("Network simulation enabled");
-  }
-
-  disable() {
-    if (!this.enabled) return;
-
-    this.enabled = false;
-    window.fetch = this.originalFetch;
-    console.log("Network simulation disabled");
-  }
-
-  setLatency(latencyMs) {
-    this.latency = latencyMs;
-  }
-
-  setPacketLoss(lossPercentage) {
-    this.packetLoss = Math.min(100, Math.max(0, lossPercentage));
-  }
-
-  createSimulatedFetch() {
-    const simulator = this;
-    const originalFetch = this.originalFetch;
-
-    return function simulatedFetch(url, options) {
-      // Simulate packet loss
-      if (Math.random() < simulator.packetLoss / 100) {
-        console.log(`[Network Simulator] Simulating packet loss for: ${url}`);
-        return Promise.reject(
-          new Error("Network request failed (simulated packet loss)")
-        );
-      }
-
-      // Simulate latency
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          originalFetch(url, options).then(resolve).catch(reject);
-        }, simulator.latency);
-      });
-    };
-  }
+// WARNING: Modifying global `fetch` is a powerful technique for testing but can have unintended
+// side effects if not properly managed. This simulation ONLY affects HTTP requests made via `fetch`
+// within the current JS environment. It DOES NOT accurately simulate real-world blockchain network
+// conditions like consensus delays, RPC node availability, or gas limitations. Use this strictly
+// for development and testing purposes.
+const originalFetch = window.fetch;
+window.fetch = async (resource, options) => {
+// Simulate packet loss
+if (Math.random() < networkSimulator.packetLoss / 100) {
+console.log(`[Network Simulator] Simulating packet loss for: ${resource}`);
+return Promise.reject(
+new Error("Network request failed (simulated packet loss)")
+);
 }
+
+// Simulate latency
+return new Promise((resolve, reject) => {
+setTimeout(() => {
+originalFetch(resource, options).then(resolve).catch(reject);
+}, networkSimulator.latency);
+});
+};
 
 // Create singleton instance
 export const networkSimulator = new NetworkSimulator();
-```
-
-> ⚠️ **Important**: The network simulator overrides all `fetch` calls in your application. Use it carefully and only during development/testing.
-
-### Testing Scenarios with the Client-Side Simulator
-
-The client-side simulator lets you test various scenarios:
-
-1. **Happy path testing** - Intents are processed successfully
-2. **Error handling** - Test how your UI handles solver failures
-3. **Network resilience** - Validate behavior under poor network conditions
-4. **User experience** - Ensure loading states and notifications work properly
-
-This approach provides a controlled environment to validate your frontend's robustness before connecting to real on-chain contracts.
 
 ## Part 2: Backend Solver Simulation for Testnet Interaction
 
@@ -529,9 +479,25 @@ const config = {
 };
 
 // Initialize NEAR connection
-async function initNear() {
+async function initializeNear() {
+  const networkId = process.env.NEAR_NETWORK_ID || "testnet";
+  // Use environment variable for key path or a platform-agnostic default
+  const keyPath =
+    process.env.NEAR_KEY_PATH ||
+    require("os").homedir() +
+      `/.near-credentials/${networkId}/<YOUR_SOLVER_ACCOUNT_ID>.testnet.json`;
+
+  if (!fs.existsSync(keyPath)) {
+    console.error(
+      `ERROR: Key file not found at ${keyPath}. Set NEAR_KEY_PATH environment variable or ensure file exists.`
+    );
+    process.exit(1);
+  }
+
+  const keyFile = JSON.parse(fs.readFileSync(keyPath));
+
   const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(
-    path.dirname(config.keyPath)
+    path.dirname(keyPath)
   );
 
   const near = await nearAPI.connect({
@@ -541,7 +507,7 @@ async function initNear() {
   });
 
   // Get account object
-  const accountId = path.basename(config.keyPath).replace(".json", "");
+  const accountId = path.basename(keyPath).replace(".json", "");
   return await near.account(accountId);
 }
 
@@ -604,7 +570,7 @@ async function processIntent(account, intent) {
 // Main loop to poll for intents and process them
 async function main() {
   console.log("Initializing NEAR connection...");
-  const account = await initNear();
+  const account = await initializeNear();
   console.log(`Connected as ${account.accountId}`);
 
   console.log(`Starting solver simulation for ${config.solverAccountId}`);
@@ -796,18 +762,27 @@ async function startLake() {
   context.on('streamer.block', async (block) => {
     for (const shard of block.chunks) {
       for (const receipt of shard.receipts) {
-        // Look for calls to verify_intent on the verifier contract
-        if (
-          receipt.receiver_id === 'verifier.yourname.testnet' &&
-          receipt.actions.some(action =>
-            action.FunctionCall &&
-            action.FunctionCall.method_name === 'verify_intent'
-          )
-        ) {
-          // Process the receipt to extract the intent
-          const intent = /* extract intent from receipt */;
-          console.log('Found new intent:', intent);
-          // Process the intent with your solver...
+        for (const receipt of shard.receiptExecutionOutcomes) {
+          for (const log of receipt.executionOutcome.outcome.logs) {
+            if (log.startsWith("EVENT_JSON:")) {
+              try {
+                const eventData = JSON.parse(log.substring("EVENT_JSON:".length));
+                if (eventData.standard === "near_intent" && eventData.event === "intent_verified") {
+                  // Found a verified intent event
+                  // Note: Extracting the full intent object from logs or transaction actions
+                  // can be complex. It depends on how the intent was originally submitted
+                  // (e.g., as base64 encoded arguments). This example assumes the relevant
+                  // intent details are available within the log event itself for simplicity.
+                  // Real-world indexers often need more sophisticated parsing of transaction actions.
+                  const intent = eventData.data;
+                  console.log(`Found verified intent: ${intent.id}`);
+                  await handleVerifiedIntent(intent);
+                }
+              } catch (e) {
+                console.warn("Error parsing log:", e);
+              }
+            }
+          }
         }
       }
     }

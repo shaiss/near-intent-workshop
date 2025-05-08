@@ -80,33 +80,49 @@ export function WalletProvider({ children }) {
   const [selector, setSelector] = useState(null);
   const [modal, setModal] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState("Initializing...");
 
   useEffect(() => {
     const init = async () => {
-      const selector = await setupWalletSelector({
-        network: "testnet",
-        modules: [setupNearWallet(), setupMyNearWallet(), setupSender()],
-      });
+      try {
+        setStatus("Connecting...");
+        const selector = await setupWalletSelector({
+          network: "testnet",
+          modules: [setupNearWallet(), setupMyNearWallet(), setupSender()],
+        });
 
-      const modal = setupModal(selector, {
-        contractId: process.env.CONTRACT_ID || "example.testnet",
-      });
+        const modal = setupModal(selector, {
+          contractId: process.env.CONTRACT_ID || "example.testnet",
+        });
 
-      const state = selector.store.getState();
-      setAccounts(state.accounts);
-
-      // Listen for account changes
-      const subscription = selector.store.observable.subscribe((state) => {
+        const state = selector.store.getState();
         setAccounts(state.accounts);
-      });
 
-      setSelector(selector);
-      setModal(modal);
+        // Listen for account changes
+        const subscription = selector.store.observable.subscribe((state) => {
+          setAccounts(state.accounts);
+        });
 
-      return () => subscription.unsubscribe();
+        setSelector(selector);
+        setModal(modal);
+
+        if (state.accounts.length > 0) {
+          setAccounts(state.accounts);
+        }
+      } catch (err) {
+        console.error("NEAR initialization failed:", err);
+        setError(
+          `Failed to initialize NEAR connection: ${
+            err.message || "Check console for details"
+          }.`
+        );
+      } finally {
+        setStatus("Initialized");
+      }
     };
 
-    init().catch((err) => console.error(err));
+    init();
   }, []);
 
   const connected = accounts.length > 0;
@@ -144,6 +160,38 @@ export function WalletProvider({ children }) {
     };
   };
 
+  const handleConnect = async () => {
+    try {
+      setError(null);
+      setStatus("Connecting...");
+      await connect();
+      // signIn redirects, so status updates might not show unless handled after redirect
+    } catch (err) {
+      console.error("Connection failed:", err);
+      setStatus("Failed");
+      setError(
+        `Connection failed: ${
+          err.message || "Unknown error"
+        }. Please try again.`
+      );
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      setStatus("Signing out...");
+      await disconnect();
+      // signOut clears local storage and resets state
+      setStatus("Signed out");
+    } catch (err) {
+      console.error("Sign out failed:", err);
+      setStatus("Failed");
+      setError(
+        `Sign out failed: ${err.message || "Unknown error"}. Please try again.`
+      );
+    }
+  };
+
   return (
     <WalletContext.Provider
       value={{
@@ -155,6 +203,10 @@ export function WalletProvider({ children }) {
         connect,
         disconnect,
         signIntent,
+        handleConnect,
+        handleDisconnect,
+        error,
+        status,
       }}
     >
       {children}
@@ -405,8 +457,12 @@ export function WalletProvider({ children }) {
         "0.25" // 0.25 NEAR allowance for gas fees
       );
 
-      // Prompt user for a password to encrypt the session key
-      const password = prompt("Create a password to secure your session:");
+      // WARNING: Using prompt() for passwords is HIGHLY INSECURE and bad UX!
+      // It's used here ONLY for simplified demonstration.
+      // Real applications MUST use a proper password input field within a secure UI modal.
+      const password = prompt(
+        "Enter a password to encrypt your session key for this browser:"
+      );
       if (!password) {
         setLoading(false);
         return;
@@ -540,188 +596,70 @@ Let's visualize the complete session key authorization flow:
 ```mermaid
 sequenceDiagram
     participant User
-    participant DApp as Our dApp
-    participant Wallet as NEAR Wallet
-    participant Blockchain as NEAR Blockchain
+    participant ReactApp
+    participant NEARWallet as NEAR Wallet (Browser Extension/Web)
+    participant NEARBlockchain
 
-    User->>DApp: Click "Connect Wallet"
-    DApp->>Wallet: Redirect for authorization
-    User->>Wallet: Login & approve
-    Wallet->>DApp: Redirect back with credentials
-
-    DApp->>DApp: Generate session key pair
-    DApp->>User: Prompt for session password
-    User->>DApp: Enter password
-
-    DApp->>Wallet: Request to add function call access key
-    User->>Wallet: Approve key addition
-    Wallet->>Blockchain: Add key to user account
-    Blockchain-->>Wallet: Confirm key added
-    Wallet-->>DApp: Return success
-
-    DApp->>DApp: Encrypt & store session key
-    DApp->>User: Show connection success
-
-    Note over User,DApp: Future actions use session key without wallet prompts
+    User->>ReactApp: Clicks "Connect Wallet"
+    ReactApp->>NEARWallet: Initiate connection (requestSignIn)
+    NEARWallet->>User: Prompt for account selection & approval
+    User->>NEARWallet: Selects account, Approves connection
+    NEARWallet->>ReactApp: Redirect back with accountId & keys
+    ReactApp->>ReactApp: Store accountId, Initialize NEAR connection
+    ReactApp->>NEARBlockchain: (Optional) Verify account state
+    ReactApp->>User: Display connected state (e.g., show Account ID)
 ```
 
-## Implementing the Dashboard Page
+Figure 1: Wallet Connection Flow using `near-api-js` WalletConnection.
 
-Let's create a simple dashboard page that uses our wallet connection:
+## Implementing Wallet Connection with near-api-js
 
-```jsx
-// src/pages/Dashboard.jsx
-import React from "react";
-import ConnectButton from "../components/WalletConnection/ConnectButton";
-import { useWallet } from "../context/WalletContext";
+This section demonstrates how to connect to a NEAR wallet using the core `near-api-js` library, specifically the `WalletConnection` object. This provides a foundational understanding before we introduce higher-level libraries like Wallet Selector in the next section.
 
-function Dashboard() {
-  const { isConnected, accountId, sessionKey } = useWallet();
+First, let's create a configuration utility (you might have created a similar one in the setup section):
 
-  return (
-    <div className="dashboard">
-      <header className="app-header">
-        <h1>NEAR Intent Architecture</h1>
-        <ConnectButton />
-      </header>
+```javascript
+// src/config/nearConfig.js
+// ... (nearConfig definition as shown previously, including BrowserLocalStorageKeyStore warning)
+```
 
-      <main className="main-content">
-        {!isConnected ? (
-          <div className="welcome-card">
-            <h2>Welcome to NEAR Intent Architecture</h2>
-            <p>Connect your wallet to get started with intents!</p>
-          </div>
-        ) : (
-          <div className="account-info-card">
-            <h2>Account Connected</h2>
-            <p>
-              <strong>Account ID:</strong> {accountId}
-            </p>
-            <p>
-              <strong>Session Expires:</strong>{" "}
-              {sessionKey
-                ? new Date(sessionKey.expires).toLocaleString()
-                : "Unknown"}
-            </p>
-            <p className="session-key-info">
-              You're using a session key that allows you to submit intents
-              without approving each transaction in your wallet!
-            </p>
+Next, a service to handle the connection logic:
 
-            {/* We'll add more components here in the next sections */}
-          </div>
-        )}
-      </main>
-    </div>
-  );
+```javascript
+// src/services/nearService.js
+import { connect, WalletConnection } from "near-api-js";
+import { nearConfig } from "../config/nearConfig";
+
+class NearService {
+  // ... (constructor, init, signIn, signOut, getAccountId, isSignedIn methods using WalletConnection)
 }
 
-export default Dashboard;
+// Singleton instance
+let nearServiceInstance = null;
+export const initNearService = async () => {
+  if (!nearServiceInstance) {
+    nearServiceInstance = new NearService();
+    await nearServiceInstance.init();
+  }
+  return nearServiceInstance;
+};
 ```
 
-## Session Key Manager UI
-
-For a complete experience, let's also create a UI to manage session keys:
+Now, a React Context (`WalletContext`) to manage the wallet state throughout the application:
 
 ```jsx
-// src/components/WalletConnection/SessionKeyManager.jsx
-import React, { useState } from "react";
-import { useWallet } from "../../context/WalletContext";
-
-function SessionKeyManagerUI() {
-  const { sessionKey, accountId, disconnectWallet } = useWallet();
-  const [showDetails, setShowDetails] = useState(false);
-
-  if (!sessionKey) return null;
-
-  // Format expiry time
-  const expiryDate = new Date(sessionKey.expires);
-  const now = new Date();
-  const hoursRemaining = Math.round((expiryDate - now) / (60 * 60 * 1000));
-
-  return (
-    <div className="session-key-manager">
-      <h3>Active Session</h3>
-
-      <div className="session-info">
-        <p>
-          <strong>Account:</strong> {accountId}
-        </p>
-        <p>
-          <strong>Expires:</strong> {expiryDate.toLocaleString()} (
-          {hoursRemaining} hours remaining)
-        </p>
-        <p>
-          <strong>Authorized Contract:</strong> {sessionKey.contractId}
-        </p>
-
-        <button
-          className="details-toggle"
-          onClick={() => setShowDetails(!showDetails)}
-        >
-          {showDetails ? "Hide Details" : "Show Details"}
-        </button>
-
-        {showDetails && (
-          <div className="key-details">
-            <p>
-              <strong>Public Key:</strong> {sessionKey.publicKey}
-            </p>
-            <p>
-              <strong>Created:</strong>{" "}
-              {new Date(sessionKey.created).toLocaleString()}
-            </p>
-            <p>
-              <strong>Authorized Methods:</strong>{" "}
-              {sessionKey.methodNames.join(", ")}
-            </p>
-            <p>
-              <strong>Authorized Gas Allowance:</strong>{" "}
-              {sessionKey.allowance / 10 ** 24} NEAR
-            </p>
-          </div>
-        )}
-
-        <div className="key-actions">
-          <button className="revoke-button danger" onClick={disconnectWallet}>
-            Revoke Session Key
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default SessionKeyManagerUI;
+// src/contexts/WalletContext.jsx
+// ... (WalletProvider using NearService, managing accountId, isConnected, etc.)
 ```
 
-## Security Considerations for Session Keys
+Finally, a UI component (`ConnectButton`) to trigger connection/disconnection:
 
-When implementing session keys in your dApp, consider these security best practices:
+```jsx
+// src/components/ConnectButton.jsx
+// ... (ConnectButton component using useWallet hook to call connect/disconnect)
+```
 
-1. **Never store private keys in plain text** – Always encrypt with a user-provided password
-2. **Set appropriate permissions** – Only request the minimal permissions needed
-3. **Use reasonable gas allowances** – Limit the maximum amount of NEAR the key can spend
-4. **Implement key expiration** – Automatically invalidate keys after a certain period
-5. **Provide key management UI** – Allow users to view and revoke active session keys
-6. **Use HTTPS** – Protect against network eavesdropping
-7. **Implement proper CSP headers** – Prevent XSS attacks that could steal keys
-
-## Direct Connection to Module 4
-
-Notice how our implementation builds directly on the concepts we explored in Module 4:
-
-1. **SessionKeyManager class** – We're reusing the key management class we built in Module 4.2
-2. **Key storage and encryption** – We're applying the same security patterns from Module 4.2
-3. **Key authorization flow** – We're implementing the complete session key lifecycle discussed in Module 4.1
-4. **Access key permissions** – We're using NEAR's Function Call Access Keys as explored in Module 4.1
-
-By following these patterns, we create a wallet connection flow that provides:
-
-1. **One-time authorization** – Users only need to approve the session key once
-2. **Seamless transactions** – Future intent submissions won't require additional approvals
-3. **Secure key management** – Private keys are protected by user-provided passwords
-4. **Limited permissions** – Session keys can only call the specific methods we authorize
+This setup provides a basic wallet connection using `near-api-js`. While functional, it requires more manual setup compared to Wallet Selector. In the next section, [5.3 Wallet Selector Integration](mdc:./03-wallet-selector.md), we'll see how Wallet Selector simplifies supporting multiple wallets and streamlines the connection process.
 
 ## Next Steps
 

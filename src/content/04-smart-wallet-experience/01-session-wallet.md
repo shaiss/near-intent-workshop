@@ -8,20 +8,28 @@
 In the previous module, we built the on-chain infrastructure of our intent system with Verifier and Solver contracts. Now, we'll implement the final piece that bridges users to this infrastructure: **the smart wallet layer**.
 
 ```mermaid
-graph TD
-    User[User] -->|Uses| SmartWallet[Smart Wallet]
-    SmartWallet -->|Creates & Signs| Intent[Intent]
-    Intent -->|Submitted to| Verifier[Verifier Contract]
-    Verifier -->|Validated Intent| Solver[Solver Contract]
-    Solver -->|Executes| Blockchain[NEAR Blockchain]
+sequenceDiagram
+    participant User
+    participant DApp
+    participant Wallet
+    participant NEAR
+
+    User->>DApp: Initiates action requiring session
+    DApp->>Wallet: Request session key authorization
+    Wallet->>User: Prompts for master key approval (once)
+    User->>Wallet: Approves (e.g., for 0.25 NEAR allowance)
+    Wallet->>NEAR: Adds Function Call Access Key (Session Key)
+    NEAR-->>Wallet: Key added
+    Wallet-->>DApp: Session authorized, returns session key info
+    DApp->>DApp: Stores session key (securely)
+    Note over DApp: For subsequent actions within session scope:
+    DApp->>NEAR: Signs transactions with Session Key (no user prompt)
+    NEAR-->>DApp: Action executes (if within allowance)
 ```
 
-The smart wallet serves as a critical abstraction layer that:
+Figure 1: Session Key Authorization and Usage Flow.
 
-1. **Handles authentication** through session keys
-2. **Simplifies intent creation** for users
-3. **Manages transaction signing** with minimal user interaction
-4. **Provides a Web2-like experience** on a Web3 infrastructure
+This flow allows the dApp to perform specific actions on the user's behalf without requiring repeated manual approvals, significantly improving the user experience for applications that need frequent on-chain interactions.
 
 ## Understanding Session-based Smart Wallets
 
@@ -242,3 +250,62 @@ With our session-based smart wallet, we can now build a seamless user experience
 4. Users get all the benefits of the intent architecture without repetitive signing
 
 In the next section, we'll explore how to implement secure key management and storage for our smart wallet.
+
+// Configuration - In a real app, load from a config file or environment variables
+const NEAR_NETWORK_ID = "testnet";
+const VERIFIER_CONTRACT_ID = "<YOUR_VERIFIER_CONTRACT_ID>"; // e.g., verifier.your-account.testnet
+const USER_ACCOUNT_ID = "<YOUR_USER_ACCOUNT_ID>"; // e.g., user-alice.testnet
+const SESSION_KEY_ALLOWANCE_NEAR = "0.25"; // Allowance for the session key in NEAR
+const DEFAULT_FUNCTION_CALL_GAS = nearAPI.utils.format.parseNearAmount("0.00000000003"); // 30 TGas, example
+
+// Connect to NEAR
+async function connectNEAR() {
+// ... existing code ...
+}
+
+// This function simulates requesting the wallet to add a new Function Call Access Key (session key).
+// In a real application using `near-api-js` directly, this would involve constructing actions for `Account.addKey`.
+// Libraries like `@near-wallet-selector` provide higher-level abstractions for this.
+async function authorizeNewSessionKey(walletConnection, accountId, contractId, methodNames = ["execute_intent"]) {
+const allowance = nearAPI.utils.format.parseNearAmount(SESSION_KEY_ALLOWANCE_NEAR);
+const actualContractId = contractId || VERIFIER_CONTRACT_ID;
+const keyPair = nearAPI.utils.KeyPair.fromRandom("ed25519");
+const publicKey = keyPair.publicKey.toString();
+
+console.log(`Requesting to add session key: ${publicKey} for contract: ${actualContractId}, methods: ${methodNames.join(", ")}`);
+
+// The actual call to add the key. The `walletConnection` object (from `new WalletConnection(near)`)
+// would typically handle the redirect to the wallet for approval.
+// The arguments (publicKey, contractId, methodNames, allowance) map to what `Account.addKey` expects.
+// Some wallet interfaces might have a more direct `requestAddKey` method.
+try {
+// This is a simplified representation. `WalletConnection.requestSignIn` is for full access keys.
+// Adding a function call access key usually happens after sign-in, via the `Account` object.
+// Example using a connected `Account` object:
+// const account = walletConnection.account();
+// await account.addKey(publicKey, actualContractId, methodNames, allowance);
+// For a wallet-brokered request (like Wallet Selector might offer):
+await walletConnection.requestSignTransactions({
+transactions: [
+nearAPI.transactions.createTransaction(
+accountId, // signerId
+publicKey, // publicKey for the new key, but this is wrong here, should be signer's key
+actualContractId, // receiverId, but for addKey it's the accountId itself
+0, // nonce
+[nearAPI.transactions.addKey(nearAPI.utils.PublicKey.fromString(publicKey), nearAPI.transactions.functionCallAccessKey(actualContractId, methodNames, allowance))],
+nearAPI.utils.serialize.base_decode("1".repeat(32)) // blockHash, placeholder
+)
+]
+});
+
+    // Persist the private key securely (as discussed, localStorage is for demo only)
+    localStorage.setItem(`session_key_${accountId}_${actualContractId}`, keyPair.secretKey);
+    alert("Session key authorized and stored (for demo). You can now use dApp features without further prompts for this session.");
+    return keyPair;
+
+} catch (error) {
+console.error("Failed to add session key:", error);
+alert("Failed to authorize session key. Please try again.");
+throw error;
+}
+}

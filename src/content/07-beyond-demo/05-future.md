@@ -390,3 +390,157 @@ As we've explored throughout this workshop, intent-centric architecture represen
 ## Next Steps
 
 In the [final module (Module 8: Resources)](mdc:../08-resources/01-resources.md), we'll provide you with a collection of valuable references, documentation, and community links to support your continued learning and development in this space. These resources will help you stay current with the rapidly evolving intent-centric ecosystem and connect with others building similar systems.
+
+### 1. Zero-Knowledge (ZK) Proofs for Privacy-Preserving Intents
+
+**Concept**: Users could submit intents where sensitive details (e.g., exact balances, specific counterparties) are hidden using ZK proofs. Verifiers could validate the intent meets rules without seeing the raw data.
+
+```rust
+// Highly Conceptual Rust Example - Requires ZK libraries and infrastructure
+
+use zero_knowledge_proofs::{Proof, VerificationKey};
+
+// ZK-proven intent might hide the actual amount
+pub struct ZkIntent {
+    user_id: AccountId,
+    action: String, // e.g., "private_transfer"
+    public_inputs: PublicData, // Data visible to verifier
+    proof: Proof, // ZK proof showing constraints met on private data
+}
+
+#[near_bindgen]
+impl ZkVerifier {
+    // Assumes verification_key is loaded during initialization
+    pub fn verify_zk_intent(&self, intent: ZkIntent) -> bool {
+        // 1. Verify the ZK proof against public inputs and verification key
+        // This confirms hidden constraints are met without revealing private data
+        let is_proof_valid = self.zk_library.verify(
+            &self.verification_key,
+            &intent.public_inputs,
+            &intent.proof
+        );
+
+        assert!(is_proof_valid, "Invalid ZK proof");
+
+        // 2. Perform other standard checks on public data
+        // ...
+
+        true
+    }
+}
+```
+
+**Extension Notes (ZK Intents):**
+
+- **Feasibility**: Highly Experimental / Future Research.
+- **Complexity**: Extremely High. Requires deep expertise in zero-knowledge cryptography, specialized libraries (e.g., Circom, ZoKrates, custom circuits), and significant computational overhead for proof generation and verification.
+- **Status**: Practical ZK integration into general smart contract platforms is still an active area of research and development. Performance and cost are major challenges.
+
+### 2. AI/ML for Solver Optimization and Intent Suggestion
+
+**Concept**: Use machine learning models to:
+
+- **Optimize Solver Selection**: Predict the best solver based on historical performance, network conditions, and intent characteristics.
+- **Suggest Intents**: Recommend potentially useful intents to users based on their past activity or market trends.
+
+```javascript
+// Conceptual AI-Powered Solver Selection Service (Off-Chain)
+
+// Assumes access to historical data and a trained ML model
+class AISolverSelector {
+  constructor(modelPath) {
+    // Load a pre-trained model (e.g., TensorFlow.js, ONNX Runtime)
+    // this.model = await loadPredictionModel(modelPath);
+  }
+
+  async recommendSolver(intent, availableSolvers) {
+    // 1. Extract features from the intent and network state
+    const features = this.extractFeatures(intent /* current network data */);
+
+    // 2. Get predictions from the ML model for each solver
+    const predictions = await Promise.all(
+      availableSolvers.map(async (solver) => {
+        const solverFeatures = this.extractSolverFeatures(solver);
+        const combinedFeatures = { ...features, ...solverFeatures };
+        // const prediction = await this.model.predict(combinedFeatures);
+        // Prediction might include estimated success rate, cost, time.
+        return { solverId: solver.id, score: Math.random() }; // Placeholder score
+      })
+    );
+
+    // 3. Rank solvers based on prediction score
+    predictions.sort((a, b) => b.score - a.score); // Higher score is better
+
+    console.log(
+      "AI Recommended Solver Order:",
+      predictions.map((p) => p.solverId)
+    );
+    return predictions[0].solverId; // Return the top-ranked solver
+  }
+
+  extractFeatures(intent, networkData) {
+    /* ... */
+  }
+  extractSolverFeatures(solver) {
+    /* ... */
+  }
+}
+```
+
+**Extension Notes (AI/ML Integration):**
+
+- **Feasibility**: Conceptual / Requires Significant Off-Chain Infrastructure.
+- **Complexity**: High. Requires expertise in machine learning, data engineering (for training data), model deployment, and maintaining the off-chain prediction service.
+- **Challenges**: Ensuring model fairness, transparency, and resistance to manipulation. Real-time feature extraction from blockchain state can be difficult.
+
+### 3. Decentralized Identity (DID) and Verifiable Credentials (VCs)
+
+**Concept**: Integrate DIDs and VCs to create more sophisticated and privacy-preserving authorization models for intents.
+
+**How it Works**: Instead of just checking `user_account`, a Verifier could require the user to present a Verifiable Credential (e.g., proving KYC status, DAO membership, or holding a specific NFT) signed by their DID, without revealing the underlying account ID directly in all cases.
+
+```rust
+// Conceptual Verifier using DIDs/VCs (Highly Simplified)
+
+// Assumes libraries for DID resolution and VC verification exist
+use decentralized_identity::{Did, VerifiableCredential};
+
+// Intent might include a credential instead of direct account ID
+pub struct CredentialBasedIntent {
+   credential: VerifiableCredential, // VC proving authorization
+   // ... other intent fields ...
+}
+
+#[near_bindgen]
+impl DidVerifier {
+    // ... state (e.g., trusted issuer DIDs) ...
+
+    pub fn verify_credential_intent(&self, intent: CredentialBasedIntent) -> bool {
+        // 1. Verify the credential's signature and integrity
+        assert!(intent.credential.verify(), "Invalid credential signature");
+
+        // 2. Check if the issuer is trusted
+        assert!(self.trusted_issuers.contains(&intent.credential.issuer_did()), "Untrusted credential issuer");
+
+        // 3. Check credential claims against intent requirements
+        // (e.g., does the VC prove DAO membership required for this action?)
+        assert!(self.check_claims(&intent.credential, &intent), "Credential does not meet intent requirements");
+
+        // 4. Check credential validity (not expired, not revoked)
+        // This might involve checking an on-chain revocation registry
+        assert!(!self.is_revoked(&intent.credential), "Credential has been revoked");
+
+        // ... other standard intent validation ...
+        true
+    }
+
+    fn check_claims(&self, credential: &VerifiableCredential, intent: &CredentialBasedIntent) -> bool { /* ... */ }
+    fn is_revoked(&self, credential: &VerifiableCredential) -> bool { /* ... */ }
+}
+```
+
+**Extension Notes (DID/VC Integration):**
+
+- **Feasibility**: Experimental / Requires Maturing Standards & Infrastructure.
+- **Complexity**: High. Depends heavily on the maturity and standardization of DID methods, VC formats, and supporting libraries/infrastructure (resolution, revocation registries) on NEAR.
+- **Interoperability**: Achieving seamless interoperability between different DID/VC systems remains a challenge.

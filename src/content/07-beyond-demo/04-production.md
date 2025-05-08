@@ -563,3 +563,245 @@ If you want to evolve your workshop implementation toward production readiness:
 Taking an intent architecture from a workshop implementation to production involves building substantial off-chain infrastructure to complement the on-chain contracts. By addressing scalability, security, reliability, user experience, and deployment considerations, you can create a robust and user-friendly intent-based application that's ready for real-world usage.
 
 In the next section, we'll explore future directions for intent architecture, including emerging standards, AI integration, and regulatory considerations.
+
+## Monitoring and Alerting
+
+Just like any production Web2 system, monitoring your intent architecture is crucial for identifying issues proactively.
+
+> 💡 **Web2 Parallel**: Monitoring blockchain systems is similar to monitoring microservices. You need visibility into performance, error rates, resource usage (gas), and overall system health.
+
+```mermaid
+graph TD
+    A[User Submits Intent] --> B{Verifier Contract};
+    B -- Verified Intent --> C(Solver Network);
+    C --> D{Execution on NEAR/Other Chains};
+    B -- Logs/Events --> E[On-Chain Indexer (e.g., The Graph, Pipeflare)];
+    C -- Logs/Events --> E;
+    D -- Logs/Events --> E;
+    E --> F[Monitoring Dashboard (e.g., Grafana)];
+    E --> G[Alerting System (e.g., Prometheus Alertmanager)];
+    F --> H((Operator));
+    G --> H;
+```
+
+Figure 1: Monitoring Architecture for an Intent System.
+
+**Key Metrics to Monitor:**
+
+- **Intent Success/Failure Rate**: Track overall system reliability.
+- **Solver Performance**: Success rate, execution time, cost efficiency per solver.
+- **Verifier Throughput**: Number of intents processed per block/minute.
+- **Gas Consumption**: Average gas used per intent type or per solver.
+- **Error Rates**: Panics, failed transactions, callback errors.
+- **Cross-Chain Bridge Health**: Monitor bridge operations if applicable.
+
+**Tools:**
+
+- **On-Chain Indexers**: The Graph, Pipeflare, custom indexers to query contract state and events.
+- **Monitoring Dashboards**: Grafana, Datadog to visualize metrics.
+- **Alerting**: Prometheus Alertmanager, PagerDuty for critical issue notifications.
+
+```javascript
+// Conceptual Monitoring Snippet (e.g., part of an indexer or backend service)
+
+// Assumes prometheus client is configured
+const prometheus = require("prom-client");
+
+const intentCounter = new prometheus.Counter({
+  name: "intents_processed_total",
+  help: "Total number of intents processed",
+  labelNames: ["action_type", "status"], // e.g., {action_type: 'swap', status: 'completed'}
+});
+
+const solverExecutionTime = new prometheus.Histogram({
+  name: "solver_execution_duration_seconds",
+  help: "Histogram of solver execution times",
+  labelNames: ["solver_id", "action_type"],
+});
+
+function recordIntentProcessing(intent, status, durationSeconds) {
+  intentCounter.labels(intent.action, status).inc();
+  if (
+    status === "completed" &&
+    durationSeconds !== undefined &&
+    intent.solver_id
+  ) {
+    solverExecutionTime
+      .labels(intent.solver_id, intent.action)
+      .observe(durationSeconds);
+  }
+  // ... potentially log errors to an error tracking service (e.g., Sentry)
+}
+
+// Example: Hook this into your indexer processing logic
+// intentObserver.on('intent_processed', recordIntentProcessing);
+```
+
+```javascript
+// Conceptual Caching Logic (e.g., using Redis in a backend service)
+
+// Assumes redisClient is configured
+const redis = require("redis");
+const redisClient = redis.createClient({ url: "<YOUR_REDIS_URL>" }); // Placeholder URL
+redisClient.on("error", (err) => console.log("Redis Client Error", err));
+redisClient.connect();
+
+const CACHE_TTL_SECONDS = 60;
+
+async function getCachedSolverInfo(solverId) {
+  const cacheKey = `solver_info:${solverId}`;
+  try {
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Cache HIT for ${solverId}`);
+      return JSON.parse(cachedData);
+    } else {
+      console.log(`Cache MISS for ${solverId}`);
+      // Fetch from blockchain
+      // Assumes nearAccount is initialized
+      const solverInfo = await nearAccount.viewFunction(
+        solverId,
+        "get_solver_info",
+        {}
+      );
+      // Cache the result
+      await redisClient.setEx(
+        cacheKey,
+        CACHE_TTL_SECONDS,
+        JSON.stringify(solverInfo)
+      );
+      return solverInfo;
+    }
+  } catch (error) {
+    console.error(`Error fetching/caching solver info for ${solverId}:`, error);
+    // Fallback: try fetching directly without caching on error
+    return nearAccount.viewFunction(solverId, "get_solver_info", {});
+  }
+}
+```
+
+```javascript
+// Conceptual Rate Limiting (e.g., using Redis in a backend API gateway)
+
+// Assumes redisClient is configured
+const redisClient = require("./redisClient"); // Your Redis client setup
+
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 100; // Max 100 requests per user per minute
+
+async function checkRateLimit(userId) {
+  const key = `rate_limit:${userId}`;
+  try {
+    const currentCount = await redisClient.incr(key);
+    if (currentCount === 1) {
+      // Set expiry for the first request in the window
+      await redisClient.expire(key, RATE_LIMIT_WINDOW_MS / 1000);
+    }
+    return currentCount <= RATE_LIMIT_MAX_REQUESTS;
+  } catch (error) {
+    console.error("Rate limiting check failed:", error);
+    return false; // Fail open or closed depending on policy
+  }
+}
+
+// Usage in an API endpoint (e.g., Express middleware)
+/*
+app.post('/submit-intent', async (req, res) => {
+  const userId = req.user.id; // Assuming user ID is available
+  const isAllowed = await checkRateLimit(userId);
+  if (!isAllowed) {
+    return res.status(429).send('Rate limit exceeded');
+  }
+  // ... process intent submission ...
+});
+*/
+```
+
+```javascript
+// Conceptual Error Handling Service
+// Assumes this.logger exists (e.g., Winston, Pino) and db interface is configured
+class IntentProcessor {
+  async process(intent) {
+    try {
+      // ... main processing logic ...
+      await this.updateIntentStatus(intent.id, "COMPLETED");
+    } catch (error) {
+      this.logger.error(
+        { intentId: intent.id, error: error.message, stack: error.stack },
+        "Intent processing failed"
+      );
+
+      // Update status to FAILED in DB
+      await this.updateIntentStatus(intent.id, "FAILED", error.message);
+
+      // Optionally: Send to dead-letter queue for manual review
+      await sendToDeadLetterQueue({ intent, error: error.message });
+
+      // Optionally: Trigger alert for critical failures
+      if (isCriticalError(error)) {
+        triggerAlert("Critical intent failure", {
+          intentId: intent.id,
+          error: error.message,
+        });
+      }
+    }
+  }
+
+  async updateIntentStatus(intentId, status, errorMessage = null) {
+    // Assumes db interface is available
+    await db.intents.updateOne(
+      { id: intentId },
+      { $set: { status: status, error: errorMessage, updatedAt: new Date() } }
+    );
+  }
+}
+```
+
+```javascript
+// Conceptual Real-time Update Service (e.g., using Socket.IO)
+// Assumes intentObserver monitors blockchain/database for changes
+// and io (Socket.IO server instance) is configured.
+
+function setupWebSocketUpdates(io, intentObserver) {
+  // Map user account IDs to their socket IDs
+  const userSockets = new Map();
+
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
+    // Store socket ID based on authenticated user (implementation omitted)
+    // userSockets.set(socket.user.accountId, socket.id);
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+      // Remove user from map
+      // userSockets.delete(socket.user.accountId);
+    });
+  });
+
+  // Listen for intent status changes from the observer
+  intentObserver.on("intent_status_update", (intent) => {
+    const socketId = userSockets.get(intent.user_account);
+    if (socketId) {
+      io.to(socketId).emit("intent_update", {
+        intentId: intent.id,
+        status: intent.status,
+        result: intent.result, // Or relevant update data
+        error: intent.error,
+      });
+      console.log(
+        `Sent update for intent ${intent.id} to user ${intent.user_account}`
+      );
+    }
+  });
+
+  console.log("WebSocket service initialized for real-time updates.");
+}
+```
+
+**Extension Notes (Production Considerations):**
+
+- **Feasibility**: Most points (Monitoring, Caching, Rate Limiting, Error Handling, UI Updates) require Off-Chain Services & Infrastructure setup. Security Audits are essential.
+- **Complexity**: Varies. Basic logging is simple. Implementing robust monitoring, caching, rate limiting, failover, and real-time updates requires significant backend/DevOps effort, similar to production Web2 systems.
+- **Security Audits**: Non-negotiable for production systems handling user funds. Involve reputable auditors early and often.
+- **Placeholders**: `<YOUR_REDIS_URL>` is illustrative.
+- **Assumptions**: Code snippets assume configured clients/instances (e.g., `redisClient`, `prometheus`, `nearAccount`, `db`, `this.logger`, `intentObserver`, `io`).

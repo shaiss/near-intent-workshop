@@ -176,6 +176,59 @@ async function createCrossChainIntent(userAccount, sourceParams, destParams) {
 }
 ```
 
+### 1. Chain Signatures: Signing for Other Chains
+
+**Concept**: Allow users to create intents that require actions on _other_ blockchains (e.g., Ethereum, Solana) by using NEAR's Chain Signatures feature.
+
+**How it Works**: NEAR validators can collectively generate threshold signatures for other chains. An intent could request such a signature to authorize an action (like an Ethereum transaction) originating from the user's NEAR account, executed via a specialized relayer.
+
+```javascript
+// Conceptual Frontend Snippet (highly simplified)
+// Assumes existence of ChainSignatures class/library and Verifier support
+
+async function submitEthereumTransferIntent(amount, recipient) {
+  const intent = {
+    action: "transfer_eth", // Special action type understood by Verifier/Solver
+    params: {
+      target_chain: "ethereum",
+      token: "USDC", // ERC-20 on Ethereum
+      amount: amount, // Amount in USDC's decimals
+      recipient: recipient, // Ethereum address
+    },
+    // ... other intent fields (user, constraints)
+  };
+
+  // 1. Submit intent to NEAR Verifier
+  const verifiedIntent = await verifier.verify_intent({ intent });
+
+  // 2. Request Chain Signature for the Ethereum transaction payload
+  // This is the complex part involving NEAR's Chain Signatures MPC network
+  // Assumes a library abstracts this interaction.
+  const ethPayload = createEthereumTransferPayload(amount, recipient);
+  // NOTE: ChainSignatures depends on a specific NEAR protocol feature.
+  const chainSignatures = new ChainSignatures(nearConnection); // Hypothetical library
+  const ethSignature = await chainSignatures.requestSignature(
+    "ethereum",
+    ethPayload
+  );
+
+  // 3. Solver/Relayer uses ethSignature to execute on Ethereum
+  // A specialized solver would pick up the verified intent AND the corresponding ethSignature
+  // and submit the transaction to Ethereum via a relayer.
+  console.log(
+    "Submitted intent and obtained Ethereum signature:",
+    ethSignature
+  );
+}
+```
+
+**Extension Notes (Chain Signatures):**
+
+- **Feasibility**: Requires Future Protocol Features (Chain Signatures must be fully deployed & accessible) & Significant Infrastructure (Specialized Solvers/Relayers).
+- **Complexity**: Very high. Involves understanding MPC networks, threshold signatures, specific chain transaction formats (e.g., Ethereum RLP encoding), and building relayers capable of submitting transactions on target chains.
+- **Security**: Relies heavily on the security of NEAR's Chain Signature implementation and the relayer infrastructure.
+- **Current Status**: Chain Signatures are an advanced, potentially experimental feature on NEAR. Check official NEAR documentation for current status and availability.
+
 ## Use Case 3: Enhanced Wallet Experience with Session Keys
 
 ### The Problem
@@ -276,6 +329,133 @@ async function createMetaTransaction(userAccount, action) {
 ```
 
 > 💡 **Implementation Note**: True meta-transactions require a specialized relayer service and contract modifications to verify the user's signature within the contract.
+
+### 2. Meta-Transactions: Gasless Experiences
+
+**Concept**: Allow users to submit intents without needing NEAR tokens for gas. A third-party relayer pays the gas fees.
+
+**How it Works**: The user signs the _intent data itself_ (off-chain). This signed intent is sent to a Relayer service. The Relayer wraps the intent and the user's signature into an actual NEAR transaction (calling the Verifier), paying the gas fees itself. The Verifier contract must be modified to accept this structure and validate the embedded user signature instead of relying solely on `env::predecessor_account_id()`.
+
+```javascript
+// Conceptual Frontend Snippet
+
+async function submitGaslessIntent(intentObject) {
+  // Assume nearConnection is set up, but user might not have gas tokens.
+  // Assume `keyPair` holds the user's keypair (e.g., from a session).
+  const keyPair = await getKeyPairForUser(); // Hypothetical function
+
+  // 1. Sign the intent data payload directly (off-chain)
+  const intentJson = JSON.stringify(intentObject);
+  const messageBytes = Buffer.from(intentJson);
+  const signature = keyPair.sign(messageBytes);
+
+  // 2. Prepare data for the relayer
+  const relayerPayload = {
+    intent: intentObject,
+    signature: {
+      publicKey: keyPair.publicKey.toString(),
+      signatureBytes: Buffer.from(signature).toString("base64"),
+    },
+  };
+
+  // 3. Send to a trusted Relayer service endpoint
+  // WARNING: Relayer selection involves trust!
+  const RELAYER_URL = "<YOUR_RELAYER_ENDPOINT_URL>"; // Placeholder for Relayer API
+  try {
+    const response = await fetch(RELAYER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(relayerPayload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Relayer error: ${await response.text()}`);
+    }
+    const result = await response.json(); // e.g., { transactionHash: "..." }
+    console.log(
+      "Gasless intent submitted via relayer:",
+      result.transactionHash
+    );
+    return result;
+  } catch (error) {
+    console.error("Failed to submit gasless intent:", error);
+    throw error;
+  }
+}
+```
+
+```rust
+// Conceptual Verifier Contract Modification (Rust)
+
+// Structure to receive relayed intent
+#[derive(Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct SignedIntent {
+    intent: Intent,         // The original intent object
+    signature: NearSignature, // User's signature over the intent
+}
+
+// Modified Verifier method
+#[near_bindgen]
+impl Verifier {
+    // New method for relayers to call
+    pub fn submit_relayed_intent(&mut self, signed_intent: SignedIntent) -> bool {
+        // Log who the relayer is (predecessor)
+        let relayer_id = env::predecessor_account_id();
+        env::log_str(&format!("Received relayed intent from: {}", relayer_id));
+
+        // Extract user account ID from the intent payload
+        let user_account_id: AccountId = signed_intent.intent.user_account.parse()
+            .expect("Invalid user account ID in intent");
+
+        // Verify the embedded user signature against the intent data
+        let intent_bytes = near_sdk::serde_json::to_vec(&signed_intent.intent).expect("Failed to serialize intent");
+        let signature_valid = signed_intent.signature.verify(&intent_bytes, &user_account_id);
+
+        assert!(signature_valid, "Invalid user signature on intent");
+        env::log_str(&format!("User signature verified for: {}", user_account_id));
+
+        // Now perform standard intent verification (deadlines, constraints etc.)
+        // NOTE: Use `user_account_id` from the *intent payload* for checks, NOT `relayer_id`.
+        let is_valid = self.validate_intent_logic(&signed_intent.intent, &user_account_id);
+
+        if is_valid {
+            self.store_verified_intent(&signed_intent.intent);
+        }
+        is_valid
+    }
+
+    // Extracted validation logic reused by direct and relayed submissions
+    fn validate_intent_logic(&self, intent: &Intent, user_account_id: &AccountId) -> bool {
+        // ... perform deadline checks, constraint checks, etc. ...
+        // Example: Check if user is allowed to perform this action
+        // assert!(self.is_user_authorized(user_account_id), "User not authorized");
+        true // Placeholder for actual logic
+    }
+
+    fn store_verified_intent(&mut self, intent: &Intent) {
+        // ... logic to store intent ...
+    }
+}
+
+// Placeholder for signature structure (adapt based on actual library used)
+#[derive(Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct NearSignature {
+    publicKey: String, // Base58 encoded public key
+    signatureBytes: String // Base64 encoded signature bytes
+    // Method to verify signature (implementation depends on crypto library)
+    // fn verify(&self, message: &[u8], user_account_id: &AccountId) -> bool { ... }
+}
+```
+
+**Extension Notes (Meta-Transactions):**
+
+- **Feasibility**: Requires Contract Modifications (Verifier) & Off-Chain Services (Relayer).
+- **Complexity**: Moderate. Requires building/hosting a reliable Relayer service and modifying the Verifier contract to handle signature verification within arguments.
+- **Relayer Trust**: Users must trust the Relayer service not to censor or tamper with their signed intents before submitting them on-chain (though the signature prevents tampering with the intent _content_).
+- **Cost Model**: The Relayer needs a business model (e.g., dApp sponsorship, taking a small fee from the execution).
+- **Placeholders**: `<YOUR_RELAYER_ENDPOINT_URL>` is illustrative.
 
 ## Use Case 4: DAO and Multisig Integration
 

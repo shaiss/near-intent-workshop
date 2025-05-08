@@ -91,12 +91,12 @@ Your journey with intent-centric architecture doesn't end here. We value your fe
 - [Report Issues or Suggest Improvements](https://github.com/near/intent-workshop/issues)
 - [Ask Questions in the NEAR Discord](https://near.chat)
 
-## Thank You
+## Thank You!
 
-Thank you for investing your time and expertise in this workshop. By building an intent-centric application, you're contributing to a more user-friendly and accessible Web3 ecosystem.
+We hope you found this workshop valuable and are excited about the possibilities of intent-centric architecture on NEAR. Keep exploring, keep building, and help shape the future of a more user-friendly Web3!
 
-As you continue to build, remember the core principle that guided this workshop: focus on what users want to achieve, not how they should achieve it. This user-centric approach is the key to bringing blockchain technology to mainstream adoption.
-
-We can't wait to see what you build next!
+<!-- Verify image path relative to this file location -->
 
 ![Workshop Completion Certificate](../images/workshop-completion.png)
+
+<!-- Assuming images are stored in src/content/images/ -->

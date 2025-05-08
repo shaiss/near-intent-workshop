@@ -78,82 +78,39 @@ Implementing this would require:
 ```javascript
 // Conceptual code for a Cross-Chain Solver
 class CrossChainSwapSolver {
-  async solve(intent) {
-    console.log("Finding optimal route for cross-chain swap");
-
-    // 1. Find the best route across chains
-    const route = await this.findOptimalRoute(
-      intent.source_chain,
-      intent.target_chain,
-      intent.input_token,
-      intent.output_token,
-      intent.input_amount
-    );
-
-    // 2. Check if the route meets constraints
-    if (!this.meetsConstraints(route, intent)) {
-      throw new Error("No route meets specified constraints");
-    }
-
-    // 3. Execute the swap across chains
-    // This would involve multiple transactions and bridge interactions
-    return await this.executeSwap(route, intent);
+  async findBestRoute(intent) {
+    // 1. Check liquidity pools on source chain (e.g., NEAR DEXes)
+    // 2. Check liquidity pools on target chain (e.g., Ethereum DEXes)
+    // 3. Check available bridges (e.g., Rainbow Bridge) and their fees/slippage
+    // 4. Calculate potential paths (e.g., NEAR -> Bridge -> ETH -> Swap on Uniswap)
+    // 5. Estimate costs (gas on both chains, bridge fees, swap fees)
+    // 6. Return the optimal route based on intent preferences (cost, speed)
+    console.log("Finding best cross-chain route for intent:", intent.id);
+    // ... complex logic omitted ...
+    return { route: "NEAR -> Bridge -> ETH -> Uniswap", estimatedOutput: "95" }; // Placeholder
   }
 
-  async findOptimalRoute(
-    sourceChain,
-    targetChain,
-    inputToken,
-    outputToken,
-    amount
-  ) {
-    // This would typically query multiple DEXes and bridges
-    // across both chains to find the best overall path
-
-    console.log(`Finding routes from ${sourceChain} to ${targetChain}`);
-
-    // In reality, this might integrate with specialized
-    // cross-chain routing services or liquidity aggregators
-    return {
-      steps: [
-        {
-          type: "swap",
-          chain: sourceChain,
-          dex: "ref.finance",
-          inputToken: inputToken,
-          outputToken: "USDT.near",
-          expectedOutput: "9950000000", // 9.95 USDT
-        },
-        {
-          type: "bridge",
-          from: sourceChain,
-          to: targetChain,
-          token: "USDT.near",
-          targetToken: "USDT.aurora",
-          bridge: "rainbow",
-          fee: "50000000", // 0.05 USDT
-        },
-        {
-          type: "swap",
-          chain: targetChain,
-          dex: "trisolaris",
-          inputToken: "USDT.aurora",
-          outputToken: "ETH.aurora",
-          expectedOutput: "515000000000000000", // 0.515 ETH
-        },
-      ],
-      totalGas: {
-        near: "0.05",
-        aurora: "0.01",
-      },
-      expectedOutput: "515000000000000000", // 0.515 ETH
-      estimatedTimeSeconds: 180, // 3 minutes
-    };
+  async executeRoute(routeDetails, intent) {
+    // Execute the steps defined in the route (e.g., call bridge, call DEX)
+    console.log(
+      `Executing route: ${routeDetails.route} for intent: ${intent.id}`
+    );
+    // ... interact with bridge contracts, wait for confirmations, submit target chain tx ...
+    return { success: true, finalOutput: "95.1" }; // Placeholder
   }
 }
 ```
 
-> ⚠️ **Implementation Reality**: The code above is conceptual and simplified. A real implementation would require extensive integration with bridges, DEXes, and security mechanisms. The route finding algorithm alone would be a substantial project, similar to how flight booking engines need to solve complex multi-hop routing problems.
+**Extension Notes (Cross-Chain Swap):**
+
+- **Feasibility**: Requires Significant Infrastructure (Bridges, Solvers, Relayers) & Complex Contract/Off-Chain Logic.
+- **Complexity**: Extremely High. Building a reliable cross-chain solver involves:
+  - Interfacing securely with multiple bridge protocols.
+  - Accurately querying state and liquidity across different chains (dealing with finality differences).
+  - Complex route optimization algorithms.
+  - Robust error handling and potential compensation mechanisms for partial failures (true atomicity is very difficult).
+  - Gas estimation and payment on multiple chains.
+- **Security**: Depends heavily on the security of the chosen bridges and the solver's implementation.
 
 ## DeFi Applications: Cross-Chain Yield Optimization
 
@@ -274,27 +231,30 @@ Ensuring transactions either complete fully or revert across multiple chains:
 ```javascript
 // Conceptual implementation for cross-chain atomicity
 class CrossChainAtomicExecutor {
-  async executeAtomically(intent) {
-    // 1. Prepare transactions on all chains
-    const preparedTxs = await this.prepareCrossChainTransactions(intent);
-
-    // 2. First phase: Lock assets and create commitments
-    const commitments = await this.executeCommitmentPhase(preparedTxs);
-
-    // 3. Verify all commitments succeeded
-    if (!this.verifyAllCommitments(commitments)) {
-      // If any commitment failed, trigger rollback
-      await this.rollbackCommitments(commitments);
-      throw new Error("Cross-chain execution failed at commitment phase");
-    }
-
-    // 4. Second phase: Complete the execution
-    return await this.executeCompletionPhase(preparedTxs, commitments);
+  async execute(actionsChainA, actionsChainB, intent) {
+    // 1. Generate secrets, calculate hashes (for HTLC)
+    // 2. Lock funds/assets on Chain A using hash lock
+    // 3. Wait for confirmation on Chain A
+    // 4. Lock funds/assets on Chain B using same hash lock
+    // 5. Wait for confirmation on Chain B
+    // 6. Reveal secret on Chain B to claim funds/execute action
+    // 7. Use revealed secret on Chain A to claim funds/execute action
+    // 8. Implement timeout and refund logic if steps fail
+    console.log(
+      "Attempting atomic cross-chain execution for intent:",
+      intent.id
+    );
+    // ... very complex interaction logic with HTLC contracts or bridges ...
+    return { success: true }; // Placeholder
   }
 }
 ```
 
-> ⚠️ **Reality Check**: True atomicity across independent blockchains is extremely difficult and often relies on time-locked transactions with fallback mechanisms rather than perfect atomicity.
+**Extension Notes (Cross-Chain Atomicity):**
+
+- **Feasibility**: Requires Advanced Contract Logic (e.g., HTLCs) on multiple chains & Specialized Solvers/Relayers.
+- **Complexity**: Extremely High. True cross-chain atomicity is one of the hardest problems in Web3. Solutions often involve complex cryptographic techniques (like HTLCs), optimistic mechanisms with challenge periods, or bridge-specific protocols. Guarantees are often probabilistic rather than absolute.
+- **Security**: Requires careful implementation of locking mechanisms and secure secret management.
 
 ### 3. Error Recovery
 

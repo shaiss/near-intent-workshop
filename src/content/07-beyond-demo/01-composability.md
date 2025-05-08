@@ -330,3 +330,247 @@ While our workshop implementation doesn't include composability, you can start e
 In the [next section (7.2: Advanced Use Cases)](mdc:./02-advanced-use-cases.md), we'll explore specific scenarios that leverage this composability, showing how intent-centric architecture can enable sophisticated DeFi operations, DAO governance, and more.
 
 > 💡 **Implementation Note**: The examples in this section are intended to illustrate concepts rather than provide production-ready code. Implementing a full composability system would require careful design and thorough testing, especially around error handling and state management.
+
+## Combining Intents: Building Complex Workflows
+
+The real power of intents emerges when you combine them. This is **composability** – using simple building blocks (individual intents) to create complex, multi-step workflows.
+
+> 💡 **Web2 Parallel**: Think of Unix pipes (`command1 | command2`) or visual programming tools like Zapier or IFTTT, where you chain simple actions together to automate complex tasks. Intent composability brings this power to blockchain interactions.
+
+### 1. Sequential Composition: A then B
+
+Execute intents one after another, potentially using the output of one as the input for the next.
+
+**Example Intent**: "First, swap 100 USDC for NEAR. Then, stake the received NEAR with validator `<VALIDATOR_ID>.poolv1.near`."
+
+```json
+{
+  "id": "comp-intent-seq-001",
+  "user_account": "<USER_ACCOUNT_ID>.testnet",
+  "action": "sequence",
+  "steps": [
+    {
+      "id": "step_swap",
+      "action": "swap",
+      "input_token": "usdc.testnet",
+      "input_amount": "100000000", // 100 USDC (6 decimals)
+      "output_token": "wrap.testnet",
+      "max_slippage": 0.01,
+      "save_output_as": "SWAP_OUTPUT_AMOUNT" // Name for the output variable
+    },
+    {
+      "id": "step_stake",
+      "action": "stake",
+      "input_token": "wrap.testnet",
+      // Reference the output of the previous step
+      // Assumes a special resolver understands this placeholder.
+      "input_amount": "$SWAP_OUTPUT_AMOUNT",
+      "validator_id": "<VALIDATOR_ID>.poolv1.near"
+    }
+  ],
+  "constraints": {
+    "atomicExecution": true, // Ensure either both succeed or both fail
+    "deadline": "1735689600000000000" // Nanosecond timestamp
+  }
+}
+```
+
+**Extension Notes (Sequential Composition):**
+
+- **Feasibility**: Requires Contract Modifications (Verifier/Solver) & potentially Off-Chain Services.
+- **Mechanism**: A dedicated "Composition Solver" or enhanced Verifier/Solver contract is needed.
+- **Output Handling (`$SWAP_OUTPUT_AMOUNT`)**: This requires a mechanism for the composition solver to:
+  1.  Execute `step_swap`.
+  2.  Capture its specific output amount (e.g., from execution logs or callbacks).
+  3.  Temporarily store this value (e.g., in contract state or passed in subsequent calls).
+  4.  Substitute this value into the `input_amount` for `step_stake` before execution.
+- **Atomicity**: Ensuring `atomicExecution` is crucial and non-trivial, especially if steps involve external calls. It often requires careful state management and rollback logic within the composition solver.
+- **Placeholders**: `<USER_ACCOUNT_ID>.testnet` and `<VALIDATOR_ID>.poolv1.near` are illustrative; replace with actual account IDs.
+
+### 2. Conditional Composition: If X then A else B
+
+Execute different intents based on on-chain conditions or oracle data.
+
+**Example Intent**: "If the price of NEAR > $10 USD, swap 50 NEAR for USDC. Otherwise, stake 50 NEAR."
+
+```json
+{
+  "id": "comp-intent-cond-001",
+  "user_account": "<USER_ACCOUNT_ID>.testnet",
+  "action": "conditional",
+  "condition": {
+    "source": "oracle", // Assumes a trusted price oracle contract
+    "oracle_contract": "priceoracle.near", // Placeholder for oracle contract
+    "feed": "NEAR_USD",
+    "operator": ">=",
+    "value": "10000000" // Price target (e.g., $10.00 with 6 decimals)
+  },
+  "true_branch": {
+    // Intent to execute if condition is true
+    "action": "swap",
+    "input_token": "wrap.testnet",
+    "input_amount": "50000000000000000000000000", // 50 NEAR
+    "output_token": "usdc.testnet",
+    "min_output_amount": "495000000" // e.g., Min 495 USDC (6 decimals)
+  },
+  "false_branch": {
+    // Intent to execute if condition is false
+    "action": "stake",
+    "input_token": "wrap.testnet",
+    "input_amount": "50000000000000000000000000", // 50 NEAR
+    "validator_id": "<VALIDATOR_ID>.poolv1.near"
+  }
+}
+```
+
+**Extension Notes (Conditional Composition):**
+
+- **Feasibility**: Requires Contract Modifications (Verifier/Solver) & External Dependencies (Oracle).
+- **Mechanism**: Needs a Verifier/Solver capable of querying the specified `oracle_contract` (or other on-chain state) and executing the appropriate branch (`true_branch` or `false_branch`).
+- **Oracle Trust**: Relies heavily on the security and reliability of the chosen oracle.
+- **Placeholders**: `<USER_ACCOUNT_ID>.testnet`, `priceoracle.near`, `<VALIDATOR_ID>.poolv1.near` are illustrative.
+
+### 3. Parallel Composition: A and B Simultaneously
+
+Execute multiple intents concurrently, often used for batching unrelated actions.
+
+**Example Intent**: "Simultaneously: 1) Transfer 10 NEAR to `<FRIEND_ACCOUNT_ID>.testnet`, and 2) Vote YES on DAO proposal #42."
+
+```json
+{
+  "id": "comp-intent-para-001",
+  "user_account": "<USER_ACCOUNT_ID>.testnet",
+  "action": "parallel",
+  "intents": [
+    {
+      // Sub-intent 1: Transfer
+      "action": "transfer",
+      "input_token": "NEAR",
+      "input_amount": "10000000000000000000000000", // 10 NEAR
+      "recipient": "<FRIEND_ACCOUNT_ID>.testnet" // Placeholder
+    },
+    {
+      // Sub-intent 2: DAO Vote
+      "action": "dao_vote",
+      "dao_contract": "<DAO_NAME>.sputnik-dao.near", // Placeholder
+      "proposal_id": 42,
+      "vote": "YES"
+    }
+  ]
+}
+```
+
+**Extension Notes (Parallel Composition):**
+
+- **Feasibility**: Requires Contract Modifications (Verifier/Solver).
+- **Mechanism**: A specialized Solver or enhanced Verifier batches the actions from the sub-intents into a single transaction submitted to the NEAR blockchain. NEAR supports batching actions within one transaction.
+- **Atomicity**: Execution is typically atomic because NEAR processes batched actions within a single transaction receipt. If one action fails, others in the batch might still succeed unless the contract logic explicitly implements rollbacks.
+- **Placeholders**: `<USER_ACCOUNT_ID>.testnet`, `<FRIEND_ACCOUNT_ID>.testnet`, `<DAO_NAME>.sputnik-dao.near` are illustrative.
+
+### Visualizing Composable Workflows
+
+Mermaid diagrams help visualize these complex flows:
+
+```mermaid
+flowchart TD
+    subgraph Sequential Composition
+        S1[Start] --> S2{Swap USDC for NEAR};
+        S2 --> S3{Stake Received NEAR};
+        S3 --> S4[End];
+    end
+
+    subgraph Conditional Composition
+        C1{Check NEAR Price > $10?} -- Yes --> C2[Swap NEAR for USDC];
+        C1 -- No --> C3[Stake NEAR];
+        C2 --> C4[End];
+        C3 --> C4;
+    end
+
+    subgraph Parallel Composition
+        P1[Start] --> P2(Transfer NEAR);
+        P1 --> P3(Vote on DAO Proposal);
+        P2 --> P4[End];
+        P3 --> P4;
+    end
+```
+
+Figure 1: Visualizing Different Intent Composition Patterns.
+
+### Building a Composition Solver (Conceptual Rust)
+
+Implementing a solver capable of handling these compositions requires careful design:
+
+```rust
+// Conceptual Rust - simplified for illustration
+// Assumes necessary imports and supporting structs (Intent, ExecutionResult, etc.)
+
+#[near_bindgen]
+impl CompositionSolver {
+    // ... (state, initialization)
+
+    pub fn execute_composed_intent(&mut self, composed_intent: ComposedIntent) -> Promise {
+        env::log_str(&format!("Executing composed intent: {}", composed_intent.id));
+
+        match composed_intent.action_type {
+            ActionType::Sequence => self.execute_sequence(composed_intent.steps, composed_intent.constraints),
+            ActionType::Conditional => self.execute_conditional(composed_intent.condition, composed_intent.true_branch, composed_intent.false_branch),
+            ActionType::Parallel => self.execute_parallel(composed_intent.intents),
+        }
+    }
+
+    fn execute_sequence(&mut self, steps: Vec<IntentStep>, constraints: Constraints) -> Promise {
+        // Implementation needs to:
+        // 1. Execute steps sequentially using promises and callbacks.
+        // 2. Store intermediate results (e.g., using a map with intent_id + step_id as key).
+        // 3. Resolve dynamic values like "$PREVIOUS_OUTPUT" before executing the next step.
+        // 4. Handle atomicity constraints - potentially requiring complex rollback logic if a step fails.
+        env::log_str("Executing sequential intent...");
+        // ... complex promise chaining and state management ...
+        // Placeholder: return promise indicating completion/failure
+        Promise::new(env::current_account_id()) // Example placeholder promise
+    }
+
+    fn execute_conditional(&mut self, condition: Condition, true_branch: Intent, false_branch: Option<Intent>) -> Promise {
+        // Implementation needs to:
+        // 1. Evaluate the condition (e.g., call an oracle contract).
+        // 2. Based on the result, execute either the true_branch or false_branch intent.
+        // 3. Use promises/callbacks to handle the asynchronous condition check and subsequent execution.
+        env::log_str("Executing conditional intent...");
+        // ... call oracle, then execute appropriate branch via promise ...
+        Promise::new(env::current_account_id())
+    }
+
+    fn execute_parallel(&mut self, intents: Vec<Intent>) -> Promise {
+        // Implementation needs to:
+        // 1. Construct a single transaction containing actions for ALL sub-intents.
+        //    NEAR allows batching actions within a single transaction.
+        // 2. Submit this batched transaction.
+        // 3. Handle the combined result (potentially multiple receipts).
+        env::log_str("Executing parallel intent...");
+        // ... construct batched actions and submit transaction ...
+        Promise::new(env::current_account_id())
+    }
+
+    // Helper to resolve dynamic values like "$SWAP_OUTPUT_AMOUNT"
+    // Needs access to stored intermediate results from previous steps.
+    fn resolve_dynamic_values(&self, intent_step: &mut IntentStep, results_store: &IntermediateResults) {
+        // Conceptual: find placeholder, lookup in results_store, replace value.
+        // E.g., if intent_step.input_amount == "$SWAP_OUTPUT_AMOUNT", replace it.
+    }
+
+    // Callback to handle results of individual steps or the final outcome
+    #[private]
+    pub fn on_step_complete(&mut self, /* ... args ... */) {
+        // ... process results, potentially trigger next step, handle errors ...
+    }
+}
+
+// Note: This is highly simplified. Real implementation requires robust error handling,
+// gas management, state management for intermediate results, and potentially complex callback logic.
+```
+
+**Extension Notes (Composition Solver):**
+
+- **Feasibility**: Requires Significant Contract Modifications & potentially Off-Chain Services.
+- **Complexity**: Building a robust composition solver is a complex task involving intricate state management, promise handling, and potentially off-chain coordination for resolving dynamic values or managing atomicity across complex steps.
+- **Gas Costs**: Composed intents, especially sequential ones with multiple cross-contract calls, can consume significant gas. Careful optimization is required.

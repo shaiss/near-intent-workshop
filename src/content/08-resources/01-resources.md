@@ -106,3 +106,19 @@ The resources above provide pathways to deepen your understanding of the concept
 ## Next Steps
 
 In the [next section (8.2: What's Next)](mdc:./02-whats-next.md), we'll explore specific project ideas and extensions you can build on top of your workshop implementation to enhance your skills and create more sophisticated intent-based applications.
+
+# Workshop Resources
+
+**Estimated Time:** 10 minutes (Review)
+**Prerequisites:** Completion of all previous modules
+**Learning Objectives:**
+
+- Access key documentation and community resources for NEAR development
+- Find relevant examples and tools for building intent-based systems
+- Know where to ask questions and get support
+
+This section provides a curated list of resources to help you continue your journey with NEAR, intent architecture, smart wallets, and related technologies.
+
+> **Note**: Web links are subject to change. While these links were valid at the time of writing, please be aware that websites and documentation structures evolve. If a link is broken, try searching the main domain (e.g., docs.near.org) for the topic.
+
+## Core NEAR Protocol Resources

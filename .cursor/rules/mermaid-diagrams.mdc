@@ -8,12 +8,48 @@ alwaysApply: false
 ## Overview
 Mermaid diagrams provide a way to create diagrams and visualizations using text in a markdown-like syntax. They are excellent for explaining workflows, sequences, and relationships in NEAR's intent-centric architecture.
 
+## When to Use Diagrams
+
+### Text-to-Diagram Conversion
+Always convert text-based flows and processes into Mermaid diagrams when you encounter:
+- Step-by-step processes
+- Decision trees or validation flows
+- Component interactions
+- State transitions
+- System architectures
+
+Examples of text that should be converted to diagrams:
+```markdown
+# Convert this:
+1. User submits intent
+2. Verifier checks intent
+3. Solver processes intent
+4. Transaction executes
+
+# To this:
+```mermaid
+flowchart TD
+    A[User] -->|Submits| B(Intent)
+    B -->|Checks| C{Verifier}
+    C -->|Processes| D[Solver]
+    D -->|Executes| E[Transaction]
+```
+```
+
+### Common Text Patterns to Convert
+Look for these patterns in text and convert them to diagrams:
+- Numbered lists describing processes
+- "If/Then" decision flows
+- "First/Then/Finally" sequences
+- Component relationships
+- System interactions
+- State changes
+
 ## Diagram Types for Workshop Content
 
 ### Flow Charts
 Use for visualizing processes like intent verification or smart wallet operations:
 
-````markdown
 ```mermaid
 flowchart TD
     A[User] -->|Creates Intent| B(Intent Object)
@@ -22,12 +58,10 @@ flowchart TD
     C -->|Invalid| E[Reject]
     D --> F[Execute Transaction]
 ```
-````
 
 ### Sequence Diagrams
 Ideal for showing interactions between components:
 
-````markdown
 ```mermaid
 sequenceDiagram
     participant User
@@ -40,12 +74,10 @@ sequenceDiagram
     Verifier->>Solver: Forward Valid Intent
     Solver->>User: Return Result
 ```
-````
 
 #### Advanced Sequence Diagrams
 For more complex interactions with activation/deactivation and alternative paths:
 
-````markdown
 ```mermaid
 sequenceDiagram
     actor User
@@ -64,12 +96,10 @@ sequenceDiagram
         Wallet->>User: Error Report
     end
 ```
-````
 
 ### Class Diagrams
 Useful for explaining contract structures:
 
-````markdown
 ```mermaid
 classDiagram
     class IntentVerifier {
@@ -84,12 +114,10 @@ classDiagram
     }
     IntentVerifier --> Solver
 ```
-````
 
 ### State Diagrams
 Good for illustrating state transitions:
 
-````markdown
 ```mermaid
 stateDiagram-v2
     [*] --> Created
@@ -99,12 +127,10 @@ stateDiagram-v2
     Executed --> [*]
     Failed --> [*]
 ```
-````
 
 ### Gantt Charts
 Useful for showing timelines and parallel execution processes:
 
-````markdown
 ```mermaid
 gantt
     title Intent Execution Timeline
@@ -122,12 +148,10 @@ gantt
     section Result
     Return to User              :c1, after b2, 1s
 ```
-````
 
 ### Entity-Relationship Diagrams
 For illustrating data models and relationships between entities:
 
-````markdown
 ```mermaid
 erDiagram
     USER ||--o{ INTENT : creates
@@ -153,7 +177,6 @@ erDiagram
         bigint amount
     }
 ```
-````
 
 ## Best Practices
 
@@ -182,6 +205,56 @@ erDiagram
 - Use clear section titles to separate diagrams
 - Add horizontal rules (---) between diagram sections for clarity
 
+## Text-to-Diagram Conversion Checklist
+
+When reviewing content, check for these opportunities to convert text to diagrams:
+
+1. **Process Flows**
+   - [ ] Numbered steps
+   - [ ] Sequential actions
+   - [ ] Decision points
+   - [ ] Multiple outcomes
+
+2. **Component Interactions**
+   - [ ] System communications
+   - [ ] Contract calls
+   - [ ] User interactions
+   - [ ] Cross-chain operations
+
+3. **State Changes**
+   - [ ] Status transitions
+   - [ ] Lifecycle stages
+   - [ ] Error states
+   - [ ] Recovery flows
+
+4. **Architecture**
+   - [ ] System components
+   - [ ] Dependencies
+   - [ ] Data flow
+   - [ ] Security boundaries
+
+## Implementation Tips
+
+1. **Start Simple**
+   - Begin with basic flowchart
+   - Add complexity gradually
+   - Focus on clarity over detail
+
+2. **Use Subgraphs**
+   - Group related elements
+   - Show system boundaries
+   - Highlight key components
+
+3. **Add Direction**
+   - Use clear arrows
+   - Label relationships
+   - Show data flow
+
+4. **Maintain Consistency**
+   - Use same shapes for similar concepts
+   - Keep terminology consistent
+   - Follow established patterns
+
 ## Advanced Tips
 
 ### Actor vs Participant
@@ -201,7 +274,6 @@ erDiagram
 ## NEAR-Specific Diagram Examples
 
 ### Intent Flow
-````markdown
 ```mermaid
 flowchart LR
     A[User] -->|1. Creates| B(Intent)
@@ -210,10 +282,8 @@ flowchart LR
     C -->|3b. Rejects| E[Error]
     D -->|4. Executes| F[NEAR Blockchain]
 ```
-````
 
 ### Smart Wallet Architecture
-````markdown
 ```mermaid
 flowchart TD
     A[Smart Wallet] -->|Controls| B(User Account)
@@ -228,10 +298,8 @@ flowchart TD
     E
     end
 ```
-````
 
 ### Cross-Contract Call Sequence
-````markdown
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -247,4 +315,3 @@ sequenceDiagram
     S->>V: Return result
     V->>U: Notify completion
 ```
-````

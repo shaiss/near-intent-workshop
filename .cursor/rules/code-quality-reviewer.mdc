@@ -1,0 +1,84 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Code Quality Reviewer
+
+**Description:** Focuses on writing high-quality code that follows best practices, readability, and standardized formatting across the workshop.
+
+## Core Principles
+
+1.  **Readability:** Code should be easy to read and understand. Prioritize clarity even if it means being slightly more verbose.
+2.  **Simplicity (KISS - Keep It Simple, Stupid):** Prefer simple, straightforward solutions over complex ones.
+3.  **Consistency:** Apply formatting, naming, and structural conventions consistently across all code examples.
+4.  **Correctness:** Code must be functionally correct and achieve its stated purpose.
+5.  **Maintainability:** Write code that is easy to modify and debug.
+
+## Formatting Standards
+
+Refer to the [markdown-formatting.mdc](mdc:src/content/cursor-rules/markdown-formatting.mdc) rule for code block presentation. Internally, code should adhere to:
+
+-   **Indentation:** Use consistent indentation (e.g., 2 or 4 spaces, no tabs) for all code blocks.
+-   **Line Length:** Keep lines to a reasonable length (e.g., 80-100 characters) to avoid horizontal scrolling.
+-   **Whitespace:** Use whitespace effectively to separate logical blocks of code and improve readability.
+-   **Naming Conventions:**
+    -   Variables: `camelCase` or `snake_case` (be consistent within a language).
+    -   Functions: `camelCase` or `snake_case` (be consistent).
+    -   Constants: `UPPER_SNAKE_CASE`.
+    -   Classes/Contracts: `PascalCase`.
+    -   Use descriptive names for variables, functions, and classes. Avoid single-letter names except for trivial loop counters.
+
+## Best Practices
+
+1.  **DRY (Don't Repeat Yourself):** Avoid duplicating code. Use functions, modules, or classes to encapsulate reusable logic.
+2.  **Error Handling:**
+    -   Gracefully handle potential errors and edge cases.
+    -   Provide clear error messages.
+    -   In Rust, use `Result` and `Option` appropriately.
+    -   In JavaScript, use `try...catch` blocks for synchronous errors and `.catch()` for Promises.
+3.  **Modularity:** Break down complex code into smaller, manageable functions or modules with clear responsibilities.
+4.  **Avoid Magic Numbers/Strings:** Use named constants instead of hardcoding literal values directly in code.
+5.  **Comments:**
+    -   Write clear, concise comments to explain *why* something is done, not just *what* is done, especially for non-obvious logic.
+    -   Keep comments up-to-date with code changes.
+    -   Remove commented-out code before finalizing examples.
+    -   Use language-appropriate comment styles (e.g., `//` or `/* ... */` for JS/Rust, `#` for shell).
+6.  **Immutability:** Prefer immutable data structures where practical, especially in functional programming paradigms or when dealing with state (e.g., Rust's ownership and borrowing).
+
+## Language-Specific Guidelines
+
+### JavaScript
+-   Use `'use strict';` at the beginning of scripts or modules.
+-   Prefer `const` and `let` over `var`.
+-   Use Promises or `async/await` for asynchronous operations.
+-   Follow modern ECMAScript standards.
+-   Ensure linters (like ESLint) and formatters (like Prettier) are used if the project has them.
+
+### Rust
+-   Follow standard Rust idioms and conventions (Clippy lints are a good guide).
+-   Manage dependencies with `Cargo.toml`.
+-   Implement `std::fmt::Debug` for structs where useful for debugging.
+-   Use `Result<T, E>` for functions that can fail.
+-   Pay attention to ownership, borrowing, and lifetimes.
+
+### Shell / Bash
+-   Use clear and simple commands.
+-   Quote variables properly (e.g., `"$VARIABLE"`).
+-   Use `set -e` to exit on error in scripts where appropriate.
+-   Provide comments for complex command sequences.
+
+## Code Examples in Markdown
+-   Ensure all code examples are complete and functional, or clearly state if they are snippets that require additional context.
+-   Include necessary imports and setup instructions if not obvious.
+-   Refer to the [technical-content-guide.mdc](mdc:src/content/cursor-rules/technical-content-guide.mdc) for how to present code examples and explain technical concepts.
+
+## Testing
+-   While full test suites may not be included for every example, the code should be written in a way that is testable.
+-   Highlight how users might test the functionality being demonstrated.
+
+## Security Considerations
+-   For any code involving user input, state changes, or external calls, briefly mention relevant security best practices (e.g., input validation, avoiding common vulnerabilities).
+-   Do not include sensitive information (keys, passwords) in examples. Use placeholders.
+
+This rule helps ensure that all code presented in the workshop is not only functional but also serves as a model of good coding practices.

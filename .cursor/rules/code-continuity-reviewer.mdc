@@ -1,0 +1,62 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Code Continuity Reviewer
+
+**Description:** Ensures that code across workshop modules builds logically, avoids overlap, and maintains consistency for a smooth learning progression.
+
+## Core Goal: Seamless Code Evolution
+
+The primary objective is to ensure that a learner can follow the code from one section or module to the next with minimal confusion. Code examples should tell a coherent story, demonstrating a clear progression of concepts and functionalities.
+
+## Module-to-Module Code Flow
+
+1.  **Building Blocks:** Code in earlier modules should establish foundational components (functions, classes, contract structures) that are expanded upon or utilized in later modules.
+2.  **Logical Progression:** Ensure that new code introduced in a module directly relates to the learning objectives of that module and builds upon previously established code.
+3.  **Clear Transitions:** When code from a previous module is being modified or extended, clearly state this and highlight the changes. Explain *why* the changes are being made in the context of the new module's goals.
+    -   Refer to the [workshop-organization.mdc](mdc:src/content/cursor-rules/workshop-organization.mdc) rule for how to structure module transitions in the narrative.
+
+## Managing Code Evolution & Avoiding Redundancy
+
+1.  **Incremental Changes:** When evolving a piece of code (e.g., adding features to a smart contract), show the incremental changes rather than repeating the entire unchanged codebase. Use diffs or clearly comment new/modified sections if appropriate for the markdown format.
+2.  **Context for Snippets:** If showing only a snippet:
+    -   Clearly indicate where this snippet fits into the larger codebase (e.g., "Add the following function to your `Solver.js` file:").
+    -   Ensure all necessary context (imports, surrounding functions/classes) is either previously established or briefly recapped if critical for understanding the snippet.
+3.  **Complete Examples at Milestones:** Provide complete, runnable code examples at key milestones (e.g., end of a major feature implementation or end of a module) so learners can verify their progress.
+4.  **Avoid Unnecessary Repetition:** Do not repeat identical or very similar large blocks of code across different sections unless it's for specific emphasis and clearly justified. Instead, refer back to the original introduction of that code.
+
+## Consistency of Examples
+
+1.  **Naming Conventions:** Maintain consistent naming for variables, functions, contracts, and files across modules. If a concept is named `intentVerifier` in Module 2, it should not become `verifierContract` in Module 3 without explicit reasoning.
+2.  **Architectural Patterns:** If a specific architectural pattern (e.g., a way of structuring solver modules) is introduced, it should be applied consistently in similar contexts.
+3.  **Parameter Consistency:** The names, types, and order of parameters in functions or contract methods should remain consistent if the underlying logic is the same. If they change, this change should be a focal point of the explanation.
+
+## Handling Shared Utilities or Libraries
+
+1.  **Introduction:** If utility functions, helper scripts, or common libraries are used across multiple modules, they should be introduced clearly in one place (e.g., a setup section or an early module).
+2.  **Referencing:** Subsequent uses should briefly refer back to their introduction, rather than re-explaining them each time.
+3.  **Centralization:** Consider if common utilities should reside in a shared directory or file that is referenced, to promote DRY principles.
+
+## Bridging Concepts with Code
+
+1.  **Direct Support:** Ensure every code example directly supports and illustrates the technical concept being taught in that part of the workshop.
+2.  **Explanation First:** Generally, explain the concept or the "why" before presenting the code that implements it, as per the [technical-content-guide.mdc](mdc:src/content/cursor-rules/technical-content-guide.mdc).
+
+## Cross-References in Code
+
+1.  **Explicit Links (Narrative):** In the accompanying markdown text, link back to previous sections or modules where related code was first introduced or explained. (e.g., "Recall the `UserIntent` struct we defined in [Section 2.3](mdc:../02-understanding-building-blocks/03-intent-anatomy.md). We will now add a new field to it.")
+2.  **Code Comments (If Necessary):** In some cases, a brief comment in the code like `// See Module 2 for the initial definition of this struct` can be helpful, but prioritize clear narrative explanations.
+
+## Review Checklist
+
+-   Does the code in this section build logically on previous sections?
+-   Are there any unexplained jumps in logic or functionality in the code examples?
+-   Is there any redundant code that could be referenced instead?
+-   Are naming conventions and code styles consistent with previous examples?
+-   If code is modified, are the changes clearly explained?
+-   Are snippets provided with enough context?
+-   Is it clear how different code components (e.g., verifier, solver, wallet) are intended to interact as the workshop progresses?
+
+By adhering to these continuity guidelines, the workshop's code examples will form a cohesive and understandable learning path for users.

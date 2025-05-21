@@ -24,7 +24,7 @@ These resources directly relate to the concepts and code we built throughout thi
 | [NEAR Intent Architecture Guide](https://docs.near.org/tutorials/intents/introduction)   | Provides a deep dive into the intent concepts from Module 2         | Beginner     |
 | [NEAR SDK for Smart Contracts](https://docs.near.org/tools/sdk)                          | The foundation for the Rust contracts we built in Module 3          | Intermediate |
 | [NEAR Examples Repository](https://github.com/near-examples)                             | Collection of example NEAR applications and contracts               | Beginner     |
-| [NEAR API JS Documentation](https://docs.near.org/tools/near-api-js)     | The JavaScript library we used for frontend integration in Module 5 | Intermediate |
+| [NEAR API JS Documentation](https://docs.near.org/tools/near-api-js)                     | The JavaScript library we used for frontend integration in Module 5 | Intermediate |
 | [Session Keys Documentation](https://docs.near.org/concepts/basics/accounts/access-keys) | Expanded explanation of the session keys concepts from Module 4     | Intermediate |
 
 ## Module-Specific Resources
@@ -42,15 +42,15 @@ These resources directly relate to the concepts and code we built throughout thi
 | Resource                                                                                | Description                                                    | Difficulty   |
 | --------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------ |
 | [Access Keys Documentation](https://docs.near.org/concepts/basics/accounts/access-keys) | Guide to the session key functionality we implemented          | Intermediate |
-| [FastAuth Integration](https://docs.near.org/chain-abstraction/fastauth-overview)                            | Authentication solution that builds on the session key concept | Intermediate |
+| [FastAuth Integration](https://docs.near.org/chain-abstraction/fastauth-overview)       | Authentication solution that builds on the session key concept | Intermediate |
 | [Smart Wallet Security](https://docs.near.org/concepts/basics/accounts/security)        | Best practices for securing your smart wallet implementation   | Advanced     |
 
 ### Frontend Development (Module 5)
 
-| Resource                                                           | Description                                                 | Difficulty   |
-| ------------------------------------------------------------------ | ----------------------------------------------------------- | ------------ |
-| [NEAR Wallet Selector](https://github.com/near/wallet-selector)    | The wallet connection library we used in our frontend       | Beginner     |
-| [NEAR Components](https://github.com/near/near-discovery-components)              | Ready-to-use React components for NEAR applications         | Beginner     |
+| Resource                                                               | Description                                                 | Difficulty   |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------- | ------------ |
+| [NEAR Wallet Selector](https://github.com/near/wallet-selector)        | The wallet connection library we used in our frontend       | Beginner     |
+| [NEAR Components](https://github.com/near/near-discovery-components)   | Ready-to-use React components for NEAR applications         | Beginner     |
 | [BOS Widget Examples](https://github.com/near-examples/bos-components) | Component examples using NEAR's Blockchain Operating System | Intermediate |
 
 ### Testnet Deployment (Module 6)
@@ -65,8 +65,8 @@ These resources directly relate to the concepts and code we built throughout thi
 
 | Resource                                                                       | Description                                                               | Difficulty |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------- | ---------- |
-| [NEAR <> Ethereum Bridge](https://github.com/Near-One/rainbow-bridge)                  | Bridge for cross-chain functionality discussed in Module 7.3              | Advanced   |
-| [NEAR Chain Abstraction](https://docs.near.org/chain-abstraction/what-is)        | Details on the cross-chain technology                                     | Advanced   |
+| [NEAR <> Ethereum Bridge](https://github.com/Near-One/rainbow-bridge)          | Bridge for cross-chain functionality discussed in Module 7.3              | Advanced   |
+| [NEAR Chain Abstraction](https://docs.near.org/chain-abstraction/what-is)      | Details on the cross-chain technology                                     | Advanced   |
 | [Meta Transactions Guide](https://docs.near.org/tutorials/basic/gas-economics) | Implementation guide for the gasless transactions discussed in Module 7.2 | Advanced   |
 | [DAO Integration](https://docs.near.org/build/dapps/dao)                       | Resources for the DAO integration patterns from Module 7.2                | Advanced   |
 

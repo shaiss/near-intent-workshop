@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+echo ".DS_Store" >> .gitignore
+echo "*.png" >> .gitignore  # If you don't need images in git

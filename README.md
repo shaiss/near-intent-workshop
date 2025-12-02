@@ -1,5 +1,11 @@
 # NEAR Intents & Smart Wallet Abstraction Workshop
 
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://www.javascript.com/)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![NEAR Protocol](https://img.shields.io/badge/NEAR-Protocol-00D4FF.svg)](https://near.org)
+[![Web3](https://img.shields.io/badge/Web3-3.0-black.svg)](https://web3.foundation/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 An interactive workshop application built with Vite+React to teach developers about NEAR's intent-centric architecture and smart wallet abstraction.
 
 ## About
